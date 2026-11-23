@@ -1,18 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
   <defs>
-    <linearGradient id="instaGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+    <linearGradient id="igGrad" x1="0%" y1="100%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#f59e0b" />
-      <stop offset="50%" stop-color="#f43f5e" />
-      <stop offset="100%" stop-color="#c026d3" />
+      <stop offset="50%" stop-color="#ec4899" />
+      <stop offset="100%" stop-color="#8b5cf6" />
     </linearGradient>
   </defs>
-  <!-- Background Squircle -->
-  <rect x="4" y="4" width="120" height="120" rx="30" ry="30" fill="url(#instaGrad)" />
-  <!-- Eye Off Stealth Icon in Pure White -->
-  <g fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" transform="translate(16, 16) scale(4)">
-    <path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49" />
-    <path d="M14.084 14.158a3 3 0 0 1-4.242-4.242" />
-    <path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143" />
-    <line x1="2" y1="2" x2="22" y2="22" />
-  </g>
+  <!-- Background with smooth rounded corners -->
+  <rect x="0" y="0" width="32" height="32" rx="8" fill="url(#igGrad)" />
+  <!-- Crisp white camera body -->
+  <rect x="5.5" y="5.5" width="21" height="21" rx="6" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+  <!-- Center lens -->
+  <circle cx="16" cy="16" r="4.5" fill="none" stroke="#ffffff" stroke-width="2.2" />
+  <!-- Flash dot -->
+  <circle cx="21.5" cy="10.5" r="1.2" fill="#ffffff" />
 </svg>
