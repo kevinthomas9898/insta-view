@@ -17,7 +17,7 @@ import { log } from '../../utils/logger';
 
 export class InstagramService {
   private static addMediaProxyUrls(item: MediaItem, username: string): MediaItem {
-    const isVideo = item.type === 'video';
+    const isVideo = item.type === 'video' && Boolean(item.url && item.url.includes('.mp4'));
     const ext = isVideo ? 'mp4' : 'jpg';
     const filename = `instagram_${username}_${item.id}.${ext}`;
     const downloadUrl = `/api/media?url=${encodeURIComponent(item.url)}&download=true&filename=${encodeURIComponent(filename)}`;
@@ -25,7 +25,7 @@ export class InstagramService {
     let carouselMedia: MediaItem[] | undefined;
     if (item.carouselMedia && item.carouselMedia.length > 0) {
       carouselMedia = item.carouselMedia.map((sub, idx) => {
-        const subIsVideo = sub.type === 'video';
+        const subIsVideo = sub.type === 'video' && Boolean(sub.url && sub.url.includes('.mp4'));
         const subExt = subIsVideo ? 'mp4' : 'jpg';
         const subFilename = `instagram_${username}_${item.id}_${idx + 1}.${subExt}`;
         return {
@@ -318,17 +318,24 @@ export class InstagramService {
 
   public static async getReels(
     username: string,
-    forceDemo: boolean = false
+    forceDemo: boolean = false,
+    maxId?: string
   ): Promise<ApiResponse<ReelResult[]>> {
-    const cacheKey = `reels:${username}:${forceDemo ? 'demo' : 'live'}`;
-    const cached = globalCache.get<ReelResult[]>(cacheKey);
+    const cacheKey = `reels:${username}:${forceDemo ? 'demo' : 'live'}:${maxId || 'initial'}`;
+    const cached = globalCache.get<{
+      reels: ReelResult[];
+      nextMaxId?: string;
+      hasNextPage?: boolean;
+      notice?: string;
+    } | ReelResult[]>(cacheKey);
 
     const provider = ProviderFactory.getProvider({ forceDemo });
     const startTime = Date.now();
 
     if (cached) {
+      const cachedReels = Array.isArray(cached) ? cached : cached.reels;
       // Poisoned Cache Defense: If cached reels contain .jpg thumbnails or lack valid .mp4 streams, invalidate cache immediately
-      const isPoisoned = cached.some(
+      const isPoisoned = cachedReels?.some(
         (r) =>
           (!r.url || !r.url.includes('.mp4')) &&
           (r.url?.includes('.jpg') || r.url?.includes('t51.82787-15'))
@@ -343,25 +350,29 @@ export class InstagramService {
       } else {
         return {
           success: true,
-          data: cached,
+          data: cachedReels,
           metadata: {
             provider: provider.name,
             executionTimeMs: 0,
             isDemo: provider.isDemo,
             timestamp: new Date().toISOString(),
+            notice: Array.isArray(cached) ? undefined : cached.notice,
+            nextMaxId: Array.isArray(cached) ? undefined : cached.nextMaxId,
+            hasNextPage: Array.isArray(cached) ? undefined : cached.hasNextPage,
           },
         };
       }
     }
 
     try {
-      const result = await provider.getReels(username);
+      const result = await provider.getReels(username, maxId);
       const durationMs = Date.now() - startTime;
 
       // Cross-enrich reels with video URLs from cached posts if available
-      const cachedPosts = globalCache.get<PostResult[]>(`posts:${username}:`);
+      const cachedPostsObj = globalCache.get<any>(`posts:${username}:${forceDemo ? 'demo' : 'live'}:initial`);
+      const cachedPosts = Array.isArray(cachedPostsObj) ? cachedPostsObj : cachedPostsObj?.posts;
       const postsMap = new Map<string, string>();
-      if (cachedPosts) {
+      if (Array.isArray(cachedPosts)) {
         for (const p of cachedPosts) {
           if (p.url && (p.url.includes('.mp4') || p.type === 'video')) {
             postsMap.set(p.id, p.url);
@@ -383,7 +394,16 @@ export class InstagramService {
         };
       });
 
-      globalCache.set(cacheKey, processed, CACHE_TTL.REELS);
+      globalCache.set(
+        cacheKey,
+        {
+          reels: processed,
+          nextMaxId: result.nextMaxId,
+          hasNextPage: result.hasNextPage,
+          notice: result.notice,
+        },
+        CACHE_TTL.REELS
+      );
 
       return {
         success: true,
@@ -394,6 +414,8 @@ export class InstagramService {
           isDemo: provider.isDemo,
           timestamp: new Date().toISOString(),
           notice: result.notice,
+          nextMaxId: result.nextMaxId,
+          hasNextPage: result.hasNextPage,
         },
       };
     } catch (err: unknown) {
@@ -422,19 +444,25 @@ export class InstagramService {
     }
 
     // Normalize any provider error indicating a private profile
+    const lower = message.toLowerCase();
     if (
-      message.includes('"error_type":"private"') ||
-      message.includes('This page is private') ||
-      message.includes('private page') ||
-      message.toLowerCase().includes('is private') ||
-      message.toLowerCase().includes('account is private')
+      lower.includes('private') ||
+      lower.includes('403') ||
+      lower.includes('this page is private') ||
+      lower.includes('account is private') ||
+      lower.includes('is private')
     ) {
       code = 'PRIVATE_ACCOUNT';
       message = 'This Instagram account is private. Its media cannot be viewed without following the account.';
     }
 
     // Never leak raw JSON / internal provider error bodies to client
-    if (message.startsWith('{') || message.includes('ScraperAPI error') || message.includes('RapidAPI error')) {
+    if (
+      message.startsWith('{') ||
+      message.includes('ScraperAPI error') ||
+      message.includes('RapidAPI error') ||
+      message.includes('error_type')
+    ) {
       if (code !== 'PRIVATE_ACCOUNT' && code !== 'RATE_LIMITED' && code !== 'PROFILE_NOT_FOUND') {
         message = 'Unable to retrieve media for this profile at this time. Please try again.';
       }

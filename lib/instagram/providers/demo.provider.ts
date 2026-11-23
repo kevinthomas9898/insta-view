@@ -250,7 +250,7 @@ export class DemoProvider implements InstagramProvider {
     };
   }
 
-  public async getReels(username: string): Promise<ProviderResult<ReelResult[]>> {
+  public async getReels(username: string, _maxId?: string): Promise<ProviderResult<ReelResult[]>> {
     const reels: ReelResult[] = [
       {
         id: 'demo_reel_1',

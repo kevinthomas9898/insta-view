@@ -13,14 +13,24 @@ import {
   Music,
   Loader2,
   Maximize2,
+  ChevronDown,
 } from 'lucide-react';
 
 interface ReelsGridProps {
   reels: ReelResult[];
   username: string;
+  hasMore?: boolean;
+  isLoadingMore?: boolean;
+  onLoadMore?: () => void;
 }
 
-export function ReelsGrid({ reels, username }: ReelsGridProps) {
+export function ReelsGrid({
+  reels,
+  username,
+  hasMore = false,
+  isLoadingMore = false,
+  onLoadMore,
+}: ReelsGridProps) {
   const [selectedReel, setSelectedReel] = useState<ReelResult | null>(null);
   const [isReelLoading, setIsReelLoading] = useState(true);
   const [isCaptionExpanded, setIsCaptionExpanded] = useState(false);
@@ -172,6 +182,33 @@ export function ReelsGrid({ reels, username }: ReelsGridProps) {
         })}
       </div>
 
+      {/* Load More Reels Button */}
+      {hasMore && onLoadMore ? (
+        <div className="mt-8 mb-6 text-center">
+          <button
+            onClick={onLoadMore}
+            disabled={isLoadingMore}
+            className="px-6 py-2.5 bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 shadow-sm dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-100 dark:border-zinc-700 rounded-xl text-sm font-semibold inline-flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          >
+            {isLoadingMore ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin text-pink-500" />
+                <span>Loading more reels...</span>
+              </>
+            ) : (
+              <>
+                <span>Load More Reels</span>
+                <ChevronDown className="w-4 h-4" />
+              </>
+            )}
+          </button>
+        </div>
+      ) : reels.length > 0 ? (
+        <div className="mt-8 mb-6 text-center text-xs text-slate-500 dark:text-zinc-500 font-medium">
+          Showing all {reels.length} loaded reels
+        </div>
+      ) : null}
+
       {/* Reel Modal Player */}
       {selectedReel && (
         <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 select-none">
@@ -204,7 +241,7 @@ export function ReelsGrid({ reels, username }: ReelsGridProps) {
                 <a
                   href={
                     selectedReel.downloadUrl ||
-                    `/api/media?url=${encodeURIComponent(selectedReel.url)}&download=true&filename=reel_${username}_${selectedReel.id}.mp4`
+                    `/api/media?url=${encodeURIComponent(selectedReel.url)}&download=true&filename=reel_${username}_${selectedReel.id}.${selectedReel.url && selectedReel.url.includes('.mp4') ? 'mp4' : 'jpg'}`
                   }
                   download
                   className="p-2 hover:bg-white/20 active:scale-90 rounded-full text-white transition-all cursor-pointer"
@@ -306,7 +343,7 @@ export function ReelsGrid({ reels, username }: ReelsGridProps) {
                   </p>
                 )}
 
-                {selectedReel.caption && (
+                {selectedReel.caption && !selectedReel.caption.startsWith('http') && (
                   <div className="text-xs text-white/95 leading-relaxed drop-shadow-sm max-h-[25vh] overflow-y-auto">
                     <p className={isCaptionExpanded ? 'whitespace-pre-line' : 'line-clamp-2'}>
                       {selectedReel.caption}
@@ -369,7 +406,7 @@ export function ReelsGrid({ reels, username }: ReelsGridProps) {
                   <a
                     href={
                       selectedReel.downloadUrl ||
-                      `/api/media?url=${encodeURIComponent(selectedReel.url)}&download=true&filename=reel_${username}_${selectedReel.id}.mp4`
+                      `/api/media?url=${encodeURIComponent(selectedReel.url)}&download=true&filename=reel_${username}_${selectedReel.id}.${selectedReel.url && selectedReel.url.includes('.mp4') ? 'mp4' : 'jpg'}`
                     }
                     download
                     className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-gradient-to-r from-pink-600 via-rose-600 to-amber-600 hover:opacity-95 text-white text-xs font-semibold rounded-xl shadow-md cursor-pointer"

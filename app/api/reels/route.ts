@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
   const parsed = apiQuerySchema.safeParse({
     username: searchParams.get('username') || '',
     demo: searchParams.get('demo') || undefined,
+    maxId: searchParams.get('maxId') || undefined,
   });
 
   if (!parsed.success) {
@@ -39,7 +40,11 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const result = await InstagramService.getReels(parsed.data.username, parsed.data.demo);
+  const result = await InstagramService.getReels(
+    parsed.data.username,
+    parsed.data.demo,
+    parsed.data.maxId
+  );
   const status = result.success ? 200 : (result.error?.code === 'UNSUPPORTED_FEATURE' ? 501 : 400);
 
   return NextResponse.json(result, { status });

@@ -89,12 +89,19 @@ export async function GET(request: NextRequest) {
     }
 
     const upstreamContentType = upstreamRes.headers.get('content-type') || 'application/octet-stream';
+    const isImage =
+      upstreamContentType.includes('image') ||
+      validatedUrl.pathname.endsWith('.jpg') ||
+      validatedUrl.pathname.endsWith('.jpeg') ||
+      validatedUrl.pathname.endsWith('.png') ||
+      validatedUrl.pathname.endsWith('.webp');
+
     const isVideo =
-      upstreamContentType.includes('video') ||
-      validatedUrl.pathname.endsWith('.mp4') ||
-      validatedUrl.pathname.includes('.mp4') ||
-      validatedUrl.toString().includes('.mp4') ||
-      Boolean(filename && filename.endsWith('.mp4'));
+      !isImage &&
+      (upstreamContentType.includes('video') ||
+        validatedUrl.pathname.endsWith('.mp4') ||
+        validatedUrl.pathname.includes('.mp4') ||
+        validatedUrl.toString().includes('.mp4'));
 
     const effectiveContentType = isVideo ? 'video/mp4' : upstreamContentType;
 
@@ -116,7 +123,17 @@ export async function GET(request: NextRequest) {
     // Determine clean safe filename for download
     if (download) {
       const defaultExt = isVideo ? 'mp4' : 'jpg';
-      const cleanFilename = (filename || `instagram_media.${defaultExt}`).replace(/[^a-zA-Z0-9._-]/g, '_');
+      let cleanFilename = (filename || `instagram_media.${defaultExt}`).replace(/[^a-zA-Z0-9._-]/g, '_');
+
+      // Safety guard: if the file is actually an image, ensure the extension is .jpg, not .mp4
+      if (isImage && cleanFilename.toLowerCase().endsWith('.mp4')) {
+        cleanFilename = cleanFilename.replace(/\.mp4$/i, '.jpg');
+      }
+      // Safety guard: if the file is actually a video, ensure the extension is .mp4
+      if (isVideo && !cleanFilename.toLowerCase().endsWith('.mp4')) {
+        cleanFilename = cleanFilename.replace(/\.[a-zA-Z0-9]+$/i, '') + '.mp4';
+      }
+
       responseHeaders.set('Content-Disposition', `attachment; filename="${cleanFilename}"`);
       // Prevent browser disk caching of potentially interrupted or corrupt downloads
       responseHeaders.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');

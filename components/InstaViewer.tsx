@@ -119,6 +119,9 @@ export function InstaViewer({
   const [postsNextMaxId, setPostsNextMaxId] = useState<string | null>(null);
   const [isLoadingMorePosts, setIsLoadingMorePosts] = useState(false);
 
+  const [reelsNextMaxId, setReelsNextMaxId] = useState<string | null>(null);
+  const [isLoadingMoreReels, setIsLoadingMoreReels] = useState(false);
+
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
   const cleanUsername = (input: string) => {
@@ -143,6 +146,7 @@ export function InstaViewer({
     setPosts([]);
     setPostsNextMaxId(null);
     setReels([]);
+    setReelsNextMaxId(null);
     setTabError(null);
 
     try {
@@ -187,7 +191,10 @@ export function InstaViewer({
       if (!res.ok || !json.success) {
         const errCode = json.error?.code;
         const errMsg = json.error?.message || `Failed to retrieve ${tab}`;
-        const isPrivate = errCode === 'PRIVATE_ACCOUNT' || errMsg.toLowerCase().includes('private');
+        const isPrivate =
+          errCode === 'PRIVATE_ACCOUNT' ||
+          errMsg.toLowerCase().includes('private') ||
+          errMsg.includes('403');
 
         if (isPrivate) {
           setProfile((prev) => (prev ? { ...prev, isPrivate: true } : prev));
@@ -196,9 +203,14 @@ export function InstaViewer({
             message: 'This account is private. Follow this account on Instagram to see their photos and videos.',
           });
         } else {
+          // Never display raw JSON error or unorganized error string
+          const cleanMessage =
+            errMsg.startsWith('{') || errMsg.includes('ScraperAPI error') || errMsg.includes('RapidAPI error')
+              ? `Unable to retrieve ${tab} for this profile at this time. Please try again.`
+              : errMsg;
           setTabError({
             code: errCode,
-            message: errMsg,
+            message: cleanMessage,
           });
         }
         return;
@@ -210,7 +222,10 @@ export function InstaViewer({
         setPosts(json.data || []);
         setPostsNextMaxId(json.metadata?.nextMaxId || null);
       }
-      if (tab === 'reels') setReels(json.data || []);
+      if (tab === 'reels') {
+        setReels(json.data || []);
+        setReelsNextMaxId(json.metadata?.nextMaxId || null);
+      }
     } catch {
       setTabError({ message: `Network error retrieving ${tab}` });
     } finally {
@@ -236,6 +251,27 @@ export function InstaViewer({
       console.error('Failed to load more posts');
     } finally {
       setIsLoadingMorePosts(false);
+    }
+  };
+
+  const handleLoadMoreReels = async () => {
+    if (!searchedUsername || !reelsNextMaxId || isLoadingMoreReels) return;
+    setIsLoadingMoreReels(true);
+
+    try {
+      const res = await fetch(
+        `/api/reels?username=${encodeURIComponent(searchedUsername)}&maxId=${encodeURIComponent(reelsNextMaxId)}`
+      );
+      const json = await res.json();
+
+      if (json.success && Array.isArray(json.data)) {
+        setReels((prev) => [...prev, ...json.data]);
+        setReelsNextMaxId(json.metadata?.nextMaxId || null);
+      }
+    } catch {
+      console.error('Failed to load more reels');
+    } finally {
+      setIsLoadingMoreReels(false);
     }
   };
 
@@ -500,12 +536,12 @@ export function InstaViewer({
 
                 {/* Tab Specific Notice / Error */}
                 {!isLoadingTab && tabError && (
-                  <div className="bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-2xl p-10 text-center backdrop-blur-sm shadow-xs max-w-xl mx-auto my-4 overflow-hidden">
+                  <div className="bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-10 text-center backdrop-blur-sm shadow-xs max-w-xl mx-auto my-4 w-full overflow-hidden">
                     <AlertCircle className="w-10 h-10 mx-auto text-amber-500 mb-3" />
                     <h3 className="font-bold text-slate-900 dark:text-zinc-100 text-base mb-1">
                       Content Notice
                     </h3>
-                    <p className="text-xs text-slate-600 dark:text-zinc-400 max-w-md mx-auto leading-relaxed break-words break-all">
+                    <p className="text-xs text-slate-600 dark:text-zinc-400 max-w-md mx-auto leading-relaxed break-words whitespace-normal">
                       {tabError.message}
                     </p>
                   </div>
@@ -530,7 +566,13 @@ export function InstaViewer({
                       />
                     )}
                     {activeTab === 'reels' && (
-                      <ReelsGrid reels={reels} username={searchedUsername} />
+                      <ReelsGrid
+                        reels={reels}
+                        username={searchedUsername}
+                        hasMore={Boolean(reelsNextMaxId)}
+                        isLoadingMore={isLoadingMoreReels}
+                        onLoadMore={handleLoadMoreReels}
+                      />
                     )}
                   </div>
                 )}

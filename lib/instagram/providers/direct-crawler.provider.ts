@@ -134,7 +134,7 @@ export class DirectCrawlerProvider implements InstagramProvider {
     );
   }
 
-  public async getReels(username: string): Promise<ProviderResult<ReelResult[]>> {
+  public async getReels(username: string, _maxId?: string): Promise<ProviderResult<ReelResult[]>> {
     throw new InstagramError(
       'UNSUPPORTED_FEATURE',
       `Reels extraction requires authenticated proxy / RapidAPI provider. Configure INSTAGRAM_RAPIDAPI_KEY in .env or toggle Demo Mode to test full reels video streaming and download.`,

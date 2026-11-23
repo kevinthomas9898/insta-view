@@ -264,7 +264,7 @@ export class RapidApiProvider implements InstagramProvider {
     return { data: posts };
   }
 
-  public async getReels(username: string): Promise<ProviderResult<ReelResult[]>> {
+  public async getReels(username: string, _maxId?: string): Promise<ProviderResult<ReelResult[]>> {
     const json = await this.fetchFromRapidApi<any>('/v1/reels', {
       username_or_id_or_url: username,
     });

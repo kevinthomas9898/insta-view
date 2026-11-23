@@ -203,10 +203,15 @@ export class ScraperApiProvider implements InstagramProvider {
     }));
   }
 
-  public async getReels(username: string): Promise<ProviderResult<ReelResult[]>> {
-    const json = await this.fetchEndpoint<any>('reels', { username });
+  public async getReels(username: string, maxId?: string): Promise<ProviderResult<ReelResult[]>> {
+    const json = await this.fetchEndpoint<any>('reels', {
+      username,
+      ...(maxId ? { maxId } : {}),
+    });
     const items = json.result?.items || [];
-    if (!Array.isArray(items)) return { data: [] };
+    const nextMaxId = json.result?.pageInfo?.maxId;
+    const hasNextPage = Boolean(json.result?.pageInfo?.hasNextPage);
+    if (!Array.isArray(items)) return { data: [], hasNextPage: false };
 
     // In ScraperAPI, the raw /api/reels endpoint returns thumbnails without mp4 video streams.
     // However, the Instagram posts feed contains full mp4 streams and genuine text captions for the user's reels.
@@ -217,42 +222,83 @@ export class ScraperApiProvider implements InstagramProvider {
       likeCount?: number;
       commentCount?: number;
     }
+
+    const extractShortcode = (obj: any): string => {
+      if (obj?.code) return String(obj.code);
+      if (obj?.shortcode) return String(obj.shortcode);
+      const permalink = obj?.permalink || obj?.url || '';
+      const match = permalink.match(/\/(?:p|reel|reels)\/([A-Za-z0-9_-]+)/);
+      return match ? match[1] : '';
+    };
+
+    const findMp4 = (obj: any): string => {
+      if (!obj) return '';
+      if (typeof obj.url === 'string' && obj.url.includes('.mp4')) return obj.url;
+      if (typeof obj.video_url === 'string' && obj.video_url.includes('.mp4')) return obj.video_url;
+      if (Array.isArray(obj.video_versions)) {
+        const v = obj.video_versions.find((x: any) => x.url?.includes('.mp4')) || obj.video_versions[0];
+        if (v?.url && v.url.includes('.mp4')) return v.url;
+      }
+      if (Array.isArray(obj.versions)) {
+        const v = obj.versions.find((x: any) => x.url?.includes('.mp4'));
+        if (v?.url) return v.url;
+      }
+      if (Array.isArray(obj.media)) {
+        for (const m of obj.media) {
+          const u = findMp4(m);
+          if (u) return u;
+        }
+      }
+      return '';
+    };
+
+    const isValidCaption = (c?: string): boolean => {
+      if (!c || typeof c !== 'string') return false;
+      const trimmed = c.trim();
+      return trimmed.length > 0 && !trimmed.startsWith('http://') && !trimmed.startsWith('https://');
+    };
+
     const postsMap = new Map<string, PostVideoMeta>();
     try {
       const postsP1: any = await this.fetchEndpoint<any>('posts', { username });
       const p1Items = postsP1.result?.items || [];
       for (const p of p1Items) {
-        const vUrl = p.media?.[0]?.versions?.[0]?.url || p.media?.[0]?.url || p.video_url;
+        const vUrl = findMp4(p) || p.media?.[0]?.versions?.[0]?.url || p.media?.[0]?.url || p.video_url;
         const captionText = p.caption?.text || (typeof p.caption === 'string' ? p.caption : undefined);
         const meta: PostVideoMeta = {
           url: vUrl || '',
-          caption: captionText,
+          caption: isValidCaption(captionText) ? captionText : undefined,
           likeCount: p.likeCount,
           commentCount: p.commentCount,
         };
         postsMap.set(String(p.id), meta);
-        if (p.shortcode) postsMap.set(String(p.shortcode), meta);
+        const sc = extractShortcode(p);
+        if (sc) postsMap.set(sc, meta);
       }
 
       // Check if page 2 of posts is needed for older reels
       const hasUnmatched = items.some(
-        (item) => !postsMap.has(String(item.id)) && !(item.shortcode && postsMap.has(String(item.shortcode)))
+        (item) => {
+          const sc = extractShortcode(item);
+          return !postsMap.has(String(item.id)) && !(sc && postsMap.has(sc));
+        }
       );
       const maxId = postsP1.result?.pageInfo?.maxId;
       if (hasUnmatched && maxId) {
         const postsP2: any = await this.fetchEndpoint<any>('posts', { username, maxId });
         const p2Items = postsP2.result?.items || [];
         for (const p of p2Items) {
-          const vUrl = p.media?.[0]?.versions?.[0]?.url || p.media?.[0]?.url || p.video_url;
+          const vUrl = findMp4(p) || p.media?.[0]?.versions?.[0]?.url || p.media?.[0]?.url || p.video_url;
           const captionText = p.caption?.text || (typeof p.caption === 'string' ? p.caption : undefined);
           const meta: PostVideoMeta = {
             url: vUrl || '',
-            caption: captionText,
+            caption: isValidCaption(captionText) ? captionText : undefined,
             likeCount: p.likeCount,
             commentCount: p.commentCount,
           };
           postsMap.set(String(p.id), meta);
-          if (p.shortcode) postsMap.set(String(p.shortcode), meta);
+          const sc = extractShortcode(p);
+          if (sc) postsMap.set(sc, meta);
         }
       }
     } catch {
@@ -262,9 +308,10 @@ export class ScraperApiProvider implements InstagramProvider {
     const reels: ReelResult[] = items.map((item: any) => {
       const m = item.media?.[0];
       const thumbUrl = m?.thumbnailUrl || '';
+      const reelSc = extractShortcode(item);
       const matched =
         postsMap.get(String(item.id)) ||
-        (item.shortcode ? postsMap.get(String(item.shortcode)) : undefined);
+        (reelSc ? postsMap.get(reelSc) : undefined);
       const videoUrl =
         matched?.url && matched.url.includes('.mp4')
           ? matched.url
@@ -273,7 +320,7 @@ export class ScraperApiProvider implements InstagramProvider {
       // Extract genuine caption text, never leak raw URL permalinks as the caption
       const rawCaption = item.caption?.text || (typeof item.caption === 'string' ? item.caption : '');
       const caption =
-        matched?.caption || (rawCaption && !rawCaption.startsWith('http') ? rawCaption : '');
+        matched?.caption || (isValidCaption(rawCaption) ? rawCaption : '');
 
       return {
         id: String(item.id),
@@ -290,6 +337,10 @@ export class ScraperApiProvider implements InstagramProvider {
       };
     });
 
-    return { data: reels };
+    return {
+      data: reels,
+      nextMaxId,
+      hasNextPage,
+    };
   }
 }

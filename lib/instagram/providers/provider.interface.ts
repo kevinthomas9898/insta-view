@@ -25,5 +25,5 @@ export interface InstagramProvider {
 
   getPosts(username: string, maxId?: string): Promise<ProviderResult<PostResult[]>>;
 
-  getReels(username: string): Promise<ProviderResult<ReelResult[]>>;
+  getReels(username: string, maxId?: string): Promise<ProviderResult<ReelResult[]>>;
 }
