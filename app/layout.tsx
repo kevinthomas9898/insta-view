@@ -224,6 +224,20 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col bg-slate-50 dark:bg-[#09090b] text-slate-900 dark:text-zinc-100 transition-colors duration-200">
         {children}
+
+        {/* Adsterra Social Bar */}
+        <script
+          data-cfasync="false"
+          src="https://bicea.org/14/2e60460c78107c07c775d60e08b3abf5"
+          async
+        />
+
+        {/* Adsterra Popunder */}
+        <script
+          data-cfasync="false"
+          src="https://afders.org/1/b9a98a81b06119ab008c9b2d3f38dc0c"
+          async
+        />
       </body>
     </html>
   );

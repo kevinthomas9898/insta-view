@@ -354,7 +354,7 @@ export function InstaViewer({
         </section>
 
         {/* Strategic Monetization Ad Slot */}
-        <AdSlot id="top-search-banner" />
+        <AdSlot id="container-4ff02455261b1454e019ced3534847d2" />
 
         {/* Profile Error Banner */}
         {profileError && (
