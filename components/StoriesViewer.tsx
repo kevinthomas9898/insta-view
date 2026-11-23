@@ -57,6 +57,22 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
     }
   }, [currentIndex, isPlaying, currentStory?.type]);
 
+  // Preload adjacent stories in background for instant playback
+  useEffect(() => {
+    if (typeof window !== 'undefined' && stories.length > 0) {
+      const nextStory = stories[currentIndex + 1];
+      const prevStory = stories[currentIndex - 1];
+      if (nextStory && nextStory.type === 'image' && nextStory.url) {
+        const img = new window.Image();
+        img.src = `/api/media?url=${encodeURIComponent(nextStory.url)}`;
+      }
+      if (prevStory && prevStory.type === 'image' && prevStory.url) {
+        const img = new window.Image();
+        img.src = `/api/media?url=${encodeURIComponent(prevStory.url)}`;
+      }
+    }
+  }, [currentIndex, stories]);
+
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -248,7 +264,7 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
         {currentIndex > 0 && (
           <button
             onClick={handlePrev}
-            className="hidden sm:flex absolute -left-14 top-1/2 -translate-y-1/2 p-3 rounded-full bg-zinc-900/80 hover:bg-zinc-800 text-white border border-zinc-700 transition-colors z-20 cursor-pointer"
+            className="hidden sm:flex absolute -left-14 top-1/2 -translate-y-1/2 p-3 rounded-full bg-zinc-900/80 hover:bg-zinc-800 active:scale-90 active:bg-pink-600 text-white border border-zinc-700 transition-all duration-150 z-20 cursor-pointer shadow-xl"
             title="Previous Story"
           >
             <ChevronLeft className="w-6 h-6" />
@@ -257,7 +273,7 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
         {currentIndex < stories.length - 1 && (
           <button
             onClick={handleNext}
-            className="hidden sm:flex absolute -right-14 top-1/2 -translate-y-1/2 p-3 rounded-full bg-zinc-900/80 hover:bg-zinc-800 text-white border border-zinc-700 transition-colors z-20 cursor-pointer"
+            className="hidden sm:flex absolute -right-14 top-1/2 -translate-y-1/2 p-3 rounded-full bg-zinc-900/80 hover:bg-zinc-800 active:scale-90 active:bg-pink-600 text-white border border-zinc-700 transition-all duration-150 z-20 cursor-pointer shadow-xl"
             title="Next Story"
           >
             <ChevronRight className="w-6 h-6" />

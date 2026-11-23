@@ -37,6 +37,54 @@ export function PostsGrid({
 }: PostsGridProps) {
   const [selectedPost, setSelectedPost] = useState<PostResult | null>(null);
   const [carouselIndex, setCarouselIndex] = useState(0);
+  const [isMediaLoading, setIsMediaLoading] = useState(false);
+
+  // Preload adjacent carousel images in the background for instant 0ms transitions
+  useEffect(() => {
+    if (selectedPost?.type === 'carousel' && selectedPost.carouselMedia) {
+      const mediaList = selectedPost.carouselMedia;
+      const toPreload = [
+        mediaList[carouselIndex + 1],
+        mediaList[carouselIndex + 2],
+        mediaList[carouselIndex - 1],
+      ];
+
+      toPreload.forEach((item) => {
+        if (item && item.type !== 'video' && item.url) {
+          const img = new window.Image();
+          img.src = `/api/media?url=${encodeURIComponent(item.url)}`;
+        }
+      });
+    }
+  }, [selectedPost, carouselIndex]);
+
+  // Keyboard navigation for carousel modal (Left/Right arrow, Escape)
+  useEffect(() => {
+    if (!selectedPost) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') {
+        if (selectedPost.type === 'carousel' && selectedPost.carouselMedia) {
+          if (carouselIndex < selectedPost.carouselMedia.length - 1) {
+            setIsMediaLoading(true);
+            setCarouselIndex((i) => i + 1);
+          }
+        }
+      } else if (e.key === 'ArrowLeft') {
+        if (carouselIndex > 0) {
+          setIsMediaLoading(true);
+          setCarouselIndex((i) => i - 1);
+        }
+      } else if (e.key === 'Escape') {
+        setSelectedPost(null);
+        setCarouselIndex(0);
+        setIsMediaLoading(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedPost, carouselIndex]);
 
   if (posts.length === 0) {
     return (
@@ -51,11 +99,35 @@ export function PostsGrid({
   const openPostModal = (post: PostResult) => {
     setSelectedPost(post);
     setCarouselIndex(0);
+    setIsMediaLoading(true);
   };
 
   const closePostModal = () => {
     setSelectedPost(null);
     setCarouselIndex(0);
+    setIsMediaLoading(false);
+  };
+
+  const handleNextSlide = () => {
+    if (!selectedPost?.carouselMedia) return;
+    if (carouselIndex < selectedPost.carouselMedia.length - 1) {
+      setIsMediaLoading(true);
+      setCarouselIndex((i) => i + 1);
+    }
+  };
+
+  const handlePrevSlide = () => {
+    if (carouselIndex > 0) {
+      setIsMediaLoading(true);
+      setCarouselIndex((i) => i - 1);
+    }
+  };
+
+  const handleGoToSlide = (idx: number) => {
+    if (idx !== carouselIndex) {
+      setIsMediaLoading(true);
+      setCarouselIndex(idx);
+    }
   };
 
   const getActiveCarouselItem = (): MediaItem | null => {
@@ -188,15 +260,35 @@ export function PostsGrid({
             </button>
 
             {/* Media Player / Image Area */}
-            <div className="relative flex-1 bg-black flex items-center justify-center min-h-[300px] md:min-h-[500px]">
+            <div className="relative flex-1 bg-black flex items-center justify-center min-h-[320px] md:min-h-[500px] overflow-hidden select-none">
+              {/* Instant Loading Spinner Overlay */}
+              {isMediaLoading && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-xs z-15 transition-opacity duration-150 animate-fade-in pointer-events-none">
+                  <div className="p-3 rounded-full bg-zinc-900/90 border border-white/10 shadow-2xl">
+                    <Loader2 className="w-6 h-6 text-pink-500 animate-spin" />
+                  </div>
+                  <span className="text-[11px] font-medium text-white/90 mt-2.5 tracking-wide">
+                    Loading media...
+                  </span>
+                </div>
+              )}
+
               {activeItem.type === 'video' ? (
                 <video
+                  key={activeItem.url}
                   controls
                   playsInline
-                  preload="metadata"
-                  className="w-full max-h-[80vh] object-contain"
+                  autoPlay
+                  preload="auto"
+                  onLoadedData={() => setIsMediaLoading(false)}
+                  onWaiting={() => setIsMediaLoading(true)}
+                  onPlaying={() => setIsMediaLoading(false)}
+                  className={`w-full max-h-[80vh] object-contain transition-opacity duration-200 ${
+                    isMediaLoading ? 'opacity-30' : 'opacity-100'
+                  }`}
                   src={`/api/media?url=${encodeURIComponent(activeItem.url)}`}
                   onError={(e) => {
+                    setIsMediaLoading(false);
                     if (e.currentTarget.src !== activeItem.url) {
                       e.currentTarget.src = activeItem.url;
                     }
@@ -207,44 +299,73 @@ export function PostsGrid({
                 </video>
               ) : (
                 <img
+                  key={activeItem.url}
                   src={`/api/media?url=${encodeURIComponent(activeItem.url)}`}
                   alt="Post content"
                   referrerPolicy="no-referrer"
-                  className="w-full max-h-[80vh] object-contain"
+                  onLoad={() => setIsMediaLoading(false)}
                   onError={(e) => {
+                    setIsMediaLoading(false);
                     if (e.currentTarget.src !== activeItem.url) {
                       e.currentTarget.src = activeItem.url;
                     }
                   }}
+                  className={`w-full max-h-[80vh] object-contain transition-opacity duration-200 ${
+                    isMediaLoading ? 'opacity-30' : 'opacity-100'
+                  }`}
                 />
               )}
 
-              {/* Carousel Navigation Arrows */}
+              {/* Carousel Navigation Arrows with Tactile Feedback */}
               {selectedPost.type === 'carousel' &&
                 selectedPost.carouselMedia &&
                 selectedPost.carouselMedia.length > 1 && (
                   <>
                     {carouselIndex > 0 && (
                       <button
-                        onClick={() => setCarouselIndex((i) => i - 1)}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/70 hover:bg-black text-white z-20 border border-white/10 cursor-pointer"
-                        title="Previous item"
+                        type="button"
+                        onClick={handlePrevSlide}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/75 hover:bg-black active:scale-85 active:bg-pink-600 text-white z-20 border border-white/20 transition-all duration-150 shadow-2xl cursor-pointer"
+                        title="Previous slide (Left Arrow)"
+                        aria-label="Previous slide"
                       >
                         <ChevronLeft className="w-5 h-5" />
                       </button>
                     )}
                     {carouselIndex < selectedPost.carouselMedia.length - 1 && (
                       <button
-                        onClick={() => setCarouselIndex((i) => i + 1)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/70 hover:bg-black text-white z-20 border border-white/10 cursor-pointer"
-                        title="Next item"
+                        type="button"
+                        onClick={handleNextSlide}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/75 hover:bg-black active:scale-85 active:bg-pink-600 text-white z-20 border border-white/20 transition-all duration-150 shadow-2xl cursor-pointer"
+                        title="Next slide (Right Arrow)"
+                        aria-label="Next slide"
                       >
                         <ChevronRight className="w-5 h-5" />
                       </button>
                     )}
-                    {/* Carousel Counter */}
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/75 text-white text-xs font-semibold z-20 border border-white/10">
-                      {carouselIndex + 1} / {selectedPost.carouselMedia.length}
+
+                    {/* Carousel Counter & Interactive Dots */}
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 z-20">
+                      <div className="px-3 py-1 rounded-full bg-black/80 backdrop-blur-md text-white text-xs font-semibold border border-white/10 shadow-lg">
+                        {carouselIndex + 1} / {selectedPost.carouselMedia.length}
+                      </div>
+
+                      {/* Interactive Dots for Multi-Item Carousels */}
+                      <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-black/60 backdrop-blur-xs">
+                        {selectedPost.carouselMedia.map((_, dotIdx) => (
+                          <button
+                            key={dotIdx}
+                            type="button"
+                            onClick={() => handleGoToSlide(dotIdx)}
+                            className={`rounded-full transition-all duration-200 cursor-pointer ${
+                              dotIdx === carouselIndex
+                                ? 'w-5 h-1.5 bg-pink-500'
+                                : 'w-1.5 h-1.5 bg-white/50 hover:bg-white/80'
+                            }`}
+                            aria-label={`Go to slide ${dotIdx + 1}`}
+                          />
+                        ))}
+                      </div>
                     </div>
                   </>
                 )}
