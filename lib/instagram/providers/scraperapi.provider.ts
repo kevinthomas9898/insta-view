@@ -33,9 +33,6 @@ export class ScraperApiProvider implements InstagramProvider {
   private async fetchEndpoint<T>(endpoint: string, body: Record<string, unknown>): Promise<T> {
     const url = `https://scraperapi.to/scrape/instagram-scraper/${endpoint}`;
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
-
     let res: Response;
     try {
       res = await fetch(url, {
@@ -46,11 +43,8 @@ export class ScraperApiProvider implements InstagramProvider {
           'Accept': 'application/json',
         },
         body: JSON.stringify(body),
-        signal: controller.signal,
       });
-      clearTimeout(timeoutId);
     } catch (err: unknown) {
-      clearTimeout(timeoutId);
       const msg = err instanceof Error ? err.message : 'Network error';
       throw new InstagramError('PROVIDER_ERROR', `ScraperAPI network request failed: ${msg}`, 502);
     }

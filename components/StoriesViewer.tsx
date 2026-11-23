@@ -254,7 +254,7 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
               muted={isMuted}
               playsInline
               preload="auto"
-              poster={currentStory.thumbnailUrl || currentStory.url}
+              poster={`/api/media?url=${encodeURIComponent(currentStory.thumbnailUrl || currentStory.url)}`}
               onLoadedData={() => setIsMediaLoading(false)}
               onWaiting={() => setIsMediaLoading(true)}
               onPlaying={() => setIsMediaLoading(false)}

@@ -13,7 +13,6 @@ import {
   Music,
   Loader2,
   Maximize2,
-  AlertCircle,
 } from 'lucide-react';
 
 interface ReelsGridProps {
@@ -31,8 +30,6 @@ export function ReelsGrid({ reels, username }: ReelsGridProps) {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
-  const [videoSrc, setVideoSrc] = useState<string>('');
-  const [hasVideoError, setHasVideoError] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const toggleVideoPlay = (e?: React.MouseEvent) => {
@@ -116,13 +113,11 @@ export function ReelsGrid({ reels, username }: ReelsGridProps) {
                 onClick={() => {
                   setSelectedReel(reel);
                   setIsReelLoading(true);
-                  setHasVideoError(false);
                   setIsCaptionExpanded(false);
                   setIsVideoPlaying(true);
                   setVideoProgress(0);
                   setCurrentTime(0);
                   setDuration(0);
-                  setVideoSrc(reel.url);
                 }}
                 className="group relative bg-zinc-950 rounded-2xl overflow-hidden cursor-pointer aspect-[9/16] shadow-md hover:shadow-2xl transition-all border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700"
               >
@@ -233,7 +228,7 @@ export function ReelsGrid({ reels, username }: ReelsGridProps) {
                 loop
                 muted={isVideoMuted}
                 preload="auto"
-                poster={selectedReel.thumbnailUrl || selectedReel.url}
+                poster={`/api/media?url=${encodeURIComponent(selectedReel.thumbnailUrl || selectedReel.url)}`}
                 onLoadedMetadata={() => {
                   if (videoRef.current) {
                     setDuration(videoRef.current.duration);
@@ -244,7 +239,6 @@ export function ReelsGrid({ reels, username }: ReelsGridProps) {
                 onPlaying={() => {
                   setIsReelLoading(false);
                   setIsVideoPlaying(true);
-                  setHasVideoError(false);
                 }}
                 onPause={() => setIsVideoPlaying(false)}
                 onTimeUpdate={() => {
@@ -255,54 +249,16 @@ export function ReelsGrid({ reels, username }: ReelsGridProps) {
                   }
                 }}
                 className={`w-full h-full object-contain transition-opacity duration-200 ${
-                  isReelLoading ? 'opacity-70' : 'opacity-100'
+                  isReelLoading ? 'opacity-80' : 'opacity-100'
                 }`}
-                src={videoSrc || selectedReel.url}
-                onError={() => {
-                  const proxyUrl = `/api/media?url=${encodeURIComponent(selectedReel.url)}`;
-                  if (videoSrc !== proxyUrl) {
-                    // Direct CDN URL failed; seamlessly retry via proxy
-                    setVideoSrc(proxyUrl);
-                  } else {
-                    setIsReelLoading(false);
-                    setHasVideoError(true);
+                src={`/api/media?url=${encodeURIComponent(selectedReel.url)}`}
+                onError={(e) => {
+                  setIsReelLoading(false);
+                  if (e.currentTarget.src !== selectedReel.url) {
+                    e.currentTarget.src = selectedReel.url;
                   }
                 }}
               />
-
-              {/* Error Fallback Card if media failed */}
-              {hasVideoError && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/85 backdrop-blur-sm z-25 p-6 text-center text-white">
-                  <div className="p-3 rounded-full bg-rose-500/20 text-rose-400 mb-3 border border-rose-500/30">
-                    <AlertCircle className="w-8 h-8" />
-                  </div>
-                  <h4 className="font-bold text-sm mb-1">Video Stream Delayed</h4>
-                  <p className="text-xs text-white/70 max-w-xs mb-4">
-                    Instagram stream is buffering slowly. You can retry or download the reel directly.
-                  </p>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setHasVideoError(false);
-                        setIsReelLoading(true);
-                        setVideoSrc(`/api/media?url=${encodeURIComponent(selectedReel.url)}&retry=${Date.now()}`);
-                      }}
-                      className="px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-semibold transition-colors cursor-pointer"
-                    >
-                      Retry Stream
-                    </button>
-                    <a
-                      href={selectedReel.downloadUrl || `/api/media?url=${encodeURIComponent(selectedReel.url)}&download=true`}
-                      download
-                      className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-pink-600 to-rose-600 text-white text-xs font-semibold shadow-md cursor-pointer"
-                    >
-                      Download Video
-                    </a>
-                  </div>
-                </div>
-              )}
 
               {/* Center Play Icon When Paused */}
               {!isVideoPlaying && !isReelLoading && (

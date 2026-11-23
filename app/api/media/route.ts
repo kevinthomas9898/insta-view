@@ -66,14 +66,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
-
     const upstreamRes = await fetch(validatedUrl.toString(), {
       headers: upstreamHeaders,
-      signal: controller.signal,
     });
-    clearTimeout(timeoutId);
 
     if (!upstreamRes.ok && upstreamRes.status !== 206) {
       log('warn', {
@@ -112,10 +107,13 @@ export async function GET(request: NextRequest) {
 
     // Determine clean safe filename for download
     if (download) {
-      const isVideo = contentType.includes('video') || validatedUrl.pathname.endsWith('.mp4');
+      const isVideo = contentType.includes('video') || validatedUrl.pathname.endsWith('.mp4') || Boolean(filename && filename.endsWith('.mp4'));
       const defaultExt = isVideo ? 'mp4' : 'jpg';
       const cleanFilename = (filename || `instagram_media.${defaultExt}`).replace(/[^a-zA-Z0-9._-]/g, '_');
       responseHeaders.set('Content-Disposition', `attachment; filename="${cleanFilename}"`);
+      if (isVideo) {
+        responseHeaders.set('Content-Type', 'video/mp4');
+      }
     }
 
     const statusCode = rangeHeader && upstreamRes.status === 206 ? 206 : 200;

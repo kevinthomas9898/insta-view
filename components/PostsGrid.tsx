@@ -340,7 +340,7 @@ export function PostsGrid({
                     autoPlay
                     muted={isVideoMuted}
                     preload="auto"
-                    poster={activeItem.thumbnailUrl || activeItem.url}
+                    poster={`/api/media?url=${encodeURIComponent(activeItem.thumbnailUrl || activeItem.url)}`}
                     onLoadedMetadata={() => {
                       if (videoRef.current) {
                         setVideoDuration(videoRef.current.duration);
