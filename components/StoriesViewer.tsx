@@ -59,6 +59,23 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
     }
   }, [currentIndex, isPlaying, isMediaLoading, currentStory?.type]);
 
+  // Synchronize play/pause and mute state directly with HTML5 video element
+  useEffect(() => {
+    if (currentStory?.type === 'video' && videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.play().catch(() => {});
+      } else {
+        videoRef.current.pause();
+      }
+    }
+  }, [isPlaying, currentStory?.type, currentIndex]);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = isMuted;
+    }
+  }, [isMuted, currentIndex]);
+
   // Preload adjacent stories in background for instant playback
   useEffect(() => {
     if (typeof window !== 'undefined' && stories.length > 0) {
@@ -276,11 +293,21 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
             />
           )}
 
-          {/* Left/Right Tap Area for Touch and Click Navigation */}
+          {/* Left/Middle/Right Tap Area for Touch and Click Navigation */}
           <div
             className="absolute left-0 inset-y-0 w-1/3 cursor-pointer z-20"
             onClick={handlePrev}
           />
+          <div
+            className="absolute left-1/3 inset-y-0 w-1/3 cursor-pointer z-20 flex items-center justify-center"
+            onClick={() => setIsPlaying((p) => !p)}
+          >
+            {!isPlaying && !isMediaLoading && (
+              <div className="p-4 rounded-full bg-black/80 backdrop-blur-sm text-white border border-white/20 shadow-2xl pointer-events-none transition-transform">
+                <Play className="w-8 h-8 fill-current translate-x-0.5 text-white" />
+              </div>
+            )}
+          </div>
           <div
             className="absolute right-0 inset-y-0 w-1/3 cursor-pointer z-20"
             onClick={handleNext}

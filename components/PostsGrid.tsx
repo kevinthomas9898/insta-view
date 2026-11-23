@@ -1,11 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { PostResult, MediaItem } from '@/lib/instagram/types';
 import { AdBanner } from '@/components/AdBanner';
 import {
   Layers,
   Play,
+  Pause,
+  Volume2,
+  VolumeX,
   Heart,
   MessageCircle,
   Download,
@@ -39,6 +42,52 @@ export function PostsGrid({
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [isMediaLoading, setIsMediaLoading] = useState(false);
   const [isCaptionExpanded, setIsCaptionExpanded] = useState(false);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(true);
+  const [isVideoMuted, setIsVideoMuted] = useState(false);
+  const [videoProgress, setVideoProgress] = useState(0);
+  const [videoCurrentTime, setVideoCurrentTime] = useState(0);
+  const [videoDuration, setVideoDuration] = useState(0);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  const formatTime = (secs: number) => {
+    if (isNaN(secs) || secs < 0) return '0:00';
+    const m = Math.floor(secs / 60);
+    const s = Math.floor(secs % 60);
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
+  const toggleVideoPlay = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (videoRef.current) {
+      if (videoRef.current.paused) {
+        videoRef.current.play().catch(() => {});
+        setIsVideoPlaying(true);
+      } else {
+        videoRef.current.pause();
+        setIsVideoPlaying(false);
+      }
+    }
+  };
+
+  const toggleVideoMute = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (videoRef.current) {
+      const nextMuted = !isVideoMuted;
+      videoRef.current.muted = nextMuted;
+      setIsVideoMuted(nextMuted);
+    }
+  };
+
+  const handleVideoSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    if (!videoRef.current || !videoRef.current.duration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const ratio = Math.max(0, Math.min(1, clickX / rect.width));
+    videoRef.current.currentTime = ratio * videoRef.current.duration;
+    setVideoProgress(ratio * 100);
+    setVideoCurrentTime(videoRef.current.currentTime);
+  };
 
   // Preload adjacent carousel images in the background for instant 0ms transitions
   useEffect(() => {
@@ -102,6 +151,8 @@ export function PostsGrid({
     setCarouselIndex(0);
     setIsMediaLoading(true);
     setIsCaptionExpanded(false);
+    setIsVideoPlaying(true);
+    setVideoProgress(0);
   };
 
   const closePostModal = () => {
@@ -278,29 +329,73 @@ export function PostsGrid({
               )}
 
               {activeItem.type === 'video' ? (
-                <video
-                  key={activeItem.url}
-                  controls
-                  playsInline
-                  autoPlay
-                  preload="auto"
-                  onLoadedData={() => setIsMediaLoading(false)}
-                  onWaiting={() => setIsMediaLoading(true)}
-                  onPlaying={() => setIsMediaLoading(false)}
-                  className={`w-full max-h-[80vh] md:max-h-[85vh] object-contain transition-opacity duration-200 ${
-                    isMediaLoading ? 'opacity-30' : 'opacity-100'
-                  }`}
-                  src={`/api/media?url=${encodeURIComponent(activeItem.url)}`}
-                  onError={(e) => {
-                    setIsMediaLoading(false);
-                    if (e.currentTarget.src !== activeItem.url) {
-                      e.currentTarget.src = activeItem.url;
-                    }
-                  }}
+                <div
+                  className="relative w-full h-full flex items-center justify-center cursor-pointer select-none"
+                  onClick={toggleVideoPlay}
                 >
-                  <source src={`/api/media?url=${encodeURIComponent(activeItem.url)}`} />
-                  Your browser does not support the video tag.
-                </video>
+                  <video
+                    ref={videoRef}
+                    key={activeItem.url}
+                    playsInline
+                    autoPlay
+                    muted={isVideoMuted}
+                    preload="auto"
+                    onLoadedMetadata={() => {
+                      if (videoRef.current) {
+                        setVideoDuration(videoRef.current.duration);
+                      }
+                    }}
+                    onLoadedData={() => setIsMediaLoading(false)}
+                    onWaiting={() => setIsMediaLoading(true)}
+                    onPlaying={() => {
+                      setIsMediaLoading(false);
+                      setIsVideoPlaying(true);
+                    }}
+                    onPause={() => setIsVideoPlaying(false)}
+                    onTimeUpdate={() => {
+                      if (videoRef.current && videoRef.current.duration) {
+                        const cur = videoRef.current.currentTime;
+                        const dur = videoRef.current.duration;
+                        setVideoCurrentTime(cur);
+                        setVideoDuration(dur);
+                        setVideoProgress((cur / dur) * 100);
+                      }
+                    }}
+                    className={`w-full max-h-[80vh] md:max-h-[85vh] object-contain transition-opacity duration-200 ${
+                      isMediaLoading ? 'opacity-30' : 'opacity-100'
+                    }`}
+                    src={`/api/media?url=${encodeURIComponent(activeItem.url)}`}
+                    onError={(e) => {
+                      setIsMediaLoading(false);
+                      if (e.currentTarget.src !== activeItem.url) {
+                        e.currentTarget.src = activeItem.url;
+                      }
+                    }}
+                  >
+                    <source src={`/api/media?url=${encodeURIComponent(activeItem.url)}`} />
+                    Your browser does not support the video tag.
+                  </video>
+
+                  {/* Top-Right Floating Mute / Unmute Button (beside Close button) */}
+                  <button
+                    type="button"
+                    onClick={toggleVideoMute}
+                    className="absolute top-3.5 right-14 z-40 p-2.5 rounded-full bg-black/75 hover:bg-black active:scale-85 text-white border border-white/20 shadow-xl transition-all cursor-pointer"
+                    title={isVideoMuted ? 'Unmute sound' : 'Mute sound'}
+                    aria-label={isVideoMuted ? 'Unmute sound' : 'Mute sound'}
+                  >
+                    {isVideoMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4 text-white" />}
+                  </button>
+
+                  {/* Center Play Icon When Paused */}
+                  {!isVideoPlaying && !isMediaLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/35 z-25 pointer-events-none">
+                      <div className="p-4 rounded-full bg-black/80 backdrop-blur-sm text-white border border-white/20 shadow-2xl active:scale-85 transition-transform">
+                        <Play className="w-8 h-8 fill-current translate-x-0.5 text-white" />
+                      </div>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <img
                   key={activeItem.url}
@@ -405,8 +500,50 @@ export function PostsGrid({
                   </div>
                 )}
 
+                {/* Video Timeline Scrub Bar */}
+                {activeItem.type === 'video' && (
+                  <div className="flex flex-col gap-1 pt-1">
+                    <div
+                      className="w-full h-1.5 bg-white/25 hover:h-2.5 rounded-full overflow-hidden transition-all cursor-pointer relative z-35"
+                      onClick={handleVideoSeek}
+                      title="Seek"
+                    >
+                      <div
+                        className="h-full bg-gradient-to-r from-pink-500 to-rose-500 rounded-full"
+                        style={{ width: `${videoProgress}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] text-white/70 font-medium px-0.5">
+                      <span>{formatTime(videoCurrentTime)}</span>
+                      <span>{formatTime(videoDuration)}</span>
+                    </div>
+                  </div>
+                )}
+
                 {/* Mobile Quick Action Buttons */}
                 <div className="flex items-center gap-2 pt-1">
+                  {activeItem.type === 'video' && (
+                    <button
+                      type="button"
+                      onClick={toggleVideoPlay}
+                      className="p-2 rounded-xl bg-black/60 hover:bg-black/80 active:scale-90 text-white border border-white/20 transition-all cursor-pointer shadow-md"
+                      title={isVideoPlaying ? 'Pause video' : 'Play video'}
+                      aria-label={isVideoPlaying ? 'Pause' : 'Play'}
+                    >
+                      {isVideoPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-current text-white" />}
+                    </button>
+                  )}
+                  {activeItem.type === 'video' && (
+                    <button
+                      type="button"
+                      onClick={toggleVideoMute}
+                      className="p-2 rounded-xl bg-black/60 hover:bg-black/80 active:scale-90 text-white border border-white/20 transition-all cursor-pointer shadow-md"
+                      title={isVideoMuted ? 'Unmute audio' : 'Mute audio'}
+                      aria-label={isVideoMuted ? 'Unmute' : 'Mute'}
+                    >
+                      {isVideoMuted ? <VolumeX className="w-3.5 h-3.5 text-rose-400" /> : <Volume2 className="w-3.5 h-3.5 text-white" />}
+                    </button>
+                  )}
                   <a
                     href={
                       activeItem.downloadUrl ||
@@ -475,6 +612,48 @@ export function PostsGrid({
                   )}
                 </div>
               </div>
+
+              {/* Desktop Video Playback Controls */}
+              {activeItem.type === 'video' && (
+                <div className="mb-3 p-3 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-800 flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-slate-700 dark:text-zinc-300">Video Player</span>
+                    <span className="text-[10px] text-slate-500 dark:text-zinc-400 font-mono">
+                      {formatTime(videoCurrentTime)} / {formatTime(videoDuration)}
+                    </span>
+                  </div>
+                  {/* Seekbar */}
+                  <div
+                    className="w-full h-1.5 bg-slate-200 dark:bg-zinc-700 hover:h-2 rounded-full overflow-hidden transition-all cursor-pointer"
+                    onClick={handleVideoSeek}
+                    title="Seek"
+                  >
+                    <div
+                      className="h-full bg-gradient-to-r from-pink-500 to-rose-500 rounded-full"
+                      style={{ width: `${videoProgress}%` }}
+                    />
+                  </div>
+                  {/* Controls */}
+                  <div className="flex items-center gap-2 pt-0.5">
+                    <button
+                      type="button"
+                      onClick={toggleVideoPlay}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-xs font-medium text-slate-800 dark:text-zinc-200 transition-colors cursor-pointer"
+                    >
+                      {isVideoPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-current" />}
+                      {isVideoPlaying ? 'Pause' : 'Play'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={toggleVideoMute}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-xs font-medium text-slate-800 dark:text-zinc-200 transition-colors cursor-pointer"
+                    >
+                      {isVideoMuted ? <VolumeX className="w-3.5 h-3.5 text-rose-500" /> : <Volume2 className="w-3.5 h-3.5" />}
+                      {isVideoMuted ? 'Unmute' : 'Mute'}
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div className="pt-4 border-t border-slate-200 dark:border-zinc-800 flex flex-col gap-2">
