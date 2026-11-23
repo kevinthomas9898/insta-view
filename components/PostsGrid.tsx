@@ -195,6 +195,26 @@ export function PostsGrid({
 
   const activeItem = getActiveCarouselItem();
 
+  // Seamless Autoplay for video posts with fallback to muted autoplay if browser blocks audio
+  useEffect(() => {
+    if (activeItem?.type === 'video' && videoRef.current) {
+      setIsMediaLoading(true);
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          if (videoRef.current) {
+            videoRef.current.muted = true;
+            setIsVideoMuted(true);
+            videoRef.current.play().catch(() => {
+              setIsVideoPlaying(false);
+              setIsMediaLoading(false);
+            });
+          }
+        });
+      }
+    }
+  }, [activeItem?.url, activeItem?.type]);
+
   return (
     <>
       {/* Posts Grid */}
@@ -340,17 +360,15 @@ export function PostsGrid({
                     playsInline
                     autoPlay
                     muted={isVideoMuted}
-                    preload="auto"
+                    preload="metadata"
                     poster={`/api/media?url=${encodeURIComponent(activeItem.thumbnailUrl || activeItem.url)}`}
                     onLoadedMetadata={() => {
                       if (videoRef.current) {
                         setVideoDuration(videoRef.current.duration);
                       }
-                      setIsMediaLoading(false);
                     }}
-                    onLoadedData={() => setIsMediaLoading(false)}
-                    onCanPlay={() => setIsMediaLoading(false)}
                     onWaiting={() => setIsMediaLoading(true)}
+                    onStalled={() => setIsMediaLoading(true)}
                     onPlaying={() => {
                       setIsMediaLoading(false);
                       setIsVideoPlaying(true);

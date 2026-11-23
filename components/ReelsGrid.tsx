@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ReelResult } from '@/lib/instagram/types';
 import {
   Play,
@@ -32,6 +32,26 @@ export function ReelsGrid({ reels, username }: ReelsGridProps) {
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const lastTimeUpdateRef = useRef<number>(0);
+
+  // Seamless Autoplay with fallback to muted autoplay if browser policy restricts unmuted audio
+  useEffect(() => {
+    if (selectedReel && videoRef.current) {
+      setIsReelLoading(true);
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          if (videoRef.current) {
+            videoRef.current.muted = true;
+            setIsVideoMuted(true);
+            videoRef.current.play().catch(() => {
+              setIsVideoPlaying(false);
+              setIsReelLoading(false);
+            });
+          }
+        });
+      }
+    }
+  }, [selectedReel]);
 
   const toggleVideoPlay = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -228,17 +248,15 @@ export function ReelsGrid({ reels, username }: ReelsGridProps) {
                 playsInline
                 loop
                 muted={isVideoMuted}
-                preload="auto"
+                preload="metadata"
                 poster={`/api/media?url=${encodeURIComponent(selectedReel.thumbnailUrl || selectedReel.url)}`}
                 onLoadedMetadata={() => {
                   if (videoRef.current) {
                     setDuration(videoRef.current.duration);
                   }
-                  setIsReelLoading(false);
                 }}
-                onLoadedData={() => setIsReelLoading(false)}
-                onCanPlay={() => setIsReelLoading(false)}
                 onWaiting={() => setIsReelLoading(true)}
+                onStalled={() => setIsReelLoading(true)}
                 onPlaying={() => {
                   setIsReelLoading(false);
                   setIsVideoPlaying(true);

@@ -249,10 +249,10 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
               autoPlay={isPlaying}
               muted={isMuted}
               playsInline
-              preload="auto"
+              preload="metadata"
               poster={`/api/media?url=${encodeURIComponent(currentStory.thumbnailUrl || currentStory.url)}`}
-              onLoadedData={() => setIsMediaLoading(false)}
               onWaiting={() => setIsMediaLoading(true)}
+              onStalled={() => setIsMediaLoading(true)}
               onPlaying={() => setIsMediaLoading(false)}
               className={`w-full h-full object-contain transition-opacity duration-200 ${
                 isMediaLoading ? 'opacity-70' : 'opacity-100'

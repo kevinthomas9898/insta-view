@@ -209,18 +209,29 @@ export class ScraperApiProvider implements InstagramProvider {
     if (!Array.isArray(items)) return { data: [] };
 
     // In ScraperAPI, the raw /api/reels endpoint returns thumbnails without mp4 video streams.
-    // However, the Instagram posts feed contains full mp4 streams for the user's reels.
-    // Fetch posts (page 1 and page 2 if needed) to enrich reels with real video URLs.
-    const postsMap = new Map<string, string>();
+    // However, the Instagram posts feed contains full mp4 streams and genuine text captions for the user's reels.
+    // Fetch posts (page 1 and page 2 if needed) to enrich reels with real video URLs and captions.
+    interface PostVideoMeta {
+      url: string;
+      caption?: string;
+      likeCount?: number;
+      commentCount?: number;
+    }
+    const postsMap = new Map<string, PostVideoMeta>();
     try {
       const postsP1: any = await this.fetchEndpoint<any>('posts', { username });
       const p1Items = postsP1.result?.items || [];
       for (const p of p1Items) {
         const vUrl = p.media?.[0]?.versions?.[0]?.url || p.media?.[0]?.url || p.video_url;
-        if (vUrl && (vUrl.includes('.mp4') || p.type === 'video')) {
-          postsMap.set(String(p.id), vUrl);
-          if (p.shortcode) postsMap.set(String(p.shortcode), vUrl);
-        }
+        const captionText = p.caption?.text || (typeof p.caption === 'string' ? p.caption : undefined);
+        const meta: PostVideoMeta = {
+          url: vUrl || '',
+          caption: captionText,
+          likeCount: p.likeCount,
+          commentCount: p.commentCount,
+        };
+        postsMap.set(String(p.id), meta);
+        if (p.shortcode) postsMap.set(String(p.shortcode), meta);
       }
 
       // Check if page 2 of posts is needed for older reels
@@ -233,10 +244,15 @@ export class ScraperApiProvider implements InstagramProvider {
         const p2Items = postsP2.result?.items || [];
         for (const p of p2Items) {
           const vUrl = p.media?.[0]?.versions?.[0]?.url || p.media?.[0]?.url || p.video_url;
-          if (vUrl && (vUrl.includes('.mp4') || p.type === 'video')) {
-            postsMap.set(String(p.id), vUrl);
-            if (p.shortcode) postsMap.set(String(p.shortcode), vUrl);
-          }
+          const captionText = p.caption?.text || (typeof p.caption === 'string' ? p.caption : undefined);
+          const meta: PostVideoMeta = {
+            url: vUrl || '',
+            caption: captionText,
+            likeCount: p.likeCount,
+            commentCount: p.commentCount,
+          };
+          postsMap.set(String(p.id), meta);
+          if (p.shortcode) postsMap.set(String(p.shortcode), meta);
         }
       }
     } catch {
@@ -246,20 +262,28 @@ export class ScraperApiProvider implements InstagramProvider {
     const reels: ReelResult[] = items.map((item: any) => {
       const m = item.media?.[0];
       const thumbUrl = m?.thumbnailUrl || '';
-      const matchedVideoUrl =
+      const matched =
         postsMap.get(String(item.id)) ||
         (item.shortcode ? postsMap.get(String(item.shortcode)) : undefined);
-      const videoUrl = matchedVideoUrl || m?.versions?.[0]?.url || m?.url || thumbUrl;
+      const videoUrl =
+        matched?.url && matched.url.includes('.mp4')
+          ? matched.url
+          : m?.versions?.[0]?.url || m?.url || thumbUrl;
+
+      // Extract genuine caption text, never leak raw URL permalinks as the caption
+      const rawCaption = item.caption?.text || (typeof item.caption === 'string' ? item.caption : '');
+      const caption =
+        matched?.caption || (rawCaption && !rawCaption.startsWith('http') ? rawCaption : '');
 
       return {
         id: String(item.id),
         type: 'video',
         url: videoUrl,
         thumbnailUrl: thumbUrl,
-        caption: item.caption?.text || item.caption || item.permalink || '',
+        caption,
         timestamp: item.timestamp ? new Date(item.timestamp * 1000).toISOString() : undefined,
         duration: item.duration,
-        viewCount: item.viewCount || item.playCount,
+        viewCount: item.viewCount || item.playCount || matched?.likeCount,
         playCount: item.playCount,
         audioTitle: item.audioTitle || 'Original Audio',
         audioArtist: item.audioArtist,

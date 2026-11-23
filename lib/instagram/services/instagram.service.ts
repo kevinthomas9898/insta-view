@@ -327,16 +327,31 @@ export class InstagramService {
     const startTime = Date.now();
 
     if (cached) {
-      return {
-        success: true,
-        data: cached,
-        metadata: {
-          provider: provider.name,
-          executionTimeMs: 0,
-          isDemo: provider.isDemo,
-          timestamp: new Date().toISOString(),
-        },
-      };
+      // Poisoned Cache Defense: If cached reels contain .jpg thumbnails or lack valid .mp4 streams, invalidate cache immediately
+      const isPoisoned = cached.some(
+        (r) =>
+          (!r.url || !r.url.includes('.mp4')) &&
+          (r.url?.includes('.jpg') || r.url?.includes('t51.82787-15'))
+      );
+      if (isPoisoned) {
+        log('warn', {
+          action: 'getReels',
+          username,
+          message: 'Invalidating poisoned cache containing jpg thumbnails for reels',
+        });
+        globalCache.delete(cacheKey);
+      } else {
+        return {
+          success: true,
+          data: cached,
+          metadata: {
+            provider: provider.name,
+            executionTimeMs: 0,
+            isDemo: provider.isDemo,
+            timestamp: new Date().toISOString(),
+          },
+        };
+      }
     }
 
     try {

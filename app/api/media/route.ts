@@ -104,7 +104,6 @@ export async function GET(request: NextRequest) {
     const responseHeaders = new Headers();
     responseHeaders.set('Content-Type', effectiveContentType);
     responseHeaders.set('Accept-Ranges', 'bytes');
-    responseHeaders.set('Cache-Control', 'public, max-age=86400, s-maxage=86400');
     responseHeaders.set('Access-Control-Allow-Origin', '*');
 
     if (contentLength) {
@@ -119,6 +118,12 @@ export async function GET(request: NextRequest) {
       const defaultExt = isVideo ? 'mp4' : 'jpg';
       const cleanFilename = (filename || `instagram_media.${defaultExt}`).replace(/[^a-zA-Z0-9._-]/g, '_');
       responseHeaders.set('Content-Disposition', `attachment; filename="${cleanFilename}"`);
+      // Prevent browser disk caching of potentially interrupted or corrupt downloads
+      responseHeaders.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      responseHeaders.set('Pragma', 'no-cache');
+      responseHeaders.set('Expires', '0');
+    } else {
+      responseHeaders.set('Cache-Control', 'private, max-age=3600');
     }
 
     const statusCode = rangeHeader && upstreamRes.status === 206 ? 206 : 200;
