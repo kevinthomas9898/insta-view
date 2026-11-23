@@ -12,6 +12,7 @@ interface ReelsGridProps {
 export function ReelsGrid({ reels, username }: ReelsGridProps) {
   const [selectedReel, setSelectedReel] = useState<ReelResult | null>(null);
   const [isReelLoading, setIsReelLoading] = useState(true);
+  const [isCaptionExpanded, setIsCaptionExpanded] = useState(false);
 
   if (reels.length === 0) {
     return (
@@ -44,6 +45,7 @@ export function ReelsGrid({ reels, username }: ReelsGridProps) {
                 onClick={() => {
                   setSelectedReel(reel);
                   setIsReelLoading(true);
+                  setIsCaptionExpanded(false);
                 }}
                 className="group relative bg-zinc-950 rounded-2xl overflow-hidden cursor-pointer aspect-[9/16] shadow-md hover:shadow-2xl transition-all border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700"
               >
@@ -142,22 +144,35 @@ export function ReelsGrid({ reels, username }: ReelsGridProps) {
                 <source src={`/api/media?url=${encodeURIComponent(selectedReel.url)}`} type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
-            </div>
 
-            {/* Caption & Audio info if present */}
-            {(selectedReel.caption || selectedReel.audioTitle) && (
-              <div className="p-3 bg-zinc-900 border-t border-zinc-800 text-xs text-zinc-300">
-                {selectedReel.audioTitle && (
-                  <p className="flex items-center gap-1.5 text-zinc-400 mb-1 font-medium">
-                    <Music className="w-3.5 h-3.5 text-pink-400" />
-                    <span>{selectedReel.audioTitle}</span>
-                  </p>
-                )}
-                {selectedReel.caption && (
-                  <p className="line-clamp-2 text-zinc-300">{selectedReel.caption}</p>
-                )}
-              </div>
-            )}
+              {/* Instagram-Style Transparent Overlay for Reel */}
+              {(selectedReel.caption || selectedReel.audioTitle) && (
+                <div className="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black/95 via-black/60 to-transparent text-white z-20 flex flex-col gap-1.5 pointer-events-auto">
+                  {selectedReel.audioTitle && (
+                    <p className="flex items-center gap-1.5 text-white/80 text-xs font-medium drop-shadow">
+                      <Music className="w-3.5 h-3.5 text-pink-400" />
+                      <span>{selectedReel.audioTitle}</span>
+                    </p>
+                  )}
+                  {selectedReel.caption && (
+                    <div className="text-xs text-white/95 leading-relaxed drop-shadow-sm max-h-[30vh] overflow-y-auto">
+                      <p className={isCaptionExpanded ? 'whitespace-pre-line' : 'line-clamp-2'}>
+                        {selectedReel.caption}
+                      </p>
+                      {selectedReel.caption.length > 70 && (
+                        <button
+                          type="button"
+                          onClick={() => setIsCaptionExpanded(!isCaptionExpanded)}
+                          className="text-[11px] font-bold text-pink-400 hover:text-pink-300 mt-0.5 cursor-pointer underline underline-offset-2"
+                        >
+                          {isCaptionExpanded ? 'Show less' : '... more'}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

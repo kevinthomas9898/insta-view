@@ -34,7 +34,7 @@ export function HighlightsViewer({ highlights }: HighlightsViewerProps) {
             <div
               key={hl.id}
               onClick={() => setActiveHighlight(hl)}
-              className="group cursor-pointer flex flex-col items-center p-4 bg-white dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-2xl hover:border-slate-300 dark:hover:border-zinc-700 hover:shadow-xl transition-all text-center backdrop-blur-sm shadow-xs"
+              className="group cursor-pointer flex flex-col items-center p-4 bg-white dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-2xl hover:border-slate-300 dark:hover:border-zinc-700 hover:shadow-xl active:scale-95 transition-all text-center backdrop-blur-sm shadow-xs"
             >
               <div className="w-20 h-20 rounded-full p-0.5 bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 group-hover:scale-105 transition-transform mb-2.5 overflow-hidden flex items-center justify-center shadow-md shadow-rose-950/20">
                 {coverSrc ? (

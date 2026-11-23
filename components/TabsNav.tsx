@@ -52,7 +52,7 @@ export function TabsNav({ activeTab, onTabChange, counts }: TabsNavProps) {
           <button
             key={tab.key}
             onClick={() => onTabChange(tab.key)}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all whitespace-nowrap cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-150 active:scale-95 whitespace-nowrap cursor-pointer ${
               isActive
                 ? 'bg-gradient-to-r from-pink-600 via-rose-600 to-amber-600 text-white shadow-md shadow-rose-950/20 font-semibold'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-800/60'

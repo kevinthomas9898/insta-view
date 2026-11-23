@@ -38,6 +38,7 @@ export function PostsGrid({
   const [selectedPost, setSelectedPost] = useState<PostResult | null>(null);
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [isMediaLoading, setIsMediaLoading] = useState(false);
+  const [isCaptionExpanded, setIsCaptionExpanded] = useState(false);
 
   // Preload adjacent carousel images in the background for instant 0ms transitions
   useEffect(() => {
@@ -100,12 +101,14 @@ export function PostsGrid({
     setSelectedPost(post);
     setCarouselIndex(0);
     setIsMediaLoading(true);
+    setIsCaptionExpanded(false);
   };
 
   const closePostModal = () => {
     setSelectedPost(null);
     setCarouselIndex(0);
     setIsMediaLoading(false);
+    setIsCaptionExpanded(false);
   };
 
   const handleNextSlide = () => {
@@ -249,19 +252,19 @@ export function PostsGrid({
 
       {/* Post Detail & Media Viewer Modal */}
       {selectedPost && activeItem && (
-        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5">
-          <div className="relative w-full max-w-4xl max-h-[92vh] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex items-center justify-center p-2 sm:p-5">
+          <div className="relative w-full max-w-4xl max-h-[94vh] bg-black md:bg-white md:dark:bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl">
             {/* Close Button */}
             <button
               onClick={closePostModal}
-              className="absolute top-3 right-3 z-30 p-2 bg-black/70 hover:bg-black text-white rounded-full border border-white/10 transition-colors cursor-pointer"
-              title="Close"
+              className="absolute top-3 right-3 z-40 p-2 bg-black/75 hover:bg-black text-white rounded-full border border-white/20 transition-all duration-150 active:scale-90 shadow-lg cursor-pointer"
+              title="Close (Esc)"
             >
               <X className="w-5 h-5" />
             </button>
 
             {/* Media Player / Image Area */}
-            <div className="relative flex-1 bg-black flex items-center justify-center min-h-[320px] md:min-h-[500px] overflow-hidden select-none">
+            <div className="relative flex-1 bg-black flex items-center justify-center min-h-[50vh] md:min-h-[520px] max-h-[85vh] md:max-h-[92vh] overflow-hidden select-none">
               {/* Instant Loading Spinner Overlay */}
               {isMediaLoading && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-xs z-15 transition-opacity duration-150 animate-fade-in pointer-events-none">
@@ -284,7 +287,7 @@ export function PostsGrid({
                   onLoadedData={() => setIsMediaLoading(false)}
                   onWaiting={() => setIsMediaLoading(true)}
                   onPlaying={() => setIsMediaLoading(false)}
-                  className={`w-full max-h-[80vh] object-contain transition-opacity duration-200 ${
+                  className={`w-full max-h-[80vh] md:max-h-[85vh] object-contain transition-opacity duration-200 ${
                     isMediaLoading ? 'opacity-30' : 'opacity-100'
                   }`}
                   src={`/api/media?url=${encodeURIComponent(activeItem.url)}`}
@@ -311,7 +314,7 @@ export function PostsGrid({
                       e.currentTarget.src = activeItem.url;
                     }
                   }}
-                  className={`w-full max-h-[80vh] object-contain transition-opacity duration-200 ${
+                  className={`w-full max-h-[80vh] md:max-h-[85vh] object-contain transition-opacity duration-200 ${
                     isMediaLoading ? 'opacity-30' : 'opacity-100'
                   }`}
                 />
@@ -345,36 +348,93 @@ export function PostsGrid({
                       </button>
                     )}
 
-                    {/* Carousel Counter & Interactive Dots */}
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 z-20">
+                    {/* Carousel Counter */}
+                    <div className="absolute top-3 left-3 z-30">
                       <div className="px-3 py-1 rounded-full bg-black/80 backdrop-blur-md text-white text-xs font-semibold border border-white/10 shadow-lg">
                         {carouselIndex + 1} / {selectedPost.carouselMedia.length}
-                      </div>
-
-                      {/* Interactive Dots for Multi-Item Carousels */}
-                      <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-black/60 backdrop-blur-xs">
-                        {selectedPost.carouselMedia.map((_, dotIdx) => (
-                          <button
-                            key={dotIdx}
-                            type="button"
-                            onClick={() => handleGoToSlide(dotIdx)}
-                            className={`rounded-full transition-all duration-200 cursor-pointer ${
-                              dotIdx === carouselIndex
-                                ? 'w-5 h-1.5 bg-pink-500'
-                                : 'w-1.5 h-1.5 bg-white/50 hover:bg-white/80'
-                            }`}
-                            aria-label={`Go to slide ${dotIdx + 1}`}
-                          />
-                        ))}
                       </div>
                     </div>
                   </>
                 )}
+
+              {/* Mobile Instagram-Style Transparent Overlay */}
+              <div className="md:hidden absolute bottom-0 inset-x-0 p-3.5 bg-gradient-to-t from-black/95 via-black/60 to-transparent text-white z-30 flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-white text-xs drop-shadow">@{username}</span>
+                    {selectedPost.timestamp && (
+                      <span className="text-[10px] text-white/60">
+                        • {new Date(selectedPost.timestamp).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-white/90">
+                    {selectedPost.likeCount !== undefined && (
+                      <span className="flex items-center gap-1 drop-shadow">
+                        <Heart className="w-3.5 h-3.5 fill-rose-500 text-rose-500" />
+                        {selectedPost.likeCount.toLocaleString()}
+                      </span>
+                    )}
+                    {selectedPost.commentCount !== undefined && (
+                      <span className="flex items-center gap-1 drop-shadow">
+                        <MessageCircle className="w-3.5 h-3.5 fill-white" />
+                        {selectedPost.commentCount.toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Collapsible Caption */}
+                {selectedPost.caption && (
+                  <div className="text-xs text-white/95 leading-relaxed drop-shadow-sm max-h-[30vh] overflow-y-auto">
+                    <p className={isCaptionExpanded ? 'whitespace-pre-line' : 'line-clamp-2'}>
+                      {selectedPost.caption}
+                    </p>
+                    {selectedPost.caption.length > 70 && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsCaptionExpanded(!isCaptionExpanded);
+                        }}
+                        className="text-[11px] font-bold text-pink-400 hover:text-pink-300 mt-0.5 cursor-pointer underline underline-offset-2"
+                      >
+                        {isCaptionExpanded ? 'Show less' : '... more'}
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Mobile Quick Action Buttons */}
+                <div className="flex items-center gap-2 pt-1">
+                  <a
+                    href={
+                      activeItem.downloadUrl ||
+                      `/api/media?url=${encodeURIComponent(activeItem.url)}&download=true&filename=instagram_${username}_${activeItem.id}.${activeItem.type === 'video' ? 'mp4' : 'jpg'}`
+                    }
+                    download
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-gradient-to-r from-pink-600 via-rose-600 to-amber-600 hover:opacity-95 text-white text-xs font-semibold rounded-xl shadow-md cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Download {activeItem.type === 'video' ? 'Video' : 'Image'}
+                    {selectedPost.type === 'carousel' && ` (${carouselIndex + 1}/${selectedPost.carouselMedia?.length})`}
+                  </a>
+                  <a
+                    href={activeItem.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 bg-black/60 hover:bg-black/80 text-white rounded-xl border border-white/20 transition-colors"
+                    title="Direct Source URL"
+                  >
+                    <Maximize2 className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              </div>
             </div>
 
-            {/* Sidebar Details & Actions */}
-            <div className="w-full md:w-80 p-5 flex flex-col justify-between border-t md:border-t-0 md:border-l border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-              <div className="overflow-y-auto max-h-[40vh] md:max-h-[60vh] pr-1">
+            {/* Desktop Sidebar Details & Actions */}
+            <div className="hidden md:flex w-80 p-5 flex-col justify-between border-l border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+              <div className="overflow-y-auto max-h-[60vh] pr-1">
                 <div className="flex items-center gap-2 mb-3">
                   <span className="font-bold text-slate-900 dark:text-white text-sm">@{username}</span>
                   {selectedPost.timestamp && (
@@ -385,9 +445,20 @@ export function PostsGrid({
                 </div>
 
                 {selectedPost.caption && (
-                  <p className="text-xs sm:text-sm text-slate-700 dark:text-zinc-300 whitespace-pre-line leading-relaxed mb-4">
-                    {selectedPost.caption}
-                  </p>
+                  <div className="text-xs sm:text-sm text-slate-700 dark:text-zinc-300 mb-4">
+                    <p className={`leading-relaxed whitespace-pre-line ${isCaptionExpanded ? '' : 'line-clamp-4'}`}>
+                      {selectedPost.caption}
+                    </p>
+                    {selectedPost.caption.length > 120 && (
+                      <button
+                        type="button"
+                        onClick={() => setIsCaptionExpanded(!isCaptionExpanded)}
+                        className="text-xs font-semibold text-pink-600 dark:text-pink-400 hover:underline mt-1 cursor-pointer block"
+                      >
+                        {isCaptionExpanded ? 'Show less' : '... more'}
+                      </button>
+                    )}
+                  </div>
                 )}
 
                 {/* Stats */}

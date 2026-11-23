@@ -52,7 +52,7 @@ export function StoriesList({ stories, username }: StoriesListProps) {
             <div
               key={story.id || idx}
               onClick={() => setSelectedStoryIndex(idx)}
-              className="group relative bg-zinc-950 rounded-2xl overflow-hidden cursor-pointer aspect-[9/16] shadow-md hover:shadow-2xl transition-all border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700"
+              className="group relative bg-zinc-950 rounded-2xl overflow-hidden cursor-pointer aspect-[9/16] shadow-md hover:shadow-2xl active:scale-95 transition-all border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700"
             >
               {thumbSrc ? (
                 <img
