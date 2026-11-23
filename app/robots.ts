@@ -1,7 +1,8 @@
 import type { MetadataRoute } from 'next';
+import { getSiteUrl } from '@/lib/utils/site';
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = 'https://insta-view.vercel.app';
+  const baseUrl = getSiteUrl();
 
   return {
     rules: [

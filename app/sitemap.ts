@@ -1,45 +1,18 @@
 import type { MetadataRoute } from 'next';
+import { getSiteUrl } from '@/lib/utils/site';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://insta-view.vercel.app';
+  const baseUrl = getSiteUrl();
   const currentDate = new Date();
 
+  // Note: Google strictly prohibits hash fragments (#stories) in sitemap URLs.
+  // Only actual valid URLs on this exact domain are allowed.
   return [
     {
       url: baseUrl,
       lastModified: currentDate,
       changeFrequency: 'daily',
       priority: 1.0,
-    },
-    {
-      url: `${baseUrl}/#stories`,
-      lastModified: currentDate,
-      changeFrequency: 'daily',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/#highlights`,
-      lastModified: currentDate,
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/#posts`,
-      lastModified: currentDate,
-      changeFrequency: 'daily',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/#reels`,
-      lastModified: currentDate,
-      changeFrequency: 'daily',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/#faq`,
-      lastModified: currentDate,
-      changeFrequency: 'monthly',
-      priority: 0.7,
     },
   ];
 }
