@@ -1,13 +1,13 @@
 import type { MetadataRoute } from 'next';
 import { getSiteUrl } from '@/lib/utils/site';
+import { BLOG_POSTS } from '@/lib/data/blog';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = getSiteUrl();
   const currentDate = new Date();
 
-  // Note: Google Search Console strictly requires canonical URLs on this exact domain,
-  // without hash fragments (#stories). Every URL in this sitemap returns HTTP 200.
-  return [
+  // Core Landing Pages & Tool Viewers
+  const corePages: MetadataRoute.Sitemap = [
     {
       url: `${baseUrl}`,
       lastModified: currentDate,
@@ -45,10 +45,28 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
+      url: `${baseUrl}/iganony`,
+      lastModified: currentDate,
+      changeFrequency: 'daily',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/blog`,
+      lastModified: currentDate,
+      changeFrequency: 'daily',
+      priority: 0.8,
+    },
+    {
       url: `${baseUrl}/faq`,
       lastModified: currentDate,
       changeFrequency: 'weekly',
       priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/remove-profile`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly',
+      priority: 0.5,
     },
     {
       url: `${baseUrl}/privacy`,
@@ -63,4 +81,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.5,
     },
   ];
+
+  // Programmatic High-Traffic Blog Guides
+  const blogPages: MetadataRoute.Sitemap = BLOG_POSTS.map((post) => ({
+    url: `${baseUrl}/blog/${post.slug}`,
+    lastModified: new Date(post.publishedAt),
+    changeFrequency: 'weekly',
+    priority: 0.8,
+  }));
+
+  return [...corePages, ...blogPages];
 }

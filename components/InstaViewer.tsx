@@ -248,6 +248,9 @@ export function InstaViewer({
               <Link href="/profile-viewer" className="px-3 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
                 Profile
               </Link>
+              <Link href="/blog" className="px-3 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
+                Blog
+              </Link>
               <Link href="/faq" className="px-3 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
                 FAQ
               </Link>
@@ -719,6 +722,11 @@ export function InstaViewer({
                     Anonymous Profile Viewer
                   </Link>
                 </li>
+                <li>
+                  <Link href="/iganony" className="hover:text-pink-600 dark:hover:text-pink-400 transition-colors">
+                    IGAnony Alternative
+                  </Link>
+                </li>
               </ul>
             </div>
 
@@ -726,6 +734,11 @@ export function InstaViewer({
             <div>
               <h4 className="font-bold text-sm text-slate-900 dark:text-zinc-200 mb-3 tracking-tight">Resources</h4>
               <ul className="space-y-2">
+                <li>
+                  <Link href="/blog" className="hover:text-pink-600 dark:hover:text-pink-400 transition-colors">
+                    Editorial Blog & Guides
+                  </Link>
+                </li>
                 <li>
                   <Link href="/faq" className="hover:text-pink-600 dark:hover:text-pink-400 transition-colors">
                     Frequently Asked Questions
@@ -741,11 +754,6 @@ export function InstaViewer({
                     Stealth Architecture & Speed
                   </Link>
                 </li>
-                <li>
-                  <Link href="/faq" className="hover:text-pink-600 dark:hover:text-pink-400 transition-colors">
-                    Download Guides & Safety
-                  </Link>
-                </li>
               </ul>
             </div>
 
@@ -753,6 +761,11 @@ export function InstaViewer({
             <div>
               <h4 className="font-bold text-sm text-slate-900 dark:text-zinc-200 mb-3 tracking-tight">Legal & Trust</h4>
               <ul className="space-y-2">
+                <li>
+                  <Link href="/remove-profile" className="hover:text-pink-600 dark:hover:text-pink-400 transition-colors font-medium text-rose-600 dark:text-rose-400">
+                    Opt-Out (Remove Profile)
+                  </Link>
+                </li>
                 <li>
                   <Link href="/privacy" className="hover:text-pink-600 dark:hover:text-pink-400 transition-colors">
                     Privacy Policy
