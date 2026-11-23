@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PostResult, MediaItem } from '@/lib/instagram/types';
 import {
   Layers,
@@ -36,6 +36,24 @@ export function PostsGrid({
 }: PostsGridProps) {
   const [selectedPost, setSelectedPost] = useState<PostResult | null>(null);
   const [carouselIndex, setCarouselIndex] = useState(0);
+
+  useEffect(() => {
+    // Inject Adsterra Native Banner script when posts are rendered
+    const container = document.getElementById('container-4ff02455261b1454e019ced3534847d2');
+    if (container) {
+      const scriptId = 'adsterra-native-feed-script';
+      const oldScript = document.getElementById(scriptId);
+      if (oldScript) {
+        oldScript.remove();
+      }
+      const script = document.createElement('script');
+      script.id = scriptId;
+      script.src = 'https://bicea.org/21/4ff02455261b1454e019ced3534847d2';
+      script.async = true;
+      script.setAttribute('data-cfasync', 'false');
+      document.body.appendChild(script);
+    }
+  }, [posts]);
 
   if (posts.length === 0) {
     return (
@@ -135,71 +153,26 @@ export function PostsGrid({
                 )}
               </div>
 
-              {/* In-Feed Sponsored Card (Every 5 posts, matching Instagram feed flow) */}
+              {/* In-Feed Real Adsterra Native Banner (Every 5 posts) */}
               {showAdAfter && (
-                <div className="group relative bg-white dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl overflow-hidden flex flex-col shadow-xs transition-all hover:border-pink-500/40">
-                  <div className="relative aspect-square bg-gradient-to-tr from-pink-500/5 via-rose-500/5 to-amber-500/5 dark:from-zinc-900/90 dark:to-zinc-800/70 flex flex-col items-center justify-center p-5 text-center">
-                    <span className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 font-bold text-[10px] tracking-wider uppercase border border-amber-200 dark:border-amber-500/20">
-                      Sponsored
+                <div className="col-span-full my-4 w-full flex flex-col items-center justify-center overflow-hidden">
+                  <div className="w-full flex items-center justify-center gap-3 mb-2">
+                    <span className="h-px bg-slate-200 dark:bg-zinc-800 flex-1 max-w-[120px]" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                      Advertisement
                     </span>
-                    <Sparkles className="w-8 h-8 text-pink-500 mb-2 opacity-90 animate-pulse" />
-                    <p className="text-xs font-bold text-slate-900 dark:text-white line-clamp-2 px-2">
-                      Featured Partner Showcase
-                    </p>
-                    <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-1 max-w-[200px]">
-                      Verified partner promotion & offers
-                    </p>
-                    <span className="mt-3.5 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-pink-50 dark:bg-pink-500/10 text-pink-600 dark:text-pink-400 text-xs font-semibold group-hover:bg-pink-100 dark:group-hover:bg-pink-500/20 transition-colors">
-                      <span>Explore</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </span>
+                    <span className="h-px bg-slate-200 dark:bg-zinc-800 flex-1 max-w-[120px]" />
                   </div>
-                  <div className="p-3 text-[11px] text-slate-500 dark:text-zinc-400 border-t border-slate-100 dark:border-zinc-800/80 bg-slate-50/70 dark:bg-zinc-900/60 flex items-center justify-between">
-                    <span className="font-medium text-slate-700 dark:text-zinc-300">InstaView Network</span>
-                    <span className="text-[10px] text-slate-400 dark:text-zinc-500">Ad</span>
-                  </div>
+                  <div
+                    id="container-4ff02455261b1454e019ced3534847d2"
+                    className="w-full max-w-4xl min-h-[90px] flex justify-center items-center"
+                  />
                 </div>
               )}
             </React.Fragment>
           );
         })}
       </div>
-
-      {/* Above Load More Sponsor Banner */}
-      {hasMore && onLoadMore && (
-        <div className="w-full flex justify-center mt-8 mb-2 px-2">
-          <div className="w-full max-w-2xl group rounded-2xl bg-gradient-to-r from-slate-50 via-white to-slate-50 dark:from-zinc-900/90 dark:via-zinc-900/60 dark:to-zinc-900/90 border border-slate-200/80 dark:border-zinc-800/80 p-4 sm:p-5 shadow-xs hover:border-pink-500/40 transition-all flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3.5 text-left">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-fuchsia-600 flex items-center justify-center shadow-sm shrink-0">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 font-bold text-[10px] tracking-wider uppercase border border-amber-200 dark:border-amber-500/20">
-                    Sponsored
-                  </span>
-                  <span className="text-[11px] text-slate-500 dark:text-zinc-500 font-medium">InstaView Partner</span>
-                </div>
-                <h4 className="text-sm font-bold text-slate-900 dark:text-white">
-                  Anonymous HD Instagram Downloader & Private Viewer
-                </h4>
-                <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
-                  Save stories, reels & albums in original HD quality with 100% privacy and zero digital trace.
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pink-50 hover:bg-pink-100 dark:bg-pink-500/10 dark:hover:bg-pink-500/20 text-pink-600 dark:text-pink-400 text-xs font-semibold transition-colors border border-pink-200/60 dark:border-pink-500/20 cursor-pointer"
-            >
-              <span>Explore</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Load More Button */}
       {hasMore && onLoadMore ? (

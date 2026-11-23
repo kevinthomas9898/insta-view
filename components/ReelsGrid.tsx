@@ -68,28 +68,6 @@ export function ReelsGrid({ reels, username }: ReelsGridProps) {
                   )}
                 </div>
               </div>
-
-              {/* In-Feed Sponsored Reel Card */}
-              {showAdAfter && (
-                <div className="group relative bg-zinc-950 rounded-2xl overflow-hidden aspect-[9/16] shadow-md border border-slate-200 dark:border-zinc-800 hover:border-pink-500/40 transition-all flex flex-col justify-between p-3.5 bg-gradient-to-b from-zinc-900 via-zinc-950 to-zinc-900">
-                  <span className="self-start px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 text-[10px] font-bold uppercase tracking-wider border border-amber-500/30">
-                    Sponsored
-                  </span>
-                  <div className="text-center my-auto flex flex-col items-center px-1">
-                    <Sparkles className="w-7 h-7 text-pink-500 mb-2 opacity-90 animate-pulse" />
-                    <p className="text-xs font-bold text-white line-clamp-2">
-                      Featured Sponsor
-                    </p>
-                    <p className="text-[10px] text-zinc-400 mt-1 line-clamp-2">
-                      Trending tools & promotions
-                    </p>
-                  </div>
-                  <div className="text-[11px] text-zinc-400 flex items-center justify-between pt-2 border-t border-zinc-800/80">
-                    <span className="font-medium text-zinc-300">Partner</span>
-                    <span className="text-[10px] text-zinc-500">Ad</span>
-                  </div>
-                </div>
-              )}
             </React.Fragment>
           );
         })}

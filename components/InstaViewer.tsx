@@ -376,8 +376,10 @@ export function InstaViewer({
           </div>
         </section>
 
-        {/* Strategic Monetization Ad Slot */}
-        <AdSlot id="container-4ff02455261b1454e019ced3534847d2" />
+        {/* Strategic Monetization Ad Slot (Homepage under search; moves into feed when profile loaded) */}
+        {!profile && (
+          <AdSlot id="container-4ff02455261b1454e019ced3534847d2" />
+        )}
 
         {/* Profile Error Banner */}
         {profileError && (
