@@ -1,0 +1,58 @@
+{
+  "nav": {
+    "stories": "Story",
+    "highlights": "Sorotan",
+    "reels": "Reels",
+    "posts": "Postingan",
+    "profile": "Profil",
+    "blog": "Blog",
+    "faq": "FAQ",
+    "anonymous": "100% Anonim",
+    "noLogin": "Tanpa Login"
+  },
+  "home": {
+    "metaTitle": "Lihat Story Instagram Secara Anonim — InstaView",
+    "metaDescription": "Tonton story, reels, dan postingan Instagram secara 100% anonim tanpa akun atau login. Unduh video dan foto kualitas HD asli.",
+    "heroBadge": "100% Anonim & Aman — Tanpa Login",
+    "heroTitle": "Lihat Story Instagram ",
+    "heroHighlight": "Secara Anonim",
+    "heroDescription": "Lihat story, sorotan, reels, dan postingan publik tanpa ketahuan dan tanpa akun. Simpan foto dan video MP4 berkualitas tinggi.",
+    "searchPlaceholder": "Masukkan username atau link profil..."
+  },
+  "stories": {
+    "metaTitle": "Viewer Story Instagram Anonim — InstaView",
+    "metaDescription": "Lihat story Instagram tanpa ketahuan pemiliknya. Tonton story 24 jam dan sorotan secara rahasia dan unduh dalam kualitas HD.",
+    "heroBadge": "Viewer Story Tersembunyi",
+    "heroTitle": "Tonton Story Instagram ",
+    "heroHighlight": "Tanpa Meninggalkan Jejak",
+    "heroDescription": "Streaming story publik dalam kualitas jernih tanpa nama Anda muncul di daftar penonton. Unduh sebelum 24 jam berakhir.",
+    "searchPlaceholder": "Masukkan username untuk melihat story aktif..."
+  },
+  "reels": {
+    "metaTitle": "Download Reels Instagram Kualitas HD Gratis — InstaView",
+    "metaDescription": "Tonton dan download reels Instagram dalam format MP4 HD dengan audio asli tanpa watermark secara anonim dan gratis.",
+    "heroBadge": "Downloader Reels MP4",
+    "heroTitle": "Tonton & Download ",
+    "heroHighlight": "Reels Instagram HD",
+    "heroDescription": "Simpan video reels Instagram dengan audio lengkap tanpa watermark langsung ke galeri ponsel atau laptop Anda.",
+    "searchPlaceholder": "Masukkan username untuk download reels..."
+  },
+  "storySaver": {
+    "metaTitle": "Story Saver Indonesia — Simpan Story Instagram",
+    "metaDescription": "Simpan story Instagram tanpa login dengan Story Saver. Unduh story 24 jam dan sorotan foto/video dalam kualitas asli.",
+    "heroBadge": "Story Saver Gratis #1",
+    "heroTitle": "Story Saver — Simpan Story ",
+    "heroHighlight": "100% Gratis & Anonim",
+    "heroDescription": "Simpan story 24 jam dan album sorotan dalam resolusi asli tanpa jejak digital. Tanpa perlu download aplikasi.",
+    "searchPlaceholder": "Masukkan username untuk simpan story..."
+  },
+  "instagramToMp4": {
+    "metaTitle": "Konverter Instagram ke MP4 HD — InstaView",
+    "metaDescription": "Ubah dan download Reels serta Video Instagram ke format MP4 jernih dengan audio asli. 100% gratis dan anonim.",
+    "heroBadge": "Konverter Langsung ke MP4",
+    "heroTitle": "Konversi Instagram ke ",
+    "heroHighlight": "MP4 Kualitas HD",
+    "heroDescription": "Ekstrak video reels dan story Instagram langsung ke file MP4 tanpa kompresi dengan audio jernih.",
+    "searchPlaceholder": "Masukkan username atau link untuk konversi ke MP4..."
+  }
+}

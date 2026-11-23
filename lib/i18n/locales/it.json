@@ -1,0 +1,58 @@
+{
+  "nav": {
+    "stories": "Storie",
+    "highlights": "In evidenza",
+    "reels": "Reel",
+    "posts": "Post",
+    "profile": "Profilo",
+    "blog": "Blog",
+    "faq": "FAQ",
+    "anonymous": "100% Anonimo",
+    "noLogin": "Nessun Login"
+  },
+  "home": {
+    "metaTitle": "Visualizza Storie Instagram in Anonimo — InstaView",
+    "metaDescription": "Guarda storie, reel, contenuti in evidenza e post di Instagram al 100% anonimo senza account né login. Scarica video e foto in HD.",
+    "heroBadge": "100% Anonimo e Sicuro — Nessun Login Richiesto",
+    "heroTitle": "Guarda Storie Instagram ",
+    "heroHighlight": "in Modo Anonimo",
+    "heroDescription": "Visualizza storie pubbliche, reel e post senza che nessuno lo sappia e senza effettuare l’accesso. Salva foto e video MP4 in qualità originale.",
+    "searchPlaceholder": "Inserisci nome utente o link del profilo..."
+  },
+  "stories": {
+    "metaTitle": "Visualizzatore Anonimo di Storie Instagram — InstaView",
+    "metaDescription": "Guarda storie di Instagram anonimamente. Visualizza storie di 24 ore e contenuti in evidenza senza comparire nell’elenco visualizzazioni.",
+    "heroBadge": "Visualizzatore Invisibile di Storie",
+    "heroTitle": "Guarda Storie Instagram ",
+    "heroHighlight": "Senza Lasciare Tracce",
+    "heroDescription": "Guarda storie pubbliche in alta definizione senza farti notare. Scarica foto e video prima che scadano in 24 ore.",
+    "searchPlaceholder": "Inserisci nome utente per vedere le storie..."
+  },
+  "reels": {
+    "metaTitle": "Scarica Reel Instagram in HD Gratis — InstaView",
+    "metaDescription": "Guarda e scarica i Reel di Instagram in formato video MP4 con audio originale in modo anonimo e gratuito.",
+    "heroBadge": "Scaricatore di Reel in MP4",
+    "heroTitle": "Guarda e Scarica ",
+    "heroHighlight": "Reel Instagram in HD",
+    "heroDescription": "Salva i video dei reel con audio completo e senza watermark direttamente sulla tua galleria o sul computer.",
+    "searchPlaceholder": "Inserisci nome utente per scaricare reel..."
+  },
+  "storySaver": {
+    "metaTitle": "Story Saver Italiano — Salva Storie Instagram",
+    "metaDescription": "Salva storie Instagram anonimamente con Story Saver di InstaView. Scarica storie di 24 ore e contenuti in evidenza gratis.",
+    "heroBadge": "Lo Story Saver #1 Gratis",
+    "heroTitle": "Story Saver — Salva Storie ",
+    "heroHighlight": "100% Gratis e Anonimo",
+    "heroDescription": "Salva le storie di 24 ore e gli album in evidenza in risoluzione originale senza lasciare tracce digitali.",
+    "searchPlaceholder": "Inserisci nome utente per salvare storie..."
+  },
+  "instagramToMp4": {
+    "metaTitle": "Convertitore Instagram in MP4 in HD — InstaView",
+    "metaDescription": "Converti e scarica Reel e video di Instagram in formato MP4 con audio pulito. Veloce, gratis e anonimo.",
+    "heroBadge": "Convertitore Diretto MP4",
+    "heroTitle": "Converti Instagram in ",
+    "heroHighlight": "MP4 in Qualità HD",
+    "heroDescription": "Estrai video e reel direttamente in file MP4 ad alto bitrate senza compressione e con audio originale.",
+    "searchPlaceholder": "Inserisci nome utente o link per convertire in MP4..."
+  }
+}

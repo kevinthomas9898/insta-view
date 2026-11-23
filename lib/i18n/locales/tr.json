@@ -1,0 +1,58 @@
+{
+  "nav": {
+    "stories": "Hikayeler",
+    "highlights": "Öne Çıkanlar",
+    "reels": "Reels",
+    "posts": "Gönderiler",
+    "profile": "Profil",
+    "blog": "Blog",
+    "faq": "SSS",
+    "anonymous": "%100 Anonim",
+    "noLogin": "Giriş Yok"
+  },
+  "home": {
+    "metaTitle": "Anonim Instagram Hikaye İzleme ve İndirme — InstaView",
+    "metaDescription": "Instagram hikayelerini, öne çıkanları, reels ve gönderileri hesap olmadan %100 gizli izleyin. HD video ve fotoğrafları güvenle indirin.",
+    "heroBadge": "%100 Anonim ve Güvenli — Giriş Yok",
+    "heroTitle": "Instagram Hikayelerini ",
+    "heroHighlight": "Gizlice İzleyin",
+    "heroDescription": "Herkese açık hikayeleri, öne çıkanları ve reels videolarını adınız görünmeden izleyin. Yüksek çözünürlüklü MP4 videoları indirin.",
+    "searchPlaceholder": "Kullanıcı adı veya profil bağlantısı girin..."
+  },
+  "stories": {
+    "metaTitle": "Gizli Instagram Hikaye İzleyici — InstaView",
+    "metaDescription": "Instagram hikayelerini gizlice izleyin. Görülme listesinde yer almadan 24 saatlik hikayeleri ve öne çıkanları görüntüleyin.",
+    "heroBadge": "Gizli Hikaye İzleyici",
+    "heroTitle": "Instagram Hikayelerini ",
+    "heroHighlight": "İz Bırakmadan İzleyin",
+    "heroDescription": "Görüntüleme geçmişinde adınız çıkmadan hikayeleri HD izleyin. 24 saat dolmadan fotoğraf ve videoları indirin.",
+    "searchPlaceholder": "Aktif hikayeleri görmek için kullanıcı adı girin..."
+  },
+  "reels": {
+    "metaTitle": "Instagram Reels İndirme HD Kalitede — InstaView",
+    "metaDescription": "Instagram reels videolarını orijinal ses kalitesiyle filigransız MP4 formatında anonim ve ücretsiz olarak indirin.",
+    "heroBadge": "HD Reels Video İndirici",
+    "heroTitle": "İzle ve İndir: ",
+    "heroHighlight": "Instagram Reels HD",
+    "heroDescription": "Reels videolarını orijinal sesleri ve yüksek çözünürlükleriyle doğrudan galerinize filigransız olarak kaydedin.",
+    "searchPlaceholder": "Reels indirmek için kullanıcı adı girin..."
+  },
+  "storySaver": {
+    "metaTitle": "Story Saver Türkçe — Instagram Hikaye Kaydedici",
+    "metaDescription": "Instagram hikayelerini Story Saver ile anonim olarak kaydedin. 24 saatlik hikayeleri ve öne çıkanları ücretsiz indirin.",
+    "heroBadge": "1 Numaralı Story Saver",
+    "heroTitle": "Story Saver — Hikayeleri ",
+    "heroHighlight": "%100 Anonim Kaydet",
+    "heroDescription": "24 saatlik hikayeleri ve öne çıkan albümleri hesap açmadan orijinal kalitede indirin. Giriş veya uygulama gerektirmez.",
+    "searchPlaceholder": "Hikaye kaydetmek için kullanıcı adı girin..."
+  },
+  "instagramToMp4": {
+    "metaTitle": "Instagram MP4 Dönüştürücü ve İndirici — InstaView",
+    "metaDescription": "Instagram reels ve videolarını net ses kalitesiyle 1080p MP4 formatına dönüştürüp indirin. %100 ücretsiz ve anonim.",
+    "heroBadge": "Doğrudan MP4 Dönüştürücü",
+    "heroTitle": "Instagram Videolarını ",
+    "heroHighlight": "MP4 Formatına Dönüştür",
+    "heroDescription": "Reels ve video gönderilerini sıkıştırma olmadan orijinal MP4 dosyaları olarak indirin.",
+    "searchPlaceholder": "MP4 dönüştürmek için link veya kullanıcı adı girin..."
+  }
+}

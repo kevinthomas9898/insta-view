@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { PostResult, MediaItem } from '@/lib/instagram/types';
+import { AdBanner } from '@/components/AdBanner';
 import {
   Layers,
   Play,
@@ -36,24 +37,6 @@ export function PostsGrid({
 }: PostsGridProps) {
   const [selectedPost, setSelectedPost] = useState<PostResult | null>(null);
   const [carouselIndex, setCarouselIndex] = useState(0);
-
-  useEffect(() => {
-    // Inject Adsterra Native Banner script when posts are rendered
-    const container = document.getElementById('container-4ff02455261b1454e019ced3534847d2');
-    if (container) {
-      const scriptId = 'adsterra-native-feed-script';
-      const oldScript = document.getElementById(scriptId);
-      if (oldScript) {
-        oldScript.remove();
-      }
-      const script = document.createElement('script');
-      script.id = scriptId;
-      script.src = 'https://bicea.org/21/4ff02455261b1454e019ced3534847d2';
-      script.async = true;
-      script.setAttribute('data-cfasync', 'false');
-      document.body.appendChild(script);
-    }
-  }, [posts]);
 
   if (posts.length === 0) {
     return (
@@ -153,20 +136,10 @@ export function PostsGrid({
                 )}
               </div>
 
-              {/* In-Feed Real Adsterra Native Banner (Every 5 posts) */}
+              {/* In-Feed Native Banner Ad (Every 5 posts) */}
               {showAdAfter && (
-                <div className="col-span-full my-4 w-full flex flex-col items-center justify-center overflow-hidden">
-                  <div className="w-full flex items-center justify-center gap-3 mb-2">
-                    <span className="h-px bg-slate-200 dark:bg-zinc-800 flex-1 max-w-[120px]" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-                      Advertisement
-                    </span>
-                    <span className="h-px bg-slate-200 dark:bg-zinc-800 flex-1 max-w-[120px]" />
-                  </div>
-                  <div
-                    id="container-4ff02455261b1454e019ced3534847d2"
-                    className="w-full max-w-4xl min-h-[90px] flex justify-center items-center"
-                  />
+                <div className="col-span-full">
+                  <AdBanner />
                 </div>
               )}
             </React.Fragment>

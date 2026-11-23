@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter, usePathname } from 'next/navigation';
 import {
   Profile,
   StoryResult,
@@ -70,6 +71,30 @@ export function InstaViewer({
 }: InstaViewerProps) {
   const [usernameInput, setUsernameInput] = useState('');
   const [searchedUsername, setSearchedUsername] = useState('');
+
+  const router = useRouter();
+  const pathname = usePathname() || '/';
+
+  // Language preference detection & auto-routing
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      if (lang && lang !== 'en') {
+        // Save current active language
+        localStorage.setItem('preferred_lang', lang);
+        document.cookie = `preferred_lang=${lang}; path=/; max-age=31536000; SameSite=Lax`;
+      } else if (pathname === '/') {
+        // Visitor is on default root '/': check if they preferred another language previously
+        const savedLang = localStorage.getItem('preferred_lang');
+        if (savedLang && savedLang !== 'en' && (SUPPORTED_LANGS as readonly string[]).includes(savedLang)) {
+          router.replace(`/${savedLang}`);
+        }
+      }
+    } catch {
+      // Storage restricted
+    }
+  }, [lang, pathname, router]);
 
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [isLoadingTab, setIsLoadingTab] = useState(false);
@@ -831,6 +856,15 @@ export function InstaViewer({
               <Link
                 key={l}
                 href={`/${l}`}
+                prefetch={true}
+                onClick={() => {
+                  try {
+                    localStorage.setItem('preferred_lang', l);
+                    document.cookie = `preferred_lang=${l}; path=/; max-age=31536000; SameSite=Lax`;
+                  } catch {
+                    // ignore
+                  }
+                }}
                 className="hover:text-pink-600 dark:hover:text-pink-400 transition-colors inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-800/50"
               >
                 <span>{LANGUAGES[l].flag}</span>

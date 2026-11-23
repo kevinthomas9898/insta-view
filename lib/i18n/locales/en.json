@@ -1,0 +1,58 @@
+{
+  "nav": {
+    "stories": "Stories",
+    "highlights": "Highlights",
+    "reels": "Reels",
+    "posts": "Posts",
+    "profile": "Profile",
+    "blog": "Blog",
+    "faq": "FAQ",
+    "anonymous": "100% Anonymous",
+    "noLogin": "No Login Required"
+  },
+  "home": {
+    "metaTitle": "Anonymous Instagram Story Viewer & Downloader — InstaView",
+    "metaDescription": "Watch Instagram stories, highlights, reels, and posts anonymously without an account or login. Download HD media securely with 100% privacy and zero trace.",
+    "heroBadge": "100% Anonymous & Secure — No Login Required",
+    "heroTitle": "Watch Instagram Stories ",
+    "heroHighlight": "Anonymously",
+    "heroDescription": "View public Instagram stories, highlights, reels, and posts without an account or login. Save high-definition photos and MP4 videos with 100% privacy and zero digital footprint.",
+    "searchPlaceholder": "Enter username or instagram.com/profile..."
+  },
+  "stories": {
+    "metaTitle": "Anonymous Instagram Story Viewer — Watch Stories Without Login",
+    "metaDescription": "Watch public Instagram stories 100% anonymously. View active 24-hour stories, photo updates, and video slides without being seen or leaving a trace.",
+    "heroBadge": "Stealth Story Viewer & Archiver",
+    "heroTitle": "Watch Instagram Stories ",
+    "heroHighlight": "Without Leaving a Trace",
+    "heroDescription": "Stream public stories in crisp high definition without appearing on their view history. Download story photos and videos before they expire in 24 hours.",
+    "searchPlaceholder": "Enter username to view active stories..."
+  },
+  "reels": {
+    "metaTitle": "Anonymous Instagram Reels Viewer & Downloader — InstaView",
+    "metaDescription": "Watch and download Instagram reels in full audio and HD MP4 quality anonymously. No login or app installation required.",
+    "heroBadge": "High-Bitrate MP4 Video Downloader",
+    "heroTitle": "Watch & Download ",
+    "heroHighlight": "Instagram Reels Anonymously",
+    "heroDescription": "Stream public Instagram reels in crisp HD with full audio track playback. Save original high-bitrate MP4 videos without watermarks to your gallery.",
+    "searchPlaceholder": "Enter username or reel link to view and download..."
+  },
+  "storySaver": {
+    "metaTitle": "Story Saver — Free Anonymous Instagram Story Saver & Downloader",
+    "metaDescription": "Save and download Instagram stories anonymously with Story Saver by InstaView. Watch active 24-hour stories and permanent highlights without an account.",
+    "heroBadge": "The #1 Free Instagram Story Saver",
+    "heroTitle": "Story Saver — Save Instagram Stories ",
+    "heroHighlight": "100% Anonymously",
+    "heroDescription": "Save active 24-hour stories, photo updates, and permanent highlight reels in full original resolution without leaving a trace. No login required.",
+    "searchPlaceholder": "Enter username to save stories anonymously..."
+  },
+  "instagramToMp4": {
+    "metaTitle": "Instagram to MP4 Converter & Downloader in HD 1080p — InstaView",
+    "metaDescription": "Convert and download Instagram Reels, Stories, and Videos to original high-bitrate MP4 with crystal-clear audio. 100% free and anonymous.",
+    "heroBadge": "Direct 1080p / 4K MP4 Video Converter",
+    "heroTitle": "Convert Instagram to ",
+    "heroHighlight": "MP4 in Original HD",
+    "heroDescription": "Extract and download Instagram Reels, Stories, and video posts directly to original high-bitrate MP4 files with crystal-clear audio. 100% free, zero compression.",
+    "searchPlaceholder": "Enter username or paste Instagram link to convert to MP4..."
+  }
+}
