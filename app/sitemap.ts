@@ -113,9 +113,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 
-  // Localized Multi-Language Pages (10 Languages x 5 Core Features = 50 URLs)
+  // Localized Multi-Language Pages (10 Languages x 8 Core Features = 80 URLs)
   const localizedPages: MetadataRoute.Sitemap = [];
-  const localizedFeatures = ['', '/stories', '/reels', '/story-saver', '/instagram-to-mp4'];
+  const localizedFeatures = [
+    '',
+    '/stories',
+    '/highlights',
+    '/reels',
+    '/posts',
+    '/profile-viewer',
+    '/story-saver',
+    '/instagram-to-mp4',
+  ];
 
   for (const lang of SUPPORTED_LANGS) {
     for (const feature of localizedFeatures) {
