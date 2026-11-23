@@ -99,23 +99,30 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
 
   if (!currentStory) return null;
 
-  const mediaSrc = `/api/media?url=${encodeURIComponent(currentStory.url)}`;
-  const downloadUrl =
-    currentStory.downloadUrl ||
-    `/api/media?url=${encodeURIComponent(currentStory.url)}&download=true&filename=story_${currentStory.id}.${currentStory.type === 'video' ? 'mp4' : 'jpg'}`;
+  const displayUrl = `/api/media?url=${encodeURIComponent(currentStory.url)}`;
 
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center select-none"
+      className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center p-0 sm:p-4 select-none"
     >
-      {/* Story Stage */}
-      <div className="relative w-full max-w-sm sm:max-w-md h-[90vh] bg-black rounded-lg overflow-hidden flex flex-col justify-between shadow-2xl">
-        {/* Top Progress Bars */}
-        <div className="absolute top-0 inset-x-0 z-20 p-3 bg-gradient-to-b from-black/70 to-transparent">
-          <div className="flex gap-1 mb-2">
-            {stories.map((story, idx) => (
-              <div key={story.id || idx} className="h-1 flex-1 bg-white/30 rounded-full overflow-hidden">
+      {/* Background click to dismiss */}
+      <div className="absolute inset-0" onClick={onClose} />
+
+      {/* Main Story Container - 9:16 Aspect Ratio */}
+      <div
+        className="relative w-full max-w-sm sm:max-w-md h-full sm:h-[88vh] bg-zinc-950 sm:rounded-2xl overflow-hidden flex flex-col justify-between shadow-2xl z-10 border border-zinc-800"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Top Header: Progress Bars & Controls */}
+        <div className="absolute top-0 inset-x-0 z-30 p-3 bg-gradient-to-b from-black/80 via-black/40 to-transparent flex flex-col gap-2">
+          {/* Progress Bars for all stories */}
+          <div className="flex gap-1 w-full">
+            {stories.map((st, idx) => (
+              <div
+                key={st.id || idx}
+                className="h-1 flex-1 bg-white/20 rounded-full overflow-hidden"
+              >
                 <div
                   className="h-full bg-white transition-all duration-75"
                   style={{
@@ -131,24 +138,16 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
             ))}
           </div>
 
-          {/* Top Controls Bar */}
-          <div className="flex items-center justify-between text-white text-xs">
-            <span className="font-medium opacity-90">
+          {/* Controls Bar */}
+          <div className="flex items-center justify-between text-white text-xs mt-1">
+            <span className="font-semibold tracking-wide">
               Story {currentIndex + 1} of {stories.length}
-              {currentStory.timestamp && (
-                <span className="ml-2 opacity-60">
-                  {new Date(currentStory.timestamp).toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </span>
-              )}
             </span>
 
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsPlaying((p) => !p)}
-                className="p-1.5 hover:bg-white/20 rounded"
+                className="p-1.5 hover:bg-white/20 rounded-full transition-colors cursor-pointer"
                 title={isPlaying ? 'Pause' : 'Play'}
               >
                 {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
@@ -157,7 +156,7 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
               {currentStory.type === 'video' && (
                 <button
                   onClick={() => setIsMuted((m) => !m)}
-                  className="p-1.5 hover:bg-white/20 rounded"
+                  className="p-1.5 hover:bg-white/20 rounded-full transition-colors cursor-pointer"
                   title={isMuted ? 'Unmute' : 'Mute'}
                 >
                   {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
@@ -165,53 +164,55 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
               )}
 
               <a
-                href={downloadUrl}
+                href={
+                  currentStory.downloadUrl ||
+                  `/api/media?url=${encodeURIComponent(currentStory.url)}&download=true&filename=story_${currentStory.id}.${currentStory.type === 'video' ? 'mp4' : 'jpg'}`
+                }
                 download
-                className="p-1.5 hover:bg-white/20 rounded flex items-center gap-1 text-white"
-                title="Download this story"
+                className="p-1.5 hover:bg-white/20 rounded-full transition-colors cursor-pointer text-white"
+                title="Download Story"
               >
                 <Download className="w-4 h-4" />
               </a>
 
               <button
                 onClick={toggleFullscreen}
-                className="p-1.5 hover:bg-white/20 rounded"
-                title="Fullscreen"
+                className="p-1.5 hover:bg-white/20 rounded-full transition-colors cursor-pointer hidden sm:inline-flex"
+                title="Toggle Fullscreen"
               >
                 <Maximize className="w-4 h-4" />
               </button>
 
               <button
                 onClick={onClose}
-                className="p-1.5 hover:bg-white/20 rounded"
+                className="p-1.5 hover:bg-white/20 rounded-full transition-colors cursor-pointer"
                 title="Close"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
           </div>
         </div>
 
-        {/* Media Render (Image or Video) */}
-        <div className="relative flex-1 flex items-center justify-center bg-black overflow-hidden">
+        {/* Media Content Area */}
+        <div className="relative flex-1 bg-black flex items-center justify-center overflow-hidden">
           {currentStory.type === 'video' ? (
             <video
               ref={videoRef}
-              src={mediaSrc}
-              autoPlay
-              playsInline
+              key={currentStory.id || currentIndex}
+              src={displayUrl}
+              autoPlay={isPlaying}
               muted={isMuted}
-              preload="metadata"
+              playsInline
               className="w-full h-full object-contain"
-              onTimeUpdate={(e) => {
-                const vid = e.currentTarget;
-                if (vid.duration) {
-                  setProgress((vid.currentTime / vid.duration) * 100);
+              onTimeUpdate={() => {
+                if (videoRef.current && videoRef.current.duration) {
+                  const p = (videoRef.current.currentTime / videoRef.current.duration) * 100;
+                  setProgress(p);
                 }
               }}
               onEnded={handleNext}
               onError={(e) => {
-                // Fallback direct URL if proxy fails
                 if (e.currentTarget.src !== currentStory.url) {
                   e.currentTarget.src = currentStory.url;
                 }
@@ -219,8 +220,9 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
             />
           ) : (
             <img
-              src={mediaSrc}
-              alt="Instagram Story"
+              key={currentStory.id || currentIndex}
+              src={displayUrl}
+              alt="Story"
               referrerPolicy="no-referrer"
               className="w-full h-full object-contain"
               onError={(e) => {
@@ -231,37 +233,36 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
             />
           )}
 
-          {/* Navigation Click Zones */}
+          {/* Left/Right Tap Area for Touch and Click Navigation */}
           <div
-            className="absolute left-0 inset-y-0 w-1/3 cursor-pointer z-10"
+            className="absolute left-0 inset-y-0 w-1/3 cursor-pointer z-20"
             onClick={handlePrev}
-            title="Previous Story"
           />
           <div
-            className="absolute right-0 inset-y-0 w-1/3 cursor-pointer z-10"
+            className="absolute right-0 inset-y-0 w-1/3 cursor-pointer z-20"
             onClick={handleNext}
-            title="Next Story"
           />
         </div>
 
-        {/* Previous/Next Nav Arrows */}
+        {/* Desktop Side Chevron Arrows */}
         {currentIndex > 0 && (
           <button
             onClick={handlePrev}
-            className="absolute -left-12 top-1/2 -translate-y-1/2 hidden sm:flex items-center justify-center w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white"
-            title="Previous"
+            className="hidden sm:flex absolute -left-14 top-1/2 -translate-y-1/2 p-3 rounded-full bg-zinc-900/80 hover:bg-zinc-800 text-white border border-zinc-700 transition-colors z-20 cursor-pointer"
+            title="Previous Story"
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
         )}
-
-        <button
-          onClick={handleNext}
-          className="absolute -right-12 top-1/2 -translate-y-1/2 hidden sm:flex items-center justify-center w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white"
-          title="Next"
-        >
-          <ChevronRight className="w-6 h-6" />
-        </button>
+        {currentIndex < stories.length - 1 && (
+          <button
+            onClick={handleNext}
+            className="hidden sm:flex absolute -right-14 top-1/2 -translate-y-1/2 p-3 rounded-full bg-zinc-900/80 hover:bg-zinc-800 text-white border border-zinc-700 transition-colors z-20 cursor-pointer"
+            title="Next Story"
+          >
+            <ChevronRight className="w-6 h-6" />
+          </button>
+        )}
       </div>
     </div>
   );

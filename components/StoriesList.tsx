@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { StoryResult } from '@/lib/instagram/types';
 import { StoriesViewer } from './StoriesViewer';
-import { PlaySquare, Download, Clock } from 'lucide-react';
+import { PlaySquare, Download, Clock, Sparkles } from 'lucide-react';
 
 interface StoriesListProps {
   stories: StoryResult[];
@@ -15,10 +15,10 @@ export function StoriesList({ stories, username }: StoriesListProps) {
 
   if (stories.length === 0) {
     return (
-      <div className="bg-white border border-gray-200 rounded p-12 text-center text-gray-500">
-        <PlaySquare className="w-10 h-10 mx-auto mb-2 text-gray-400 stroke-1" />
-        <p className="text-base font-medium">No active stories</p>
-        <p className="text-sm mt-1 text-gray-400">This account has no active 24-hour stories published right now.</p>
+      <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-12 text-center text-zinc-400 backdrop-blur-sm">
+        <PlaySquare className="w-10 h-10 mx-auto mb-2 text-zinc-600 stroke-1" />
+        <p className="text-base font-semibold text-zinc-200">No active stories</p>
+        <p className="text-sm mt-1 text-zinc-500">This account has no active 24-hour stories published right now.</p>
       </div>
     );
   }
@@ -26,13 +26,17 @@ export function StoriesList({ stories, username }: StoriesListProps) {
   return (
     <>
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-gray-700">
-          Active 24-Hour Stories ({stories.length})
+        <h2 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
+          <span>Active 24-Hour Stories</span>
+          <span className="px-2 py-0.5 rounded-full bg-pink-500/10 text-pink-400 text-xs font-bold border border-pink-500/20">
+            {stories.length}
+          </span>
         </h2>
         <button
           onClick={() => setSelectedStoryIndex(0)}
-          className="px-3 py-1.5 bg-gray-900 hover:bg-black text-white text-xs font-medium rounded transition-colors"
+          className="px-4 py-2 bg-gradient-to-r from-pink-600 via-rose-600 to-amber-600 hover:opacity-95 text-white text-xs font-semibold rounded-xl shadow-lg shadow-rose-950/40 transition-all cursor-pointer flex items-center gap-1.5"
         >
+          <Sparkles className="w-3.5 h-3.5" />
           Watch All Stories
         </button>
       </div>
@@ -48,14 +52,14 @@ export function StoriesList({ stories, username }: StoriesListProps) {
             <div
               key={story.id || idx}
               onClick={() => setSelectedStoryIndex(idx)}
-              className="group relative bg-gray-900 rounded overflow-hidden cursor-pointer aspect-[9/16] shadow-sm hover:shadow-md transition-all border border-gray-200"
+              className="group relative bg-zinc-950 rounded-2xl overflow-hidden cursor-pointer aspect-[9/16] shadow-lg hover:shadow-2xl transition-all border border-zinc-800 hover:border-zinc-700"
             >
               {thumbSrc ? (
                 <img
                   src={displayThumb}
                   alt={`Story ${idx + 1}`}
                   referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   onError={(e) => {
                     if (thumbSrc && e.currentTarget.src !== thumbSrc) {
                       e.currentTarget.src = thumbSrc;
@@ -72,28 +76,28 @@ export function StoriesList({ stories, username }: StoriesListProps) {
                 />
               )}
 
-              {/* Badges */}
-              <div className="absolute top-2 left-2 z-10">
-                <span className="px-1.5 py-0.5 bg-black/60 text-white rounded text-[10px] font-medium tracking-wide">
+              {/* Type Badge */}
+              <div className="absolute top-2.5 left-2.5 z-10">
+                <span className="px-2 py-0.5 bg-zinc-950/80 backdrop-blur-md text-white rounded-md text-[10px] font-bold tracking-wider border border-white/10">
                   {story.type.toUpperCase()}
                 </span>
               </div>
 
-              {/* Time remaining */}
-              <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/80 to-transparent text-white text-[11px] flex items-center justify-between">
-                <span className="flex items-center gap-1 opacity-90">
-                  <Clock className="w-3 h-3" />
+              {/* Bottom overlay with Story # & Download */}
+              <div className="absolute inset-x-0 bottom-0 p-2.5 bg-gradient-to-t from-black/90 via-black/50 to-transparent text-white text-[11px] flex items-center justify-between">
+                <span className="flex items-center gap-1 opacity-90 font-medium">
+                  <Clock className="w-3 h-3 text-pink-400" />
                   Story #{idx + 1}
                 </span>
                 <a
                   href={
                     story.downloadUrl ||
-                    `/api/media?url=${encodeURIComponent(story.url)}&download=true&filename=story_${story.id}.${story.type === 'video' ? 'mp4' : 'jpg'}`
+                    `/api/media?url=${encodeURIComponent(story.url)}&download=true&filename=story_${username}_${story.id}.${story.type === 'video' ? 'mp4' : 'jpg'}`
                   }
                   download
                   onClick={(e) => e.stopPropagation()}
-                  className="p-1 hover:bg-white/20 rounded text-white"
-                  title="Download"
+                  className="p-1.5 hover:bg-white/20 rounded-lg text-white transition-colors"
+                  title="Download Story"
                 >
                   <Download className="w-3.5 h-3.5" />
                 </a>

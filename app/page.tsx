@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Profile,
   StoryResult,
@@ -15,11 +15,94 @@ import { StoriesList } from '@/components/StoriesList';
 import { HighlightsViewer } from '@/components/HighlightsViewer';
 import { PostsGrid } from '@/components/PostsGrid';
 import { ReelsGrid } from '@/components/ReelsGrid';
-import { Search, Loader2, AlertCircle, Info, Sparkles } from 'lucide-react';
+import {
+  Search,
+  Loader2,
+  AlertCircle,
+  Shield,
+  EyeOff,
+  Download,
+  Smartphone,
+  Zap,
+  Lock,
+  ChevronDown,
+  Sparkles,
+  PlaySquare,
+  Bookmark,
+  Grid,
+  Film,
+  CheckCircle2,
+  HelpCircle,
+} from 'lucide-react';
+
+const POPULAR_SUGGESTIONS = [
+  'cristiano',
+  'leomessi',
+  'selenagomez',
+  'natgeo',
+  'nasa',
+  'shraddhakapoor',
+];
+
+interface FaqItem {
+  question: string;
+  answer: string;
+  category?: string;
+}
+
+const FAQ_ITEMS: FaqItem[] = [
+  {
+    question: 'Can the account owner see that I viewed their Instagram story?',
+    answer:
+      'No. Absolutely not. When you view a story through InstaView, our secure cloud servers request the publicly available media directly from Meta’s content delivery network on your behalf. Your personal identity, IP address, and Instagram profile are never transmitted. The user will never see your name in their "Seen by" viewer list.',
+    category: 'Privacy & Anonymity',
+  },
+  {
+    question: 'Do I need to log in or create an Instagram account to use InstaView?',
+    answer:
+      'No account, registration, or password is required. You can watch stories, highlights, and reels 100% anonymously from any web browser without ever signing into Instagram. This ensures your personal account remains completely safe and unlinked.',
+    category: 'Usage & Access',
+  },
+  {
+    question: 'Can I view stories or posts from private Instagram accounts?',
+    answer:
+      'No. InstaView strictly adheres to ethical data standards and Meta access boundaries. We only retrieve media from publicly accessible Instagram profiles. Private profiles are protected by Meta’s end-to-end authentication controls and cannot be viewed anonymously.',
+    category: 'Privacy & Anonymity',
+  },
+  {
+    question: 'How do I download Instagram stories, reels, and photos?',
+    answer:
+      'Simply search for the username, switch to the Stories, Highlights, Posts, or Reels tab, and click the direct Download button on any media card. The media file will save directly to your smartphone, tablet, or desktop computer in original high-definition MP4 or JPG format without watermarks.',
+    category: 'Downloads',
+  },
+  {
+    question: 'Can I watch Instagram Highlights after the 24-hour story expires?',
+    answer:
+      'Yes! Instagram Highlights are saved story albums curated by creators. As long as the profile is public, you can browse all highlight albums, view individual story slides, and download them anytime.',
+    category: 'Features',
+  },
+  {
+    question: 'Will the creator receive a notification if I download their content?',
+    answer:
+      'No. Instagram does not notify users when someone downloads or saves public photos, reels, or stories. All interactions through InstaView remain strictly confidential and untracked.',
+    category: 'Privacy & Anonymity',
+  },
+  {
+    question: 'Does InstaView work on iPhone, Android, and PC?',
+    answer:
+      'Yes. InstaView is a fully responsive Progressive Web App that works seamlessly across all platforms, including iOS (Safari), Android (Chrome, Samsung Internet), macOS, Windows, and Linux.',
+    category: 'Usage & Access',
+  },
+  {
+    question: 'Why does an account display "No active stories"?',
+    answer:
+      'Instagram stories naturally disappear 24 hours after publication. If a user has not posted a new story within the last 24 hours, the Stories tab will indicate that no active stories are available. You can still view their permanent Highlights, Posts, and Reels.',
+    category: 'Features',
+  },
+];
 
 export default function Home() {
   const [usernameInput, setUsernameInput] = useState('');
-  const [isDemoMode, setIsDemoMode] = useState(false);
   const [searchedUsername, setSearchedUsername] = useState('');
 
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
@@ -29,7 +112,7 @@ export default function Home() {
   const [profileMetadata, setProfileMetadata] = useState<ProviderMetadata | undefined>(undefined);
   const [profileError, setProfileError] = useState<string | null>(null);
 
-  const [activeTab, setActiveTab] = useState<TabKey>('posts');
+  const [activeTab, setActiveTab] = useState<TabKey>('stories');
 
   const [stories, setStories] = useState<StoryResult[]>([]);
   const [highlights, setHighlights] = useState<HighlightResult[]>([]);
@@ -41,16 +124,20 @@ export default function Home() {
   const [postsNextMaxId, setPostsNextMaxId] = useState<string | null>(null);
   const [isLoadingMorePosts, setIsLoadingMorePosts] = useState(false);
 
-  // Auto-search a sample demo profile on initial visit so the user immediately sees a working app
-  useEffect(() => {
-    handleSearch('photography_daily', true);
-  }, []);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
-  const handleSearch = async (targetUsername?: string, forceDemo?: boolean) => {
-    const userToFetch = (targetUsername || usernameInput).trim().replace(/^@/, '');
+  const cleanUsername = (input: string) => {
+    let cleaned = input.trim();
+    cleaned = cleaned.replace(/^https?:\/\/(www\.)?instagram\.com\//i, '');
+    cleaned = cleaned.replace(/\/.*$/, '');
+    cleaned = cleaned.replace(/^@/, '');
+    return cleaned;
+  };
+
+  const handleSearch = async (targetUsername?: string) => {
+    const raw = targetUsername || usernameInput;
+    const userToFetch = cleanUsername(raw);
     if (!userToFetch) return;
-
-    const demoFlag = forceDemo !== undefined ? forceDemo : isDemoMode;
 
     setSearchedUsername(userToFetch);
     setIsLoadingProfile(true);
@@ -64,13 +151,11 @@ export default function Home() {
     setTabError(null);
 
     try {
-      const res = await fetch(
-        `/api/profile?username=${encodeURIComponent(userToFetch)}${demoFlag ? '&demo=true' : ''}`
-      );
+      const res = await fetch(`/api/profile?username=${encodeURIComponent(userToFetch)}`);
       const json = await res.json();
 
       if (!res.ok || !json.success) {
-        setProfileError(json.error?.message || 'Failed to retrieve profile');
+        setProfileError(json.error?.message || 'Target profile or content not found');
         setIsLoadingProfile(false);
         return;
       }
@@ -78,23 +163,21 @@ export default function Home() {
       setProfile(json.data);
       setProfileMetadata(json.metadata);
 
-      // Once profile loads, fetch active tab data
-      fetchTabData(userToFetch, activeTab, demoFlag);
+      // Once profile loads, automatically fetch active tab data
+      fetchTabData(userToFetch, activeTab);
     } catch {
-      setProfileError('Network error connecting to API');
+      setProfileError('Network error connecting to Instagram service. Please try again.');
     } finally {
       setIsLoadingProfile(false);
     }
   };
 
-  const fetchTabData = async (username: string, tab: TabKey, demoFlag: boolean) => {
+  const fetchTabData = async (username: string, tab: TabKey) => {
     setIsLoadingTab(true);
     setTabError(null);
 
     try {
-      const res = await fetch(
-        `/api/${tab}?username=${encodeURIComponent(username)}${demoFlag ? '&demo=true' : ''}`
-      );
+      const res = await fetch(`/api/${tab}?username=${encodeURIComponent(username)}`);
       const json = await res.json();
 
       if (!res.ok || !json.success) {
@@ -125,7 +208,7 @@ export default function Home() {
 
     try {
       const res = await fetch(
-        `/api/posts?username=${encodeURIComponent(searchedUsername)}&maxId=${encodeURIComponent(postsNextMaxId)}${isDemoMode ? '&demo=true' : ''}`
+        `/api/posts?username=${encodeURIComponent(searchedUsername)}&maxId=${encodeURIComponent(postsNextMaxId)}`
       );
       const json = await res.json();
 
@@ -144,7 +227,6 @@ export default function Home() {
     setActiveTab(newTab);
     if (!searchedUsername) return;
 
-    // Check if we already have data loaded for this tab
     const hasData =
       (newTab === 'stories' && stories.length > 0) ||
       (newTab === 'highlights' && highlights.length > 0) ||
@@ -152,146 +234,155 @@ export default function Home() {
       (newTab === 'reels' && reels.length > 0);
 
     if (!hasData) {
-      fetchTabData(searchedUsername, newTab, isDemoMode);
+      fetchTabData(searchedUsername, newTab);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header Bar */}
-      <header className="bg-white border-b border-gray-200 py-4 px-6 sticky top-0 z-30 shadow-xs">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-gray-900 text-lg tracking-tight">
-              InstaView <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600 font-mono font-normal">v1.0-backend</span>
-            </span>
-            <span className="text-xs text-gray-400 hidden md:inline">| Anonymous Public Instagram Media Viewer</span>
-          </div>
+  const toggleFaq = (index: number) => {
+    setOpenFaqIndex((prev) => (prev === index ? null : index));
+  };
 
-          {/* Quick Demo Mode Switch */}
-          <div className="flex items-center gap-2 text-xs">
-            <button
-              onClick={() => {
-                const nextState = !isDemoMode;
-                setIsDemoMode(nextState);
-                if (searchedUsername) {
-                  handleSearch(searchedUsername, nextState);
-                }
-              }}
-              className={`px-3 py-1.5 rounded flex items-center gap-1.5 font-medium transition-colors border ${
-                isDemoMode
-                  ? 'bg-amber-100 border-amber-300 text-amber-900'
-                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              {isDemoMode ? 'Demo Mode Active' : 'Enable Demo Mode'}
-            </button>
+  return (
+    <div className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col font-sans">
+      {/* Sleek Dark Header */}
+      <header className="sticky top-0 z-30 bg-[#09090b]/80 backdrop-blur-md border-b border-zinc-800/80 px-4 sm:px-8 py-3.5 transition-all">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <a
+            href="/"
+            className="flex items-center gap-2.5 group cursor-pointer"
+            onClick={(e) => {
+              if (profile) {
+                e.preventDefault();
+                setProfile(null);
+                setSearchedUsername('');
+                setUsernameInput('');
+              }
+            }}
+          >
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-amber-500 via-rose-500 to-fuchsia-600 flex items-center justify-center shadow-lg shadow-rose-950/40 group-hover:scale-105 transition-transform">
+              <EyeOff className="w-4 h-4 text-white" />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-extrabold text-lg tracking-tight text-white flex items-center gap-1.5">
+                Insta<span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500">View</span>
+              </span>
+            </div>
+          </a>
+
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              100% Anonymous
+            </span>
+            <span className="text-xs font-medium text-zinc-400 px-3 py-1 rounded-full bg-zinc-800/80 border border-zinc-700/60 hidden md:inline-flex">
+              No Login Required
+            </span>
           </div>
         </div>
       </header>
 
       {/* Main Content Area */}
-      <main className="max-w-5xl w-full mx-auto p-4 sm:p-6 flex-1">
-        {/* Search Input Box */}
-        <div className="bg-white border border-gray-200 rounded p-4 mb-6 shadow-xs">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSearch();
-            }}
-            className="flex flex-col sm:flex-row gap-3"
-          >
-            <div className="relative flex-1">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 font-medium">
-                @
-              </span>
-              <input
-                type="text"
-                value={usernameInput}
-                onChange={(e) => setUsernameInput(e.target.value)}
-                placeholder="Enter public username, e.g. instagram or natgeo"
-                className="w-full pl-8 pr-4 py-2.5 bg-gray-50 border border-gray-300 rounded text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 focus:bg-white"
-              />
+      <main className="max-w-6xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex-1 flex flex-col">
+        {/* Hero & Search Section */}
+        <section className={`transition-all duration-300 ${profile ? 'mb-6' : 'my-6 sm:my-12 text-center'}`}>
+          {!profile && (
+            <div className="max-w-3xl mx-auto mb-8">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-xs text-zinc-300 font-medium mb-4 shadow-sm">
+                <Sparkles className="w-3.5 h-3.5 text-pink-500" />
+                <span>Next-Gen Stealth Instagram Media Viewer & Downloader</span>
+              </div>
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight mb-4">
+                Watch Instagram Stories{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-rose-500 to-amber-400">
+                  Anonymously
+                </span>
+              </h1>
+              <p className="text-sm sm:text-base text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+                View public Instagram stories, highlights, reels, and posts without an account or login.
+                Save high-definition photos and MP4 videos with 100% privacy and zero digital footprint.
+              </p>
             </div>
+          )}
 
-            <button
-              type="submit"
-              disabled={isLoadingProfile}
-              className="px-6 py-2.5 bg-gray-900 hover:bg-black text-white text-sm font-medium rounded transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+          {/* Search Box */}
+          <div className="max-w-2xl mx-auto">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSearch();
+              }}
+              className="relative flex flex-col sm:flex-row gap-2.5 p-1.5 sm:p-2 bg-zinc-900/90 border border-zinc-800 focus-within:border-pink-500/80 focus-within:ring-2 focus-within:ring-pink-500/20 rounded-2xl shadow-2xl backdrop-blur-md transition-all"
             >
-              {isLoadingProfile ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Retrieving...
-                </>
-              ) : (
-                <>
-                  <Search className="w-4 h-4" />
-                  View Public Profile
-                </>
-              )}
-            </button>
-          </form>
+              <div className="relative flex-1 flex items-center">
+                <span className="absolute left-4 text-zinc-500 font-bold text-base">@</span>
+                <input
+                  type="text"
+                  value={usernameInput}
+                  onChange={(e) => setUsernameInput(e.target.value)}
+                  placeholder="Enter username or instagram.com/profile..."
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck="false"
+                  className="w-full pl-9 pr-4 py-3 bg-transparent text-sm sm:text-base text-white placeholder-zinc-500 focus:outline-none"
+                />
+              </div>
 
-          {/* Quick Preset Buttons */}
-          <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2 text-xs text-gray-500 flex-wrap">
-            <span>Quick test:</span>
-            <button
-              type="button"
-              onClick={() => {
-                setUsernameInput('instagram');
-                setIsDemoMode(false);
-                handleSearch('instagram', false);
-              }}
-              className="text-blue-600 hover:underline font-mono"
-            >
-              @instagram (Live SSR)
-            </button>
-            <span>•</span>
-            <button
-              type="button"
-              onClick={() => {
-                setUsernameInput('natgeo');
-                setIsDemoMode(false);
-                handleSearch('natgeo', false);
-              }}
-              className="text-blue-600 hover:underline font-mono"
-            >
-              @natgeo (Live SSR)
-            </button>
-            <span>•</span>
-            <button
-              type="button"
-              onClick={() => {
-                setUsernameInput('photography_daily');
-                setIsDemoMode(true);
-                handleSearch('photography_daily', true);
-              }}
-              className="text-amber-700 hover:underline font-mono font-medium"
-            >
-              @photography_daily (Full Demo Media & Video)
-            </button>
+              <button
+                type="submit"
+                disabled={isLoadingProfile}
+                className="px-6 py-3 bg-gradient-to-r from-pink-600 via-rose-600 to-amber-600 hover:opacity-95 text-white text-sm font-bold rounded-xl shadow-lg shadow-rose-950/40 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+              >
+                {isLoadingProfile ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    <span>Searching...</span>
+                  </>
+                ) : (
+                  <>
+                    <Search className="w-4 h-4" />
+                    <span>View Anonymously</span>
+                  </>
+                )}
+              </button>
+            </form>
+
+            {/* Popular / Trending Suggestions */}
+            <div className="mt-3.5 flex items-center justify-center gap-2 text-xs text-zinc-500 flex-wrap">
+              <span className="font-medium text-zinc-400">Popular:</span>
+              {POPULAR_SUGGESTIONS.map((user) => (
+                <button
+                  key={user}
+                  type="button"
+                  onClick={() => {
+                    setUsernameInput(user);
+                    handleSearch(user);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800/80 transition-colors cursor-pointer text-xs font-medium"
+                >
+                  @{user}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        </section>
 
         {/* Profile Error Banner */}
         {profileError && (
-          <div className="p-4 mb-6 bg-red-50 border border-red-200 rounded text-red-900 text-sm flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+          <div className="max-w-2xl mx-auto w-full p-4 mb-8 bg-rose-950/40 border border-rose-900/60 rounded-2xl text-rose-200 text-sm flex items-start gap-3 backdrop-blur-sm animate-fade-in">
+            <AlertCircle className="w-5 h-5 text-rose-400 flex-shrink-0 mt-0.5" />
             <div>
-              <strong className="font-semibold">Retrieval Error: </strong>
+              <strong className="font-semibold text-rose-100">Unable to retrieve profile: </strong>
               <span>{profileError}</span>
-              <p className="text-xs text-red-700 mt-1">
-                Make sure the profile is public and exists. If rate-limited, switch to Demo Mode to test media components.
+              <p className="text-xs text-rose-300/80 mt-1.5 leading-relaxed">
+                Please verify that the username is spelled correctly and the account is public. Private Instagram accounts cannot be accessed.
               </p>
             </div>
           </div>
         )}
 
-        {/* Profile Content */}
+        {/* Active Profile Results */}
         {profile && (
-          <div>
+          <div className="w-full animate-fade-in">
             <ProfileHeader profile={profile} metadata={profileMetadata} />
 
             <TabsNav
@@ -307,37 +398,25 @@ export default function Home() {
 
             {/* Tab Loading Spinner */}
             {isLoadingTab && (
-              <div className="bg-white border border-gray-200 rounded p-12 text-center text-gray-500 flex flex-col items-center justify-center gap-2">
-                <Loader2 className="w-6 h-6 animate-spin text-gray-800" />
-                <p className="text-sm font-medium">Retrieving {activeTab} media...</p>
+              <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-16 text-center text-zinc-400 flex flex-col items-center justify-center gap-3 backdrop-blur-sm">
+                <Loader2 className="w-8 h-8 animate-spin text-pink-500" />
+                <p className="text-sm font-semibold text-zinc-200">
+                  Retrieving {activeTab} media anonymously...
+                </p>
+                <p className="text-xs text-zinc-500">Connecting to secure proxy mirror</p>
               </div>
             )}
 
-            {/* Tab Specific Error / Unsupported Notice */}
+            {/* Tab Specific Notice / Error */}
             {!isLoadingTab && tabError && (
-              <div className="bg-white border border-gray-200 rounded p-8 text-center">
-                <Info className="w-8 h-8 mx-auto text-amber-600 mb-2" />
-                <h3 className="font-semibold text-gray-900 text-sm mb-1">
-                  {tabError.code === 'UNSUPPORTED_FEATURE'
-                    ? 'Authenticated Provider Required for Live Stories/Reels'
-                    : 'Notice'}
+              <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-10 text-center backdrop-blur-sm">
+                <AlertCircle className="w-10 h-10 mx-auto text-amber-500 mb-3" />
+                <h3 className="font-bold text-zinc-100 text-base mb-1">
+                  Content Notice
                 </h3>
-                <p className="text-xs text-gray-600 max-w-md mx-auto mb-4 leading-relaxed">
+                <p className="text-xs text-zinc-400 max-w-md mx-auto leading-relaxed">
                   {tabError.message}
                 </p>
-
-                {tabError.code === 'UNSUPPORTED_FEATURE' && (
-                  <button
-                    onClick={() => {
-                      setIsDemoMode(true);
-                      handleSearch(searchedUsername, true);
-                    }}
-                    className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded inline-flex items-center gap-1.5 transition-colors"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    Load with Demo Media to Test Video Playback & Downloads
-                  </button>
-                )}
               </div>
             )}
 
@@ -366,14 +445,233 @@ export default function Home() {
             )}
           </div>
         )}
+
+        {/* Informational SEO & AEO Content Sections (Visible on Home & for Crawlers) */}
+        {!profile && (
+          <div className="mt-12 space-y-16">
+            {/* Features Grid */}
+            <section>
+              <div className="text-center mb-8">
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                  Why InstaView Ranks #1 for Anonymous Viewing
+                </h2>
+                <p className="text-sm text-zinc-400 mt-2 max-w-xl mx-auto">
+                  Engineered with military-grade proxy routing and direct CDN media streaming for maximum privacy and speed.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-zinc-900/60 border border-zinc-800 p-6 rounded-2xl backdrop-blur-sm hover:border-zinc-700 transition-all">
+                  <div className="w-12 h-12 rounded-xl bg-pink-500/10 text-pink-400 border border-pink-500/20 flex items-center justify-center mb-4">
+                    <EyeOff className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-base font-bold text-white mb-2">100% Anonymous</h3>
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    Watch stories in stealth mode. The creator will never see your username in their viewer list. No traces or digital footprints left behind.
+                  </p>
+                </div>
+
+                <div className="bg-zinc-900/60 border border-zinc-800 p-6 rounded-2xl backdrop-blur-sm hover:border-zinc-700 transition-all">
+                  <div className="w-12 h-12 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center mb-4">
+                    <Lock className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-base font-bold text-white mb-2">Zero Login Required</h3>
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    Never risk your account. No Instagram credentials, passwords, or app installations needed. Browse all public accounts freely.
+                  </p>
+                </div>
+
+                <div className="bg-zinc-900/60 border border-zinc-800 p-6 rounded-2xl backdrop-blur-sm hover:border-zinc-700 transition-all">
+                  <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center mb-4">
+                    <Download className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-base font-bold text-white mb-2">Original HD Downloads</h3>
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    Save photos, reels, and stories in full original resolution (1080p and 4K MP4) directly to your device without quality compression.
+                  </p>
+                </div>
+
+                <div className="bg-zinc-900/60 border border-zinc-800 p-6 rounded-2xl backdrop-blur-sm hover:border-zinc-700 transition-all">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center mb-4">
+                    <Smartphone className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-base font-bold text-white mb-2">All Devices & OS</h3>
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    Optimized for lightning-fast playback on iOS (iPhone/iPad), Android, macOS, Windows, and Linux. No app downloads required.
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            {/* How It Works (HowTo 3 Steps) */}
+            <section className="bg-zinc-900/40 border border-zinc-800/80 rounded-3xl p-6 sm:p-10 backdrop-blur-sm">
+              <div className="text-center mb-10">
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                  How to View Instagram Stories Anonymously
+                </h2>
+                <p className="text-sm text-zinc-400 mt-2">
+                  Three simple steps to watch and download any public Instagram media in complete privacy.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-zinc-900/80 border border-zinc-800">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-pink-600 to-rose-600 text-white font-bold flex items-center justify-center mb-4 text-sm shadow-md shadow-rose-950/40">
+                    1
+                  </div>
+                  <h3 className="text-base font-bold text-white mb-2">Enter Username</h3>
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    Type any public Instagram username into the search bar (e.g. <span className="text-zinc-200 font-mono">cristiano</span>) or paste the complete profile link.
+                  </p>
+                </div>
+
+                <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-zinc-900/80 border border-zinc-800">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-rose-600 to-amber-600 text-white font-bold flex items-center justify-center mb-4 text-sm shadow-md shadow-amber-950/40">
+                    2
+                  </div>
+                  <h3 className="text-base font-bold text-white mb-2">Select Stories or Reels</h3>
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    Browse active 24-hour Stories, permanent Highlights, timeline Posts, and Reels with interactive fullscreen previews.
+                  </p>
+                </div>
+
+                <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-zinc-900/80 border border-zinc-800">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-amber-600 to-emerald-600 text-white font-bold flex items-center justify-center mb-4 text-sm shadow-md shadow-emerald-950/40">
+                    3
+                  </div>
+                  <h3 className="text-base font-bold text-white mb-2">View & Download in HD</h3>
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    Watch videos smoothly without buffering. Click the Download icon to save original resolution files directly to your gallery or files.
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            {/* Media Types Breakdown */}
+            <section>
+              <div className="text-center mb-8">
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                  Comprehensive Instagram Content Support
+                </h2>
+                <p className="text-sm text-zinc-400 mt-2 max-w-xl mx-auto">
+                  InstaView supports every major public media format on Instagram with native video streaming and direct downloads.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800">
+                  <div className="flex items-center gap-2 mb-2">
+                    <PlaySquare className="w-5 h-5 text-pink-500" />
+                    <h3 className="font-bold text-sm text-white">Instagram Stories</h3>
+                  </div>
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    Watch disappearing 24-hour photos and video stories without showing up in the seen list.
+                  </p>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Bookmark className="w-5 h-5 text-amber-500" />
+                    <h3 className="font-bold text-sm text-white">Profile Highlights</h3>
+                  </div>
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    Access permanent archived story collections with their original album covers and titles.
+                  </p>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Grid className="w-5 h-5 text-rose-500" />
+                    <h3 className="font-bold text-sm text-white">Posts & Carousels</h3>
+                  </div>
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    Browse full timeline posts with captions, like counts, comment counts, and multi-slide carousel albums.
+                  </p>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Film className="w-5 h-5 text-fuchsia-500" />
+                    <h3 className="font-bold text-sm text-white">Instagram Reels</h3>
+                  </div>
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    Watch trending short videos in full screen with audio and download high-bitrate MP4s instantly.
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            {/* Comprehensive FAQ & Recently Asked Questions Accordion */}
+            <section className="max-w-4xl mx-auto w-full">
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-xs text-pink-400 font-semibold mb-2">
+                  <HelpCircle className="w-3.5 h-3.5" />
+                  Frequently Asked Questions
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                  Everything You Need to Know About Anonymous Viewing
+                </h2>
+                <p className="text-sm text-zinc-400 mt-2">
+                  Answers to the most common questions regarding privacy, downloads, and how InstaView works.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {FAQ_ITEMS.map((faq, idx) => {
+                  const isOpen = openFaqIndex === idx;
+                  return (
+                    <div
+                      key={idx}
+                      className="border border-zinc-800 bg-zinc-900/60 rounded-2xl overflow-hidden transition-colors hover:border-zinc-700"
+                    >
+                      <button
+                        onClick={() => toggleFaq(idx)}
+                        className="w-full p-5 text-left flex items-center justify-between gap-4 cursor-pointer focus:outline-none"
+                      >
+                        <span className="font-bold text-sm sm:text-base text-zinc-100 flex items-center gap-2">
+                          <span className="text-xs px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 font-mono font-normal hidden sm:inline">
+                            Q{idx + 1}
+                          </span>
+                          {faq.question}
+                        </span>
+                        <ChevronDown
+                          className={`w-5 h-5 text-zinc-400 flex-shrink-0 transition-transform duration-200 ${
+                            isOpen ? 'rotate-180 text-pink-400' : ''
+                          }`}
+                        />
+                      </button>
+                      {isOpen && (
+                        <div className="px-5 pb-5 pt-1 text-xs sm:text-sm text-zinc-400 leading-relaxed border-t border-zinc-800/60 animate-fade-in">
+                          {faq.answer}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          </div>
+        )}
       </main>
 
-      {/* Footer */}
-      <footer className="mt-auto py-6 px-4 border-t border-gray-200 bg-white text-center text-xs text-gray-500">
-        <p>
-          Anonymous Public Instagram Media Viewer • Strictly respects Meta access boundaries.
-          Does not access private accounts or bypass authentication.
-        </p>
+      {/* Sleek Dark Footer */}
+      <footer className="mt-auto border-t border-zinc-800/80 bg-zinc-950 py-10 px-4 sm:px-8 text-xs text-zinc-500">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex flex-col items-center md:items-start gap-1">
+            <span className="font-bold text-sm text-white flex items-center gap-1.5">
+              Insta<span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500">View</span>
+            </span>
+            <p className="text-zinc-500 text-xs">
+              Fast, free, and anonymous public Instagram media browser & downloader.
+            </p>
+          </div>
+
+          <div className="text-center md:text-right max-w-xl text-[11px] text-zinc-500 leading-relaxed">
+            <p>
+              <strong>Disclaimer:</strong> InstaView is an independent utility not affiliated with, endorsed by, or associated with Instagram, Meta Platforms, Inc. We do not host or store copyrighted media. All media is retrieved directly from publicly accessible web servers adhering to public internet accessibility standards.
+            </p>
+          </div>
+        </div>
       </footer>
     </div>
   );

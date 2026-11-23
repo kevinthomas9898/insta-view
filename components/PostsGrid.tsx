@@ -14,6 +14,7 @@ import {
   X,
   Maximize2,
   Loader2,
+  Image as ImageIcon,
 } from 'lucide-react';
 
 interface PostsGridProps {
@@ -36,9 +37,10 @@ export function PostsGrid({
 
   if (posts.length === 0) {
     return (
-      <div className="bg-white border border-gray-200 rounded p-12 text-center text-gray-500">
-        <p className="text-base font-medium">No posts found</p>
-        <p className="text-sm mt-1 text-gray-400">This account has no public posts or posts could not be retrieved.</p>
+      <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-12 text-center text-zinc-400 backdrop-blur-sm">
+        <ImageIcon className="w-10 h-10 mx-auto mb-2 text-zinc-600 stroke-1" />
+        <p className="text-base font-semibold text-zinc-200">No posts found</p>
+        <p className="text-sm mt-1 text-zinc-500">This account has no public posts available.</p>
       </div>
     );
   }
@@ -75,15 +77,15 @@ export function PostsGrid({
             <div
               key={post.id}
               onClick={() => openPostModal(post)}
-              className="group relative bg-white border border-gray-200 rounded overflow-hidden cursor-pointer hover:border-gray-400 transition-all"
+              className="group relative bg-zinc-900/80 border border-zinc-800 rounded-xl overflow-hidden cursor-pointer hover:border-zinc-700 hover:shadow-2xl transition-all flex flex-col"
             >
               {/* Media Thumbnail Container with 1:1 Aspect Ratio */}
-              <div className="relative aspect-square bg-gray-100 overflow-hidden">
+              <div className="relative aspect-square bg-zinc-950 overflow-hidden">
                 <img
                   src={displayThumb}
                   alt={post.caption || 'Instagram Post'}
                   referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   onError={(e) => {
                     if (e.currentTarget.src !== thumbUrl) {
                       e.currentTarget.src = thumbUrl;
@@ -92,30 +94,30 @@ export function PostsGrid({
                 />
 
                 {/* Badge for Type */}
-                <div className="absolute top-2 right-2 flex gap-1 z-10">
+                <div className="absolute top-2.5 right-2.5 flex gap-1 z-10">
                   {post.type === 'carousel' && (
-                    <span className="p-1.5 bg-black/60 text-white rounded text-xs flex items-center gap-1">
+                    <span className="p-1.5 bg-zinc-950/80 text-white rounded-md text-xs flex items-center gap-1 backdrop-blur-md border border-white/10">
                       <Layers className="w-3.5 h-3.5" />
                     </span>
                   )}
                   {post.type === 'video' && (
-                    <span className="p-1.5 bg-black/60 text-white rounded text-xs flex items-center gap-1">
+                    <span className="p-1.5 bg-zinc-950/80 text-white rounded-md text-xs flex items-center gap-1 backdrop-blur-md border border-white/10">
                       <Play className="w-3.5 h-3.5 fill-current" />
                     </span>
                   )}
                 </div>
 
                 {/* Hover Overlay with Likes & Comments */}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-6 text-white text-sm font-semibold">
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-6 text-white text-sm font-semibold backdrop-blur-[2px]">
                   {post.likeCount !== undefined && (
-                    <span className="flex items-center gap-1.5">
-                      <Heart className="w-4 h-4 fill-current" />
+                    <span className="flex items-center gap-1.5 drop-shadow">
+                      <Heart className="w-4 h-4 fill-rose-500 text-rose-500" />
                       {post.likeCount.toLocaleString()}
                     </span>
                   )}
                   {post.commentCount !== undefined && (
-                    <span className="flex items-center gap-1.5">
-                      <MessageCircle className="w-4 h-4 fill-current" />
+                    <span className="flex items-center gap-1.5 drop-shadow">
+                      <MessageCircle className="w-4 h-4 fill-white" />
                       {post.commentCount.toLocaleString()}
                     </span>
                   )}
@@ -124,7 +126,7 @@ export function PostsGrid({
 
               {/* Caption Snippet */}
               {post.caption && (
-                <div className="p-3 text-xs text-gray-700 line-clamp-2 border-t border-gray-100">
+                <div className="p-3 text-xs text-zinc-400 line-clamp-2 border-t border-zinc-800/80 bg-zinc-900/90 flex-1">
                   {post.caption}
                 </div>
               )}
@@ -139,11 +141,11 @@ export function PostsGrid({
           <button
             onClick={onLoadMore}
             disabled={isLoadingMore}
-            className="px-6 py-2.5 bg-gray-900 hover:bg-black text-white text-sm font-semibold rounded shadow-sm inline-flex items-center gap-2 transition-all disabled:opacity-60 disabled:cursor-not-allowed hover:shadow"
+            className="px-6 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700 rounded-xl text-sm font-semibold shadow-lg inline-flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             {isLoadingMore ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin text-white" />
+                <Loader2 className="w-4 h-4 animate-spin text-pink-400" />
                 <span>Loading more posts...</span>
               </>
             ) : (
@@ -155,19 +157,19 @@ export function PostsGrid({
           </button>
         </div>
       ) : posts.length > 0 ? (
-        <div className="mt-8 mb-6 text-center text-xs text-gray-500 font-medium">
+        <div className="mt-8 mb-6 text-center text-xs text-zinc-500 font-medium">
           Showing all {posts.length} loaded posts
         </div>
       ) : null}
 
       {/* Post Detail & Media Viewer Modal */}
       {selectedPost && activeItem && (
-        <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4">
-          <div className="relative w-full max-w-4xl max-h-[92vh] bg-white rounded-lg overflow-hidden flex flex-col md:flex-row shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5">
+          <div className="relative w-full max-w-4xl max-h-[92vh] bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl">
             {/* Close Button */}
             <button
               onClick={closePostModal}
-              className="absolute top-3 right-3 z-30 p-2 bg-black/70 hover:bg-black text-white rounded-full"
+              className="absolute top-3 right-3 z-30 p-2 bg-zinc-950/80 hover:bg-zinc-950 text-white rounded-full border border-white/10 transition-colors cursor-pointer"
               title="Close"
             >
               <X className="w-5 h-5" />
@@ -213,7 +215,7 @@ export function PostsGrid({
                     {carouselIndex > 0 && (
                       <button
                         onClick={() => setCarouselIndex((i) => i - 1)}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 hover:bg-black/90 text-white z-20"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-zinc-950/80 hover:bg-zinc-950 text-white z-20 border border-white/10 cursor-pointer"
                         title="Previous item"
                       >
                         <ChevronLeft className="w-5 h-5" />
@@ -222,14 +224,14 @@ export function PostsGrid({
                     {carouselIndex < selectedPost.carouselMedia.length - 1 && (
                       <button
                         onClick={() => setCarouselIndex((i) => i + 1)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 hover:bg-black/90 text-white z-20"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-zinc-950/80 hover:bg-zinc-950 text-white z-20 border border-white/10 cursor-pointer"
                         title="Next item"
                       >
                         <ChevronRight className="w-5 h-5" />
                       </button>
                     )}
                     {/* Carousel Counter */}
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-full bg-black/70 text-white text-xs font-medium z-20">
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-zinc-950/80 text-white text-xs font-semibold z-20 border border-white/10">
                       {carouselIndex + 1} / {selectedPost.carouselMedia.length}
                     </div>
                   </>
@@ -237,47 +239,47 @@ export function PostsGrid({
             </div>
 
             {/* Sidebar Details & Actions */}
-            <div className="w-full md:w-80 p-5 flex flex-col justify-between border-t md:border-t-0 md:border-l border-gray-200 bg-white">
-              <div className="overflow-y-auto max-h-[40vh] md:max-h-[60vh]">
+            <div className="w-full md:w-80 p-5 flex flex-col justify-between border-t md:border-t-0 md:border-l border-zinc-800 bg-zinc-900">
+              <div className="overflow-y-auto max-h-[40vh] md:max-h-[60vh] pr-1">
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="font-bold text-gray-900 text-sm">@{username}</span>
+                  <span className="font-bold text-white text-sm">@{username}</span>
                   {selectedPost.timestamp && (
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-zinc-500">
                       • {new Date(selectedPost.timestamp).toLocaleDateString()}
                     </span>
                   )}
                 </div>
 
                 {selectedPost.caption && (
-                  <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed mb-4">
+                  <p className="text-xs sm:text-sm text-zinc-300 whitespace-pre-line leading-relaxed mb-4">
                     {selectedPost.caption}
                   </p>
                 )}
 
                 {/* Stats */}
-                <div className="flex gap-4 text-xs text-gray-500 py-3 border-y border-gray-100">
+                <div className="flex gap-4 text-xs text-zinc-400 py-3 border-y border-zinc-800">
                   {selectedPost.likeCount !== undefined && (
                     <span>
-                      <strong className="text-gray-900">{selectedPost.likeCount.toLocaleString()}</strong> likes
+                      <strong className="text-white font-semibold">{selectedPost.likeCount.toLocaleString()}</strong> likes
                     </span>
                   )}
                   {selectedPost.commentCount !== undefined && (
                     <span>
-                      <strong className="text-gray-900">{selectedPost.commentCount.toLocaleString()}</strong> comments
+                      <strong className="text-white font-semibold">{selectedPost.commentCount.toLocaleString()}</strong> comments
                     </span>
                   )}
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-4 border-t border-gray-100 flex flex-col gap-2">
+              <div className="pt-4 border-t border-zinc-800 flex flex-col gap-2">
                 <a
                   href={
                     activeItem.downloadUrl ||
                     `/api/media?url=${encodeURIComponent(activeItem.url)}&download=true&filename=instagram_${username}_${activeItem.id}.${activeItem.type === 'video' ? 'mp4' : 'jpg'}`
                   }
                   download
-                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-gray-900 hover:bg-black text-white text-sm font-medium rounded transition-colors"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-gradient-to-r from-pink-600 via-rose-600 to-amber-600 hover:opacity-95 text-white text-sm font-semibold rounded-xl shadow-lg shadow-rose-950/40 transition-all cursor-pointer"
                 >
                   <Download className="w-4 h-4" />
                   Download {activeItem.type === 'video' ? 'Video' : 'Image'}
@@ -288,10 +290,10 @@ export function PostsGrid({
                   href={activeItem.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full flex items-center justify-center gap-1.5 py-2 px-3 border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-medium rounded text-center"
+                  className="w-full flex items-center justify-center gap-1.5 py-2 px-3 border border-zinc-700/80 hover:bg-zinc-800 text-zinc-300 text-xs font-medium rounded-xl text-center transition-colors"
                 >
                   <Maximize2 className="w-3.5 h-3.5" />
-                  Open Direct CDN URL
+                  Direct Source URL
                 </a>
               </div>
             </div>

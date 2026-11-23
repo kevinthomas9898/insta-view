@@ -45,25 +45,25 @@ export function TabsNav({ activeTab, onTabChange, counts }: TabsNavProps) {
   ];
 
   return (
-    <div className="flex border-b border-gray-200 bg-white rounded-t mb-6 overflow-x-auto">
+    <div className="flex bg-zinc-900/60 p-1.5 rounded-xl border border-zinc-800/80 mb-6 overflow-x-auto gap-1.5 backdrop-blur-sm">
       {tabs.map((tab) => {
         const isActive = activeTab === tab.key;
         return (
           <button
             key={tab.key}
             onClick={() => onTabChange(tab.key)}
-            className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all whitespace-nowrap cursor-pointer ${
               isActive
-                ? 'border-gray-900 text-gray-900 bg-gray-50'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'bg-gradient-to-r from-pink-600 via-rose-600 to-amber-600 text-white shadow-md shadow-rose-950/40 font-semibold'
+                : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60'
             }`}
           >
             {tab.icon}
-            {tab.label}
+            <span>{tab.label}</span>
             {tab.count !== undefined && (
               <span
-                className={`text-xs px-1.5 py-0.5 rounded-full ${
-                  isActive ? 'bg-gray-200 text-gray-800' : 'bg-gray-100 text-gray-600'
+                className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
+                  isActive ? 'bg-black/30 text-white' : 'bg-zinc-800 text-zinc-400'
                 }`}
               >
                 {tab.count}

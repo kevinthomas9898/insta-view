@@ -14,10 +14,10 @@ export function HighlightsViewer({ highlights }: HighlightsViewerProps) {
 
   if (highlights.length === 0) {
     return (
-      <div className="bg-white border border-gray-200 rounded p-12 text-center text-gray-500">
-        <Folder className="w-10 h-10 mx-auto mb-2 text-gray-400 stroke-1" />
-        <p className="text-base font-medium">No highlights available</p>
-        <p className="text-sm mt-1 text-gray-400">This account has not published any public highlight albums.</p>
+      <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-12 text-center text-zinc-400 backdrop-blur-sm">
+        <Folder className="w-10 h-10 mx-auto mb-2 text-zinc-600 stroke-1" />
+        <p className="text-base font-semibold text-zinc-200">No highlights available</p>
+        <p className="text-sm mt-1 text-zinc-500">This account has not published any public highlight albums.</p>
       </div>
     );
   }
@@ -34,15 +34,15 @@ export function HighlightsViewer({ highlights }: HighlightsViewerProps) {
             <div
               key={hl.id}
               onClick={() => setActiveHighlight(hl)}
-              className="group cursor-pointer flex flex-col items-center p-3 bg-white border border-gray-200 rounded hover:border-gray-400 transition-all text-center"
+              className="group cursor-pointer flex flex-col items-center p-4 bg-zinc-900/80 border border-zinc-800 rounded-2xl hover:border-zinc-700 hover:shadow-xl transition-all text-center backdrop-blur-sm"
             >
-              <div className="w-20 h-20 rounded-full p-0.5 border-2 border-gray-300 group-hover:border-gray-900 transition-colors mb-2 overflow-hidden bg-gray-100 flex items-center justify-center">
+              <div className="w-20 h-20 rounded-full p-0.5 bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 group-hover:scale-105 transition-transform mb-2.5 overflow-hidden flex items-center justify-center shadow-lg shadow-rose-950/20">
                 {coverSrc ? (
                   <img
                     src={coverSrc}
                     alt={hl.title}
                     referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover rounded-full"
+                    className="w-full h-full object-cover rounded-full border-2 border-zinc-950 bg-zinc-800"
                     onError={(e) => {
                       if (hl.coverUrl && e.currentTarget.src !== hl.coverUrl) {
                         e.currentTarget.src = hl.coverUrl;
@@ -50,13 +50,15 @@ export function HighlightsViewer({ highlights }: HighlightsViewerProps) {
                     }}
                   />
                 ) : (
-                  <Folder className="w-8 h-8 text-gray-400" />
+                  <div className="w-full h-full rounded-full border-2 border-zinc-950 bg-zinc-800 flex items-center justify-center">
+                    <Folder className="w-8 h-8 text-zinc-400" />
+                  </div>
                 )}
               </div>
-              <h3 className="text-sm font-semibold text-gray-900 truncate max-w-full">
+              <h3 className="text-sm font-semibold text-zinc-100 truncate max-w-full">
                 {hl.title}
               </h3>
-              <span className="text-xs text-gray-500 mt-0.5">
+              <span className="text-xs text-zinc-500 mt-0.5">
                 {hl.mediaCount || hl.items.length} stories
               </span>
             </div>

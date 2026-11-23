@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { ReelResult } from '@/lib/instagram/types';
-import { Play, Music, Download, Eye, X, Film } from 'lucide-react';
+import { Play, Download, X, Film, Music } from 'lucide-react';
 
 interface ReelsGridProps {
   reels: ReelResult[];
@@ -14,10 +14,10 @@ export function ReelsGrid({ reels, username }: ReelsGridProps) {
 
   if (reels.length === 0) {
     return (
-      <div className="bg-white border border-gray-200 rounded p-12 text-center text-gray-500">
-        <Film className="w-10 h-10 mx-auto mb-2 text-gray-400 stroke-1" />
-        <p className="text-base font-medium">No reels found</p>
-        <p className="text-sm mt-1 text-gray-400">This account has not published any public reels.</p>
+      <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-12 text-center text-zinc-400 backdrop-blur-sm">
+        <Film className="w-10 h-10 mx-auto mb-2 text-zinc-600 stroke-1" />
+        <p className="text-base font-semibold text-zinc-200">No reels found</p>
+        <p className="text-sm mt-1 text-zinc-500">This account has not published any public reels.</p>
       </div>
     );
   }
@@ -40,13 +40,13 @@ export function ReelsGrid({ reels, username }: ReelsGridProps) {
             <div
               key={reel.id}
               onClick={() => setSelectedReel(reel)}
-              className="group relative bg-black rounded overflow-hidden cursor-pointer aspect-[9/16] shadow-sm hover:shadow-md transition-all border border-gray-200"
+              className="group relative bg-zinc-950 rounded-2xl overflow-hidden cursor-pointer aspect-[9/16] shadow-lg hover:shadow-2xl transition-all border border-zinc-800 hover:border-zinc-700"
             >
               <img
                 src={displayThumb}
                 alt={reel.caption || 'Reel thumbnail'}
                 referrerPolicy="no-referrer"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 onError={(e) => {
                   if (e.currentTarget.src !== thumbSrc) {
                     e.currentTarget.src = thumbSrc;
@@ -55,13 +55,15 @@ export function ReelsGrid({ reels, username }: ReelsGridProps) {
               />
 
               {/* Bottom Overlay with Views & Play Icon */}
-              <div className="absolute inset-x-0 bottom-0 p-2.5 bg-gradient-to-t from-black/80 via-black/40 to-transparent text-white text-xs flex items-center justify-between">
-                <span className="flex items-center gap-1 font-medium">
-                  <Play className="w-3.5 h-3.5 fill-current" />
+              <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 via-black/40 to-transparent text-white text-xs flex items-center justify-between">
+                <span className="flex items-center gap-1 font-semibold drop-shadow">
+                  <Play className="w-3.5 h-3.5 fill-current text-white" />
                   {formatViews(reel.viewCount || reel.playCount) || 'Play'}
                 </span>
                 {reel.duration && (
-                  <span className="opacity-80 text-[11px]">{reel.duration}s</span>
+                  <span className="opacity-90 text-[11px] font-medium bg-black/60 px-1.5 py-0.5 rounded backdrop-blur-xs">
+                    {reel.duration}s
+                  </span>
                 )}
               </div>
             </div>
@@ -71,26 +73,26 @@ export function ReelsGrid({ reels, username }: ReelsGridProps) {
 
       {/* Reel Modal Player */}
       {selectedReel && (
-        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
-          <div className="relative w-full max-w-sm sm:max-w-md h-[88vh] bg-black rounded-lg overflow-hidden flex flex-col justify-between shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5">
+          <div className="relative w-full max-w-sm sm:max-w-md h-[88vh] bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden flex flex-col justify-between shadow-2xl">
             {/* Top Close & Download Bar */}
-            <div className="absolute top-0 inset-x-0 z-30 p-3 bg-gradient-to-b from-black/80 to-transparent flex items-center justify-between text-white">
-              <span className="text-xs font-semibold">@{username} Reel</span>
+            <div className="absolute top-0 inset-x-0 z-30 p-3.5 bg-gradient-to-b from-black/80 to-transparent flex items-center justify-between text-white">
+              <span className="text-xs font-bold tracking-tight">@{username} Reel</span>
               <div className="flex items-center gap-2">
                 <a
                   href={
                     selectedReel.downloadUrl ||
-                    `/api/media?url=${encodeURIComponent(selectedReel.url)}&download=true&filename=reel_${selectedReel.id}.mp4`
+                    `/api/media?url=${encodeURIComponent(selectedReel.url)}&download=true&filename=reel_${username}_${selectedReel.id}.mp4`
                   }
                   download
-                  className="p-1.5 hover:bg-white/20 rounded text-white"
+                  className="p-2 hover:bg-white/20 rounded-full text-white transition-colors cursor-pointer"
                   title="Download Reel"
                 >
                   <Download className="w-4 h-4" />
                 </a>
                 <button
                   onClick={() => setSelectedReel(null)}
-                  className="p-1.5 hover:bg-white/20 rounded text-white"
+                  className="p-2 hover:bg-white/20 rounded-full text-white transition-colors cursor-pointer"
                   title="Close"
                 >
                   <X className="w-5 h-5" />
@@ -98,10 +100,11 @@ export function ReelsGrid({ reels, username }: ReelsGridProps) {
               </div>
             </div>
 
-            {/* Native Video Element */}
+            {/* Video Player */}
             <div className="relative flex-1 flex items-center justify-center bg-black overflow-hidden">
               <video
                 controls
+                autoPlay
                 playsInline
                 preload="metadata"
                 className="w-full h-full object-contain"
@@ -117,23 +120,20 @@ export function ReelsGrid({ reels, username }: ReelsGridProps) {
               </video>
             </div>
 
-            {/* Bottom Caption & Audio Info */}
-            <div className="p-3 bg-black/90 text-white border-t border-white/10 text-xs">
-              {selectedReel.caption && (
-                <p className="line-clamp-2 text-gray-300 mb-2 leading-relaxed">
-                  {selectedReel.caption}
-                </p>
-              )}
-              {selectedReel.audioTitle && (
-                <div className="flex items-center gap-1.5 text-gray-400">
-                  <Music className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span className="truncate">
-                    {selectedReel.audioTitle}
-                    {selectedReel.audioArtist ? ` • ${selectedReel.audioArtist}` : ''}
-                  </span>
-                </div>
-              )}
-            </div>
+            {/* Caption & Audio info if present */}
+            {(selectedReel.caption || selectedReel.audioTitle) && (
+              <div className="p-3 bg-zinc-900 border-t border-zinc-800 text-xs text-zinc-300">
+                {selectedReel.audioTitle && (
+                  <p className="flex items-center gap-1.5 text-zinc-400 mb-1 font-medium">
+                    <Music className="w-3.5 h-3.5 text-pink-400" />
+                    <span>{selectedReel.audioTitle}</span>
+                  </p>
+                )}
+                {selectedReel.caption && (
+                  <p className="line-clamp-2 text-zinc-300">{selectedReel.caption}</p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

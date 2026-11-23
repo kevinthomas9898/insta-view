@@ -2,14 +2,14 @@
 
 import React from 'react';
 import { Profile, ProviderMetadata } from '@/lib/instagram/types';
-import { CheckCircle2, Lock, ExternalLink, ShieldAlert, Cpu } from 'lucide-react';
+import { CheckCircle2, Lock, ExternalLink, ShieldCheck } from 'lucide-react';
 
 interface ProfileHeaderProps {
   profile: Profile;
   metadata?: ProviderMetadata;
 }
 
-export function ProfileHeader({ profile, metadata }: ProfileHeaderProps) {
+export function ProfileHeader({ profile }: ProfileHeaderProps) {
   const formatNumber = (num?: number) => {
     if (num === undefined || num === null) return '-';
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
@@ -17,51 +17,39 @@ export function ProfileHeader({ profile, metadata }: ProfileHeaderProps) {
     return num.toLocaleString();
   };
 
-  // Safe avatar URL through proxy if needed
+  // Safe avatar URL through proxy
   const avatarSrc = profile.avatarUrl
     ? `/api/media?url=${encodeURIComponent(profile.avatarUrl)}`
     : undefined;
 
   return (
-    <div className="bg-white border border-gray-200 rounded p-6 mb-6">
-      {/* Demo Warning Banner */}
-      {metadata?.isDemo && (
-        <div className="mb-4 p-3 bg-amber-50 border border-amber-300 rounded text-amber-900 text-sm flex items-center gap-2">
-          <ShieldAlert className="w-5 h-5 flex-shrink-0 text-amber-700" />
-          <div>
-            <strong className="font-semibold">DEMO DATA — NOT LIVE INSTAGRAM DATA</strong>
-            <p className="text-xs text-amber-800">
-              Live retrieval requires an API key or unblocked IP. Displaying fully interactive test media with real playable video streams.
-            </p>
-          </div>
-        </div>
-      )}
-
+    <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-5 sm:p-7 mb-6 shadow-2xl backdrop-blur-sm transition-all">
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-        {/* Avatar */}
-        <div className="relative flex-shrink-0">
-          {avatarSrc ? (
-            <img
-              src={avatarSrc}
-              alt={profile.username}
-              referrerPolicy="no-referrer"
-              className="w-24 h-24 rounded-full object-cover border border-gray-300 bg-gray-100"
-              onError={(e) => {
-                // If proxy or direct CDN fails, fallback to direct or placeholder
-                if (profile.avatarUrl && e.currentTarget.src !== profile.avatarUrl) {
-                  e.currentTarget.src = profile.avatarUrl;
-                }
-              }}
-            />
-          ) : (
-            <div className="w-24 h-24 rounded-full bg-gray-200 border border-gray-300 flex items-center justify-center text-gray-500 font-bold text-2xl">
-              {profile.username.charAt(0).toUpperCase()}
-            </div>
-          )}
+        {/* Avatar with IG gradient border */}
+        <div className="relative flex-shrink-0 group">
+          <div className="p-0.5 rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-fuchsia-600 shadow-lg shadow-rose-950/30">
+            {avatarSrc ? (
+              <img
+                src={avatarSrc}
+                alt={profile.username}
+                referrerPolicy="no-referrer"
+                className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-2 border-zinc-950 bg-zinc-800"
+                onError={(e) => {
+                  if (profile.avatarUrl && e.currentTarget.src !== profile.avatarUrl) {
+                    e.currentTarget.src = profile.avatarUrl;
+                  }
+                }}
+              />
+            ) : (
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-zinc-800 border-2 border-zinc-950 flex items-center justify-center text-zinc-300 font-bold text-3xl">
+                {profile.username.charAt(0).toUpperCase()}
+              </div>
+            )}
+          </div>
           {profile.isPrivate && (
             <div
               title="Private Account"
-              className="absolute bottom-0 right-0 bg-gray-800 text-white p-1 rounded-full border-2 border-white"
+              className="absolute bottom-1 right-1 bg-amber-500 text-zinc-950 p-1.5 rounded-full border-2 border-zinc-900 shadow-md"
             >
               <Lock className="w-3.5 h-3.5" />
             </div>
@@ -70,27 +58,27 @@ export function ProfileHeader({ profile, metadata }: ProfileHeaderProps) {
 
         {/* Profile Details */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-2xl font-bold text-gray-900">@{profile.username}</h1>
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+              @{profile.username}
+            </h1>
             {profile.verified && (
               <span title="Verified Account">
-                <CheckCircle2 className="w-5 h-5 text-blue-600" />
+                <CheckCircle2 className="w-5 h-5 text-blue-500 fill-blue-500/10" />
               </span>
             )}
-            {metadata && (
-              <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600 border border-gray-200 flex items-center gap-1">
-                <Cpu className="w-3 h-3" />
-                {metadata.provider} ({metadata.executionTimeMs}ms)
-              </span>
-            )}
+            <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-zinc-800/80 text-zinc-400 border border-zinc-700/60 flex items-center gap-1">
+              <ShieldCheck className="w-3 h-3 text-emerald-400" />
+              Public Profile
+            </span>
           </div>
 
           {profile.fullName && (
-            <p className="text-sm font-medium text-gray-700 mt-0.5">{profile.fullName}</p>
+            <p className="text-sm font-medium text-zinc-300 mt-1">{profile.fullName}</p>
           )}
 
           {profile.biography && (
-            <p className="text-sm text-gray-600 mt-2 whitespace-pre-line leading-relaxed max-w-2xl">
+            <p className="text-sm text-zinc-400 mt-2.5 whitespace-pre-line leading-relaxed max-w-2xl font-normal">
               {profile.biography}
             </p>
           )}
@@ -100,7 +88,7 @@ export function ProfileHeader({ profile, metadata }: ProfileHeaderProps) {
               href={profile.externalUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline mt-1"
+              className="inline-flex items-center gap-1.5 text-xs text-pink-400 hover:text-pink-300 transition-colors mt-2 font-medium"
             >
               <ExternalLink className="w-3.5 h-3.5" />
               {profile.externalUrl.replace(/^https?:\/\//, '')}
@@ -108,18 +96,18 @@ export function ProfileHeader({ profile, metadata }: ProfileHeaderProps) {
           )}
 
           {/* Stats Bar */}
-          <div className="flex gap-6 mt-4 pt-4 border-t border-gray-100 text-sm">
-            <div>
-              <span className="font-bold text-gray-900">{formatNumber(profile.postsCount)}</span>{' '}
-              <span className="text-gray-500">posts</span>
+          <div className="flex gap-4 sm:gap-8 mt-5 pt-4 border-t border-zinc-800/80 text-sm">
+            <div className="flex flex-col">
+              <span className="font-bold text-white text-base">{formatNumber(profile.postsCount)}</span>
+              <span className="text-xs text-zinc-500 font-medium">Posts</span>
             </div>
-            <div>
-              <span className="font-bold text-gray-900">{formatNumber(profile.followers)}</span>{' '}
-              <span className="text-gray-500">followers</span>
+            <div className="flex flex-col">
+              <span className="font-bold text-white text-base">{formatNumber(profile.followers)}</span>
+              <span className="text-xs text-zinc-500 font-medium">Followers</span>
             </div>
-            <div>
-              <span className="font-bold text-gray-900">{formatNumber(profile.following)}</span>{' '}
-              <span className="text-gray-500">following</span>
+            <div className="flex flex-col">
+              <span className="font-bold text-white text-base">{formatNumber(profile.following)}</span>
+              <span className="text-xs text-zinc-500 font-medium">Following</span>
             </div>
           </div>
         </div>
