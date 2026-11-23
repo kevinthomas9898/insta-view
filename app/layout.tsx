@@ -43,6 +43,16 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/icon", sizes: "32x32", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-icon", sizes: "180x180", type: "image/png" },
+    ],
+    shortcut: "/icon.svg",
+  },
   openGraph: {
     title: "Anonymous Instagram Story Viewer & Downloader — InstaView",
     description:
