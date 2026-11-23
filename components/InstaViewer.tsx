@@ -17,6 +17,7 @@ import { HighlightsViewer } from '@/components/HighlightsViewer';
 import { PostsGrid } from '@/components/PostsGrid';
 import { ReelsGrid } from '@/components/ReelsGrid';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { AdSlot } from '@/components/AdSlot';
 import {
   Search,
   Loader2,
@@ -352,6 +353,9 @@ export function InstaViewer({
           </div>
         </section>
 
+        {/* Strategic Monetization Ad Slot */}
+        <AdSlot id="top-search-banner" />
+
         {/* Profile Error Banner */}
         {profileError && (
           <div className="max-w-2xl mx-auto w-full p-4 mb-8 bg-rose-50 border border-rose-200 dark:bg-rose-950/40 dark:border-rose-900/60 rounded-2xl text-rose-900 dark:text-rose-200 text-sm flex items-start gap-3 backdrop-blur-sm animate-fade-in shadow-xs">
@@ -429,6 +433,9 @@ export function InstaViewer({
                 )}
               </div>
             )}
+
+            {/* Media Results Sponsor Ad Slot */}
+            <AdSlot id="media-results-ad" />
           </div>
         )}
 
