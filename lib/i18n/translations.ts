@@ -42,7 +42,20 @@ export interface PageContent {
   searchPlaceholder: string;
 }
 
+export interface NavContent {
+  stories: string;
+  highlights: string;
+  reels: string;
+  posts: string;
+  profile: string;
+  blog: string;
+  faq: string;
+  anonymous: string;
+  noLogin: string;
+}
+
 export interface LangTranslations {
+  nav: NavContent;
   home: PageContent;
   stories: PageContent;
   reels: PageContent;
@@ -52,6 +65,17 @@ export interface LangTranslations {
 
 export const TRANSLATIONS: Record<SupportedLang, LangTranslations> = {
   en: {
+    nav: {
+      stories: 'Stories',
+      highlights: 'Highlights',
+      reels: 'Reels',
+      posts: 'Posts',
+      profile: 'Profile',
+      blog: 'Blog',
+      faq: 'FAQ',
+      anonymous: '100% Anonymous',
+      noLogin: 'No Login Required',
+    },
     home: {
       metaTitle: 'Anonymous Instagram Story Viewer & Downloader — InstaView',
       metaDescription:
@@ -108,8 +132,18 @@ export const TRANSLATIONS: Record<SupportedLang, LangTranslations> = {
       searchPlaceholder: 'Enter username or paste Instagram link to convert to MP4...',
     },
   },
-
   es: {
+    nav: {
+      stories: 'Historias',
+      highlights: 'Destacados',
+      reels: 'Reels',
+      posts: 'Publicaciones',
+      profile: 'Perfil',
+      blog: 'Blog',
+      faq: 'Preguntas',
+      anonymous: '100% Anónimo',
+      noLogin: 'Sin Registro',
+    },
     home: {
       metaTitle: 'Ver Historias de Instagram Anónimamente — InstaView',
       metaDescription:
@@ -166,8 +200,18 @@ export const TRANSLATIONS: Record<SupportedLang, LangTranslations> = {
       searchPlaceholder: 'Ingresa usuario o enlace para convertir a MP4...',
     },
   },
-
   pt: {
+    nav: {
+      stories: 'Stories',
+      highlights: 'Destaques',
+      reels: 'Reels',
+      posts: 'Publicações',
+      profile: 'Perfil',
+      blog: 'Blog',
+      faq: 'FAQ',
+      anonymous: '100% Anônimo',
+      noLogin: 'Sem Login',
+    },
     home: {
       metaTitle: 'Ver Stories do Instagram Anonimamente — InstaView',
       metaDescription:
@@ -224,8 +268,18 @@ export const TRANSLATIONS: Record<SupportedLang, LangTranslations> = {
       searchPlaceholder: 'Digite o usuário ou cole o link para converter para MP4...',
     },
   },
-
   hi: {
+    nav: {
+      stories: 'स्टोरीज़',
+      highlights: 'हाइलाइट्स',
+      reels: 'रील्स',
+      posts: 'पोस्ट्स',
+      profile: 'प्रोफ़ाइल',
+      blog: 'ब्लॉग',
+      faq: 'एफएक्यू',
+      anonymous: '100% गुप्त',
+      noLogin: 'लॉगिन नहीं चाहिए',
+    },
     home: {
       metaTitle: 'इंस्टाग्राम स्टोरी चुपके से देखें — InstaView',
       metaDescription:
@@ -282,8 +336,18 @@ export const TRANSLATIONS: Record<SupportedLang, LangTranslations> = {
       searchPlaceholder: 'MP4 में बदलने के लिए लिंक या यूज़रनेम दर्ज करें...',
     },
   },
-
   id: {
+    nav: {
+      stories: 'Story',
+      highlights: 'Sorotan',
+      reels: 'Reels',
+      posts: 'Postingan',
+      profile: 'Profil',
+      blog: 'Blog',
+      faq: 'FAQ',
+      anonymous: '100% Anonim',
+      noLogin: 'Tanpa Login',
+    },
     home: {
       metaTitle: 'Lihat Story Instagram Secara Anonim — InstaView',
       metaDescription:
@@ -340,8 +404,18 @@ export const TRANSLATIONS: Record<SupportedLang, LangTranslations> = {
       searchPlaceholder: 'Masukkan username atau link untuk konversi ke MP4...',
     },
   },
-
   tr: {
+    nav: {
+      stories: 'Hikayeler',
+      highlights: 'Öne Çıkanlar',
+      reels: 'Reels',
+      posts: 'Gönderiler',
+      profile: 'Profil',
+      blog: 'Blog',
+      faq: 'SSS',
+      anonymous: '%100 Anonim',
+      noLogin: 'Giriş Yok',
+    },
     home: {
       metaTitle: 'Anonim Instagram Hikaye İzleme ve İndirme — InstaView',
       metaDescription:
@@ -398,8 +472,18 @@ export const TRANSLATIONS: Record<SupportedLang, LangTranslations> = {
       searchPlaceholder: 'MP4 dönüştürmek için link veya kullanıcı adı girin...',
     },
   },
-
   ru: {
+    nav: {
+      stories: 'Истории',
+      highlights: 'Актуальное',
+      reels: 'Рилс',
+      posts: 'Публикации',
+      profile: 'Профиль',
+      blog: 'Блог',
+      faq: 'FAQ',
+      anonymous: '100% Анонимно',
+      noLogin: 'Без Логина',
+    },
     home: {
       metaTitle: 'Анонимный просмотр сторис Инстаграм — InstaView',
       metaDescription:
@@ -456,8 +540,18 @@ export const TRANSLATIONS: Record<SupportedLang, LangTranslations> = {
       searchPlaceholder: 'Введите username или ссылку для конвертации в MP4...',
     },
   },
-
   de: {
+    nav: {
+      stories: 'Stories',
+      highlights: 'Highlights',
+      reels: 'Reels',
+      posts: 'Beiträge',
+      profile: 'Profil',
+      blog: 'Blog',
+      faq: 'FAQ',
+      anonymous: '100% Anonym',
+      noLogin: 'Kein Login',
+    },
     home: {
       metaTitle: 'Instagram Stories Anonym Anschauen & Downloaden — InstaView',
       metaDescription:
@@ -514,8 +608,18 @@ export const TRANSLATIONS: Record<SupportedLang, LangTranslations> = {
       searchPlaceholder: 'Link oder Benutzername eingeben für MP4-Download...',
     },
   },
-
   fr: {
+    nav: {
+      stories: 'Stories',
+      highlights: 'À la une',
+      reels: 'Reels',
+      posts: 'Publications',
+      profile: 'Profil',
+      blog: 'Blog',
+      faq: 'FAQ',
+      anonymous: '100% Anonyme',
+      noLogin: 'Sans Connexion',
+    },
     home: {
       metaTitle: 'Voir les Stories Instagram Anonymement — InstaView',
       metaDescription:
@@ -572,8 +676,18 @@ export const TRANSLATIONS: Record<SupportedLang, LangTranslations> = {
       searchPlaceholder: 'Entrez un nom ou collez un lien pour convertir en MP4...',
     },
   },
-
   it: {
+    nav: {
+      stories: 'Storie',
+      highlights: 'In evidenza',
+      reels: 'Reel',
+      posts: 'Post',
+      profile: 'Profilo',
+      blog: 'Blog',
+      faq: 'FAQ',
+      anonymous: '100% Anonimo',
+      noLogin: 'Nessun Login',
+    },
     home: {
       metaTitle: 'Visualizza Storie Instagram in Anonimo — InstaView',
       metaDescription:

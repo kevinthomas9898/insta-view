@@ -18,7 +18,7 @@ import { PostsGrid } from '@/components/PostsGrid';
 import { ReelsGrid } from '@/components/ReelsGrid';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageSelector } from '@/components/LanguageSelector';
-import { LANGUAGES, SUPPORTED_LANGS } from '@/lib/i18n/translations';
+import { LANGUAGES, SUPPORTED_LANGS, getTranslations } from '@/lib/i18n/translations';
 import { AdSlot } from '@/components/AdSlot';
 import {
   Search,
@@ -77,6 +77,9 @@ export function InstaViewer({
   const [profile, setProfile] = useState<Profile | null>(null);
   const [profileMetadata, setProfileMetadata] = useState<ProviderMetadata | undefined>(undefined);
   const [profileError, setProfileError] = useState<string | null>(null);
+
+  const tNav = getTranslations(lang).nav;
+  const langPrefix = lang && lang !== 'en' ? `/${lang}` : '';
 
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
 
@@ -215,7 +218,7 @@ export function InstaViewer({
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link
-              href="/"
+              href={langPrefix || '/'}
               className="flex items-center gap-2.5 group cursor-pointer"
               onClick={() => {
                 if (profile) {
@@ -237,26 +240,26 @@ export function InstaViewer({
 
             {/* Nav Links */}
             <nav className="hidden lg:flex items-center gap-1 text-xs font-semibold text-slate-600 dark:text-zinc-400">
-              <Link href="/stories" className="px-3 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
-                Stories
+              <Link href={`${langPrefix}/stories`} className="px-3 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
+                {tNav.stories}
               </Link>
-              <Link href="/highlights" className="px-3 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
-                Highlights
+              <Link href={`${langPrefix}/highlights`} className="px-3 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
+                {tNav.highlights}
               </Link>
-              <Link href="/reels" className="px-3 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
-                Reels
+              <Link href={`${langPrefix}/reels`} className="px-3 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
+                {tNav.reels}
               </Link>
-              <Link href="/posts" className="px-3 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
-                Posts
+              <Link href={`${langPrefix}/posts`} className="px-3 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
+                {tNav.posts}
               </Link>
-              <Link href="/profile-viewer" className="px-3 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
-                Profile
+              <Link href={`${langPrefix}/profile-viewer`} className="px-3 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
+                {tNav.profile}
               </Link>
               <Link href="/blog" className="px-3 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
-                Blog
+                {tNav.blog}
               </Link>
               <Link href="/faq" className="px-3 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
-                FAQ
+                {tNav.faq}
               </Link>
             </nav>
           </div>
@@ -264,10 +267,10 @@ export function InstaViewer({
           <div className="flex items-center gap-2 sm:gap-3">
             <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
-              100% Anonymous
+              {tNav.anonymous}
             </span>
             <span className="text-xs font-medium text-slate-600 dark:text-zinc-400 px-3 py-1 rounded-full bg-slate-100 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/60 hidden md:inline-flex">
-              No Login Required
+              {tNav.noLogin}
             </span>
 
             {/* Language Selector Dropdown */}
