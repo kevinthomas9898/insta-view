@@ -2,13 +2,13 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-:root {
+:root, html.light {
   --background: #f8fafc;
   --foreground: #0f172a;
   color-scheme: light;
 }
 
-.dark {
+html.dark, [data-theme="dark"] {
   --background: #09090b;
   --foreground: #f4f4f5;
   color-scheme: dark;
@@ -25,7 +25,7 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbars */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -36,14 +36,75 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #71717a;
+  background: #cbd5e1;
   border-radius: 4px;
 }
 
-.dark ::-webkit-scrollbar-thumb {
+html.dark ::-webkit-scrollbar-thumb {
   background: #27272a;
 }
 
-.dark ::-webkit-scrollbar-thumb:hover {
+html.dark ::-webkit-scrollbar-thumb:hover {
   background: #3f3f46;
+}
+
+/* Explicit Light Mode Overrides: Guarantees full theme switch across all elements */
+html.light body,
+html.light .min-h-screen {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+html.light header {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  border-color: #e2e8f0 !important;
+}
+
+html.light .bg-zinc-900,
+html.light .bg-zinc-900\/60,
+html.light .bg-zinc-900\/80,
+html.light .bg-zinc-900\/90 {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+html.light .bg-zinc-950 {
+  background-color: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+}
+
+html.light .text-white,
+html.light .text-zinc-100 {
+  color: #0f172a !important;
+}
+
+html.light .text-zinc-200,
+html.light .text-zinc-300 {
+  color: #1e293b !important;
+}
+
+html.light .text-zinc-400,
+html.light .text-zinc-500 {
+  color: #64748b !important;
+}
+
+html.light .border-zinc-800,
+html.light .border-zinc-700,
+html.light .border-zinc-800\/80 {
+  border-color: #e2e8f0 !important;
+}
+
+html.light input {
+  color: #0f172a !important;
+  background-color: transparent !important;
+}
+
+html.light input::placeholder {
+  color: #94a3b8 !important;
+}
+
+html.light footer {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
 }
