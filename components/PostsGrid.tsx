@@ -48,6 +48,7 @@ export function PostsGrid({
   const [videoCurrentTime, setVideoCurrentTime] = useState(0);
   const [videoDuration, setVideoDuration] = useState(0);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const lastTimeUpdateRef = useRef<number>(0);
 
   const formatTime = (secs: number) => {
     if (isNaN(secs) || secs < 0) return '0:00';
@@ -345,8 +346,10 @@ export function PostsGrid({
                       if (videoRef.current) {
                         setVideoDuration(videoRef.current.duration);
                       }
+                      setIsMediaLoading(false);
                     }}
                     onLoadedData={() => setIsMediaLoading(false)}
+                    onCanPlay={() => setIsMediaLoading(false)}
                     onWaiting={() => setIsMediaLoading(true)}
                     onPlaying={() => {
                       setIsMediaLoading(false);
@@ -355,11 +358,15 @@ export function PostsGrid({
                     onPause={() => setIsVideoPlaying(false)}
                     onTimeUpdate={() => {
                       if (videoRef.current && videoRef.current.duration) {
-                        const cur = videoRef.current.currentTime;
-                        const dur = videoRef.current.duration;
-                        setVideoCurrentTime(cur);
-                        setVideoDuration(dur);
-                        setVideoProgress((cur / dur) * 100);
+                        const now = Date.now();
+                        if (now - lastTimeUpdateRef.current > 200) {
+                          lastTimeUpdateRef.current = now;
+                          const cur = videoRef.current.currentTime;
+                          const dur = videoRef.current.duration;
+                          setVideoCurrentTime(cur);
+                          setVideoDuration(dur);
+                          setVideoProgress((cur / dur) * 100);
+                        }
                       }
                     }}
                     className={`w-full max-h-[80vh] md:max-h-[85vh] object-contain transition-opacity duration-200 ${

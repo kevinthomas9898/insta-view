@@ -177,53 +177,49 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
 
           {/* Controls Bar */}
           <div className="flex items-center justify-between text-white text-xs mt-1">
-            <span className="font-semibold tracking-wide">
+            <span className="font-semibold tracking-wide drop-shadow">
               Story {currentIndex + 1} of {stories.length}
             </span>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <button
+                type="button"
                 onClick={() => setIsPlaying((p) => !p)}
-                className="p-1.5 hover:bg-white/20 rounded-full transition-colors cursor-pointer"
+                className="p-1.5 hover:bg-white/20 active:scale-90 rounded-full transition-all cursor-pointer"
                 title={isPlaying ? 'Pause' : 'Play'}
+                aria-label={isPlaying ? 'Pause' : 'Play'}
               >
                 {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               </button>
 
               {currentStory.type === 'video' && (
                 <button
+                  type="button"
                   onClick={() => setIsMuted((m) => !m)}
-                  className="p-1.5 hover:bg-white/20 rounded-full transition-colors cursor-pointer"
+                  className="p-1.5 hover:bg-white/20 active:scale-90 rounded-full transition-all cursor-pointer"
                   title={isMuted ? 'Unmute' : 'Mute'}
+                  aria-label={isMuted ? 'Unmute' : 'Mute'}
                 >
-                  {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                  {isMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4" />}
                 </button>
               )}
 
-              <a
-                href={
-                  currentStory.downloadUrl ||
-                  `/api/media?url=${encodeURIComponent(currentStory.url)}&download=true&filename=story_${currentStory.id}.${currentStory.type === 'video' ? 'mp4' : 'jpg'}`
-                }
-                download
-                className="p-1.5 hover:bg-white/20 rounded-full transition-colors cursor-pointer text-white"
-                title="Download Story"
-              >
-                <Download className="w-4 h-4" />
-              </a>
-
               <button
+                type="button"
                 onClick={toggleFullscreen}
-                className="p-1.5 hover:bg-white/20 rounded-full transition-colors cursor-pointer hidden sm:inline-flex"
+                className="p-1.5 hover:bg-white/20 active:scale-90 rounded-full transition-all cursor-pointer hidden sm:inline-flex"
                 title="Toggle Fullscreen"
+                aria-label="Fullscreen"
               >
                 <Maximize className="w-4 h-4" />
               </button>
 
               <button
+                type="button"
                 onClick={onClose}
-                className="p-1.5 hover:bg-white/20 rounded-full transition-colors cursor-pointer"
+                className="p-1.5 hover:bg-white/20 active:scale-90 rounded-full transition-all cursor-pointer"
                 title="Close"
+                aria-label="Close"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -313,6 +309,22 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
             className="absolute right-0 inset-y-0 w-1/3 cursor-pointer z-20"
             onClick={handleNext}
           />
+        </div>
+
+        {/* Bottom Floating Download Story Pill (Unobtrusive & Accessible) */}
+        <div className="absolute bottom-4 inset-x-0 z-30 flex items-center justify-center pointer-events-auto px-4">
+          <a
+            href={
+              currentStory.downloadUrl ||
+              `/api/media?url=${encodeURIComponent(currentStory.url)}&download=true&filename=story_${currentStory.id}.${currentStory.type === 'video' ? 'mp4' : 'jpg'}`
+            }
+            download
+            className="flex items-center gap-1.5 py-1.5 px-3.5 rounded-full bg-black/75 hover:bg-black/95 active:scale-95 text-white text-xs font-semibold border border-white/20 backdrop-blur-md shadow-xl transition-all cursor-pointer"
+            title="Download Story"
+          >
+            <Download className="w-3.5 h-3.5 text-pink-400" />
+            <span>Download Story</span>
+          </a>
         </div>
 
         {/* Desktop Side Chevron Arrows */}

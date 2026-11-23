@@ -88,12 +88,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const contentType = upstreamRes.headers.get('content-type') || 'application/octet-stream';
+    const upstreamContentType = upstreamRes.headers.get('content-type') || 'application/octet-stream';
+    const isVideo =
+      upstreamContentType.includes('video') ||
+      validatedUrl.pathname.endsWith('.mp4') ||
+      validatedUrl.pathname.includes('.mp4') ||
+      validatedUrl.toString().includes('.mp4') ||
+      Boolean(filename && filename.endsWith('.mp4'));
+
+    const effectiveContentType = isVideo ? 'video/mp4' : upstreamContentType;
+
     const contentLength = upstreamRes.headers.get('content-length');
     const contentRange = upstreamRes.headers.get('content-range');
 
     const responseHeaders = new Headers();
-    responseHeaders.set('Content-Type', contentType);
+    responseHeaders.set('Content-Type', effectiveContentType);
     responseHeaders.set('Accept-Ranges', 'bytes');
     responseHeaders.set('Cache-Control', 'public, max-age=86400, s-maxage=86400');
     responseHeaders.set('Access-Control-Allow-Origin', '*');
@@ -107,13 +116,9 @@ export async function GET(request: NextRequest) {
 
     // Determine clean safe filename for download
     if (download) {
-      const isVideo = contentType.includes('video') || validatedUrl.pathname.endsWith('.mp4') || Boolean(filename && filename.endsWith('.mp4'));
       const defaultExt = isVideo ? 'mp4' : 'jpg';
       const cleanFilename = (filename || `instagram_media.${defaultExt}`).replace(/[^a-zA-Z0-9._-]/g, '_');
       responseHeaders.set('Content-Disposition', `attachment; filename="${cleanFilename}"`);
-      if (isVideo) {
-        responseHeaders.set('Content-Type', 'video/mp4');
-      }
     }
 
     const statusCode = rangeHeader && upstreamRes.status === 206 ? 206 : 200;

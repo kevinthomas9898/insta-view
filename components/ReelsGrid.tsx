@@ -31,6 +31,7 @@ export function ReelsGrid({ reels, username }: ReelsGridProps) {
   const [duration, setDuration] = useState(0);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const lastTimeUpdateRef = useRef<number>(0);
 
   const toggleVideoPlay = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -233,8 +234,10 @@ export function ReelsGrid({ reels, username }: ReelsGridProps) {
                   if (videoRef.current) {
                     setDuration(videoRef.current.duration);
                   }
+                  setIsReelLoading(false);
                 }}
                 onLoadedData={() => setIsReelLoading(false)}
+                onCanPlay={() => setIsReelLoading(false)}
                 onWaiting={() => setIsReelLoading(true)}
                 onPlaying={() => {
                   setIsReelLoading(false);
@@ -243,9 +246,13 @@ export function ReelsGrid({ reels, username }: ReelsGridProps) {
                 onPause={() => setIsVideoPlaying(false)}
                 onTimeUpdate={() => {
                   if (videoRef.current && videoRef.current.duration) {
-                    setCurrentTime(videoRef.current.currentTime);
-                    setDuration(videoRef.current.duration);
-                    setVideoProgress((videoRef.current.currentTime / videoRef.current.duration) * 100);
+                    const now = Date.now();
+                    if (now - lastTimeUpdateRef.current > 200) {
+                      lastTimeUpdateRef.current = now;
+                      setCurrentTime(videoRef.current.currentTime);
+                      setDuration(videoRef.current.duration);
+                      setVideoProgress((videoRef.current.currentTime / videoRef.current.duration) * 100);
+                    }
                   }
                 }}
                 className={`w-full h-full object-contain transition-opacity duration-200 ${

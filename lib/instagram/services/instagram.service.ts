@@ -343,13 +343,30 @@ export class InstagramService {
       const result = await provider.getReels(username);
       const durationMs = Date.now() - startTime;
 
-      const processed = result.data.map((r) => ({
-        ...this.addMediaProxyUrls(r, username),
-        viewCount: r.viewCount,
-        playCount: r.playCount,
-        audioTitle: r.audioTitle,
-        audioArtist: r.audioArtist,
-      }));
+      // Cross-enrich reels with video URLs from cached posts if available
+      const cachedPosts = globalCache.get<PostResult[]>(`posts:${username}:`);
+      const postsMap = new Map<string, string>();
+      if (cachedPosts) {
+        for (const p of cachedPosts) {
+          if (p.url && (p.url.includes('.mp4') || p.type === 'video')) {
+            postsMap.set(p.id, p.url);
+          }
+        }
+      }
+
+      const processed = result.data.map((r) => {
+        let reelItem = { ...r };
+        if ((!reelItem.url || !reelItem.url.includes('.mp4')) && postsMap.has(reelItem.id)) {
+          reelItem.url = postsMap.get(reelItem.id)!;
+        }
+        return {
+          ...this.addMediaProxyUrls(reelItem, username),
+          viewCount: r.viewCount,
+          playCount: r.playCount,
+          audioTitle: r.audioTitle,
+          audioArtist: r.audioArtist,
+        };
+      });
 
       globalCache.set(cacheKey, processed, CACHE_TTL.REELS);
 

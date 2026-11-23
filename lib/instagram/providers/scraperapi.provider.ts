@@ -208,10 +208,48 @@ export class ScraperApiProvider implements InstagramProvider {
     const items = json.result?.items || [];
     if (!Array.isArray(items)) return { data: [] };
 
+    // In ScraperAPI, the raw /api/reels endpoint returns thumbnails without mp4 video streams.
+    // However, the Instagram posts feed contains full mp4 streams for the user's reels.
+    // Fetch posts (page 1 and page 2 if needed) to enrich reels with real video URLs.
+    const postsMap = new Map<string, string>();
+    try {
+      const postsP1: any = await this.fetchEndpoint<any>('posts', { username });
+      const p1Items = postsP1.result?.items || [];
+      for (const p of p1Items) {
+        const vUrl = p.media?.[0]?.versions?.[0]?.url || p.media?.[0]?.url || p.video_url;
+        if (vUrl && (vUrl.includes('.mp4') || p.type === 'video')) {
+          postsMap.set(String(p.id), vUrl);
+          if (p.shortcode) postsMap.set(String(p.shortcode), vUrl);
+        }
+      }
+
+      // Check if page 2 of posts is needed for older reels
+      const hasUnmatched = items.some(
+        (item) => !postsMap.has(String(item.id)) && !(item.shortcode && postsMap.has(String(item.shortcode)))
+      );
+      const maxId = postsP1.result?.pageInfo?.maxId;
+      if (hasUnmatched && maxId) {
+        const postsP2: any = await this.fetchEndpoint<any>('posts', { username, maxId });
+        const p2Items = postsP2.result?.items || [];
+        for (const p of p2Items) {
+          const vUrl = p.media?.[0]?.versions?.[0]?.url || p.media?.[0]?.url || p.video_url;
+          if (vUrl && (vUrl.includes('.mp4') || p.type === 'video')) {
+            postsMap.set(String(p.id), vUrl);
+            if (p.shortcode) postsMap.set(String(p.shortcode), vUrl);
+          }
+        }
+      }
+    } catch {
+      // Non-blocking: continue if posts lookup encounters an issue
+    }
+
     const reels: ReelResult[] = items.map((item: any) => {
       const m = item.media?.[0];
       const thumbUrl = m?.thumbnailUrl || '';
-      const videoUrl = m?.versions?.[0]?.url || m?.url || thumbUrl;
+      const matchedVideoUrl =
+        postsMap.get(String(item.id)) ||
+        (item.shortcode ? postsMap.get(String(item.shortcode)) : undefined);
+      const videoUrl = matchedVideoUrl || m?.versions?.[0]?.url || m?.url || thumbUrl;
 
       return {
         id: String(item.id),
