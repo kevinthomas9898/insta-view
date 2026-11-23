@@ -37,6 +37,7 @@ import {
   Film,
   HelpCircle,
   CheckCircle2,
+  ShieldAlert,
 } from 'lucide-react';
 
 import { FAQ_ITEMS, type FaqItem } from '@/lib/data/faq';
@@ -157,8 +158,17 @@ export function InstaViewer({
       setProfile(json.data);
       setProfileMetadata(json.metadata);
 
-      // Once profile loads, automatically fetch active tab data
-      fetchTabData(userToFetch, activeTab);
+      // If the account is private, do not make failing media requests
+      if (json.data?.isPrivate) {
+        setIsLoadingTab(false);
+        setTabError({
+          code: 'PRIVATE_ACCOUNT',
+          message: 'This account is private. Follow this account on Instagram to see their photos and videos.',
+        });
+      } else {
+        // Once public profile loads, automatically fetch active tab data
+        fetchTabData(userToFetch, activeTab);
+      }
     } catch {
       setProfileError('Network error connecting to Instagram service. Please try again.');
     } finally {
@@ -175,10 +185,22 @@ export function InstaViewer({
       const json = await res.json();
 
       if (!res.ok || !json.success) {
-        setTabError({
-          code: json.error?.code,
-          message: json.error?.message || `Failed to retrieve ${tab}`,
-        });
+        const errCode = json.error?.code;
+        const errMsg = json.error?.message || `Failed to retrieve ${tab}`;
+        const isPrivate = errCode === 'PRIVATE_ACCOUNT' || errMsg.toLowerCase().includes('private');
+
+        if (isPrivate) {
+          setProfile((prev) => (prev ? { ...prev, isPrivate: true } : prev));
+          setTabError({
+            code: 'PRIVATE_ACCOUNT',
+            message: 'This account is private. Follow this account on Instagram to see their photos and videos.',
+          });
+        } else {
+          setTabError({
+            code: errCode,
+            message: errMsg,
+          });
+        }
         return;
       }
 
@@ -219,7 +241,7 @@ export function InstaViewer({
 
   const handleTabChange = (newTab: TabKey) => {
     setActiveTab(newTab);
-    if (!searchedUsername) return;
+    if (!searchedUsername || profile?.isPrivate) return;
 
     const hasData =
       (newTab === 'stories' && stories.length > 0) ||
@@ -237,7 +259,7 @@ export function InstaViewer({
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#09090b] text-slate-900 dark:text-zinc-100 flex flex-col font-sans transition-colors duration-200">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-slate-50 dark:bg-[#09090b] text-slate-900 dark:text-zinc-100 flex flex-col font-sans transition-colors duration-200">
       {/* Header with Navigation and Dark / Light Switch */}
       <header className="sticky top-0 z-30 bg-white/85 dark:bg-[#09090b]/85 backdrop-blur-md border-b border-slate-200/80 dark:border-zinc-800/80 px-4 sm:px-8 py-3.5 transition-all">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
@@ -328,7 +350,7 @@ export function InstaViewer({
       </aside>
 
       {/* Main Content Area */}
-      <main className="max-w-6xl w-full mx-auto px-4 sm:px-6 pt-2 sm:pt-4 pb-12 flex-1 flex flex-col">
+      <main className="max-w-6xl w-full mx-auto px-4 sm:px-6 pt-2 sm:pt-4 pb-12 flex-1 flex flex-col min-w-0 overflow-x-hidden">
         {/* Hero & Search Section */}
         <section className={`transition-all duration-300 ${profile ? 'mb-4' : 'my-2 sm:my-4 text-center'}`}>
           {!profile && (
@@ -418,7 +440,7 @@ export function InstaViewer({
 
         {/* Profile Error Banner */}
         {profileError && (
-          <div className="max-w-2xl mx-auto w-full p-4 mb-8 bg-rose-50 border border-rose-200 dark:bg-rose-950/40 dark:border-rose-900/60 rounded-2xl text-rose-900 dark:text-rose-200 text-sm flex items-start gap-3 backdrop-blur-sm animate-fade-in shadow-xs">
+          <div className="max-w-2xl mx-auto w-full p-4 mb-8 bg-rose-50 border border-rose-200 dark:bg-rose-950/40 dark:border-rose-900/60 rounded-2xl text-rose-900 dark:text-rose-200 text-sm flex items-start gap-3 backdrop-blur-sm animate-fade-in shadow-xs overflow-hidden break-words">
             <AlertCircle className="w-5 h-5 text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5" />
             <div>
               <strong className="font-semibold text-rose-950 dark:text-rose-100">Unable to retrieve profile: </strong>
@@ -432,66 +454,87 @@ export function InstaViewer({
 
         {/* Active Profile Results */}
         {profile && (
-          <div className="w-full animate-fade-in">
+          <div className="w-full animate-fade-in overflow-hidden">
             <ProfileHeader profile={profile} metadata={profileMetadata} />
 
-            <TabsNav
-              activeTab={activeTab}
-              onTabChange={handleTabChange}
-              counts={{
-                stories: stories.length || undefined,
-                highlights: highlights.length || undefined,
-                posts: posts.length || undefined,
-                reels: reels.length || undefined,
-              }}
-            />
-
-            {/* Tab Loading Spinner */}
-            {isLoadingTab && (
-              <div className="bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-2xl p-16 text-center text-slate-500 dark:text-zinc-400 flex flex-col items-center justify-center gap-3 backdrop-blur-sm shadow-xs">
-                <Loader2 className="w-8 h-8 animate-spin text-pink-500" />
-                <p className="text-sm font-semibold text-slate-900 dark:text-zinc-200">
-                  Retrieving {activeTab} media anonymously...
-                </p>
-                <p className="text-xs text-slate-500 dark:text-zinc-500">Connecting to secure proxy mirror</p>
-              </div>
-            )}
-
-            {/* Tab Specific Notice / Error */}
-            {!isLoadingTab && tabError && (
-              <div className="bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-2xl p-10 text-center backdrop-blur-sm shadow-xs">
-                <AlertCircle className="w-10 h-10 mx-auto text-amber-500 mb-3" />
-                <h3 className="font-bold text-slate-900 dark:text-zinc-100 text-base mb-1">
-                  Content Notice
+            {/* If profile is private, show dedicated private notice and skip tabs */}
+            {profile.isPrivate || tabError?.code === 'PRIVATE_ACCOUNT' ? (
+              <div className="bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-2xl p-8 sm:p-14 text-center backdrop-blur-sm shadow-xs max-w-xl mx-auto my-6 overflow-hidden">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-amber-500/10 border-2 border-amber-500/20 text-amber-500 flex items-center justify-center mx-auto mb-4 shadow-inner">
+                  <Lock className="w-8 h-8 sm:w-10 sm:h-10 text-amber-500 stroke-[1.75]" />
+                </div>
+                <h3 className="font-extrabold text-slate-900 dark:text-zinc-100 text-lg sm:text-xl mb-2 tracking-tight">
+                  This Account is Private
                 </h3>
-                <p className="text-xs text-slate-600 dark:text-zinc-400 max-w-md mx-auto leading-relaxed">
-                  {tabError.message}
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-zinc-400 max-w-md mx-auto leading-relaxed mb-6 break-words">
+                  Follow @{profile.username} on Instagram to see their photos and videos.
                 </p>
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700/50 text-xs text-slate-500 dark:text-zinc-400 flex items-center justify-center gap-2 max-w-sm mx-auto">
+                  <ShieldAlert className="w-4 h-4 text-amber-500 shrink-0" />
+                  <span>InstaView only displays content from public Instagram accounts.</span>
+                </div>
               </div>
-            )}
+            ) : (
+              <>
+                <TabsNav
+                  activeTab={activeTab}
+                  onTabChange={handleTabChange}
+                  counts={{
+                    stories: stories.length || undefined,
+                    highlights: highlights.length || undefined,
+                    posts: posts.length || undefined,
+                    reels: reels.length || undefined,
+                  }}
+                />
 
-            {/* Tab Content Display */}
-            {!isLoadingTab && !tabError && (
-              <div>
-                {activeTab === 'stories' && (
-                  <StoriesList stories={stories} username={searchedUsername} />
+                {/* Tab Loading Spinner */}
+                {isLoadingTab && (
+                  <div className="bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-2xl p-16 text-center text-slate-500 dark:text-zinc-400 flex flex-col items-center justify-center gap-3 backdrop-blur-sm shadow-xs">
+                    <Loader2 className="w-8 h-8 animate-spin text-pink-500" />
+                    <p className="text-sm font-semibold text-slate-900 dark:text-zinc-200">
+                      Retrieving {activeTab} media anonymously...
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-zinc-500">Connecting to secure proxy mirror</p>
+                  </div>
                 )}
-                {activeTab === 'highlights' && (
-                  <HighlightsViewer highlights={highlights} />
+
+                {/* Tab Specific Notice / Error */}
+                {!isLoadingTab && tabError && (
+                  <div className="bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-2xl p-10 text-center backdrop-blur-sm shadow-xs max-w-xl mx-auto my-4 overflow-hidden">
+                    <AlertCircle className="w-10 h-10 mx-auto text-amber-500 mb-3" />
+                    <h3 className="font-bold text-slate-900 dark:text-zinc-100 text-base mb-1">
+                      Content Notice
+                    </h3>
+                    <p className="text-xs text-slate-600 dark:text-zinc-400 max-w-md mx-auto leading-relaxed break-words break-all">
+                      {tabError.message}
+                    </p>
+                  </div>
                 )}
-                {activeTab === 'posts' && (
-                  <PostsGrid
-                    posts={posts}
-                    username={searchedUsername}
-                    hasMore={Boolean(postsNextMaxId)}
-                    isLoadingMore={isLoadingMorePosts}
-                    onLoadMore={handleLoadMorePosts}
-                  />
+
+                {/* Tab Content Display */}
+                {!isLoadingTab && !tabError && (
+                  <div>
+                    {activeTab === 'stories' && (
+                      <StoriesList stories={stories} username={searchedUsername} />
+                    )}
+                    {activeTab === 'highlights' && (
+                      <HighlightsViewer highlights={highlights} />
+                    )}
+                    {activeTab === 'posts' && (
+                      <PostsGrid
+                        posts={posts}
+                        username={searchedUsername}
+                        hasMore={Boolean(postsNextMaxId)}
+                        isLoadingMore={isLoadingMorePosts}
+                        onLoadMore={handleLoadMorePosts}
+                      />
+                    )}
+                    {activeTab === 'reels' && (
+                      <ReelsGrid reels={reels} username={searchedUsername} />
+                    )}
+                  </div>
                 )}
-                {activeTab === 'reels' && (
-                  <ReelsGrid reels={reels} username={searchedUsername} />
-                )}
-              </div>
+              </>
             )}
           </div>
         )}

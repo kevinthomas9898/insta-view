@@ -59,7 +59,7 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
         {/* Profile Details */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2.5 flex-wrap">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight break-all">
               @{profile.username}
             </h1>
             {profile.verified && (
@@ -67,10 +67,17 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
                 <CheckCircle2 className="w-5 h-5 text-blue-600 fill-blue-600/10" />
               </span>
             )}
-            <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 dark:bg-zinc-800/80 dark:text-zinc-400 dark:border-zinc-700/60 flex items-center gap-1 font-medium">
-              <ShieldCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-              Public Profile
-            </span>
+            {profile.isPrivate ? (
+              <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20 flex items-center gap-1 font-medium">
+                <Lock className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                Private Account
+              </span>
+            ) : (
+              <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 dark:bg-zinc-800/80 dark:text-zinc-400 dark:border-zinc-700/60 flex items-center gap-1 font-medium">
+                <ShieldCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                Public Profile
+              </span>
+            )}
           </div>
 
           {profile.fullName && (

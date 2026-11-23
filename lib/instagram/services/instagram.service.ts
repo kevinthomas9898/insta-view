@@ -389,6 +389,25 @@ export class InstagramService {
       message = err.message;
     }
 
+    // Normalize any provider error indicating a private profile
+    if (
+      message.includes('"error_type":"private"') ||
+      message.includes('This page is private') ||
+      message.includes('private page') ||
+      message.toLowerCase().includes('is private') ||
+      message.toLowerCase().includes('account is private')
+    ) {
+      code = 'PRIVATE_ACCOUNT';
+      message = 'This Instagram account is private. Its media cannot be viewed without following the account.';
+    }
+
+    // Never leak raw JSON / internal provider error bodies to client
+    if (message.startsWith('{') || message.includes('ScraperAPI error') || message.includes('RapidAPI error')) {
+      if (code !== 'PRIVATE_ACCOUNT' && code !== 'RATE_LIMITED' && code !== 'PROFILE_NOT_FOUND') {
+        message = 'Unable to retrieve media for this profile at this time. Please try again.';
+      }
+    }
+
     log('error', {
       action,
       username,

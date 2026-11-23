@@ -67,7 +67,10 @@ export class RapidApiProvider implements InstagramProvider {
 
     if (!res.ok) {
       const errText = await res.text();
-      throw new InstagramError('PROVIDER_ERROR', `RapidAPI error [${res.status}]: ${errText.slice(0, 200)}`, res.status);
+      if (res.status === 403 || errText.includes('private') || errText.includes('Private')) {
+        throw new InstagramError('PRIVATE_ACCOUNT', 'This Instagram account is private. Its media cannot be viewed without following the account.', 403);
+      }
+      throw new InstagramError('PROVIDER_ERROR', `RapidAPI error [${res.status}]: ${errText.slice(0, 100)}`, res.status);
     }
 
     return (await res.json()) as T;
