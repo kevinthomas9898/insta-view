@@ -340,6 +340,7 @@ export function PostsGrid({
                     autoPlay
                     muted={isVideoMuted}
                     preload="auto"
+                    poster={activeItem.thumbnailUrl || activeItem.url}
                     onLoadedMetadata={() => {
                       if (videoRef.current) {
                         setVideoDuration(videoRef.current.duration);
@@ -362,7 +363,7 @@ export function PostsGrid({
                       }
                     }}
                     className={`w-full max-h-[80vh] md:max-h-[85vh] object-contain transition-opacity duration-200 ${
-                      isMediaLoading ? 'opacity-30' : 'opacity-100'
+                      isMediaLoading ? 'opacity-70' : 'opacity-100'
                     }`}
                     src={`/api/media?url=${encodeURIComponent(activeItem.url)}`}
                     onError={(e) => {
@@ -371,10 +372,7 @@ export function PostsGrid({
                         e.currentTarget.src = activeItem.url;
                       }
                     }}
-                  >
-                    <source src={`/api/media?url=${encodeURIComponent(activeItem.url)}`} />
-                    Your browser does not support the video tag.
-                  </video>
+                  />
 
                   {/* Top-Right Floating Mute / Unmute Button (beside Close button) */}
                   <button

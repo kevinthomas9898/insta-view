@@ -66,9 +66,14 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
     const upstreamRes = await fetch(validatedUrl.toString(), {
       headers: upstreamHeaders,
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
 
     if (!upstreamRes.ok && upstreamRes.status !== 206) {
       log('warn', {

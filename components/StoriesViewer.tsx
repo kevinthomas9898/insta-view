@@ -254,11 +254,12 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
               muted={isMuted}
               playsInline
               preload="auto"
+              poster={currentStory.thumbnailUrl || currentStory.url}
               onLoadedData={() => setIsMediaLoading(false)}
               onWaiting={() => setIsMediaLoading(true)}
               onPlaying={() => setIsMediaLoading(false)}
               className={`w-full h-full object-contain transition-opacity duration-200 ${
-                isMediaLoading ? 'opacity-30' : 'opacity-100'
+                isMediaLoading ? 'opacity-70' : 'opacity-100'
               }`}
               onTimeUpdate={() => {
                 if (videoRef.current && videoRef.current.duration) {

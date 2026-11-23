@@ -39,6 +39,9 @@ export class RapidApiProvider implements InstagramProvider {
       url.searchParams.set(k, v);
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
     let res: Response;
     try {
       res = await fetch(url.toString(), {
@@ -47,8 +50,11 @@ export class RapidApiProvider implements InstagramProvider {
           'X-RapidAPI-Host': this.host,
           'Accept': 'application/json',
         },
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
     } catch (err: unknown) {
+      clearTimeout(timeoutId);
       const msg = err instanceof Error ? err.message : 'Network error';
       throw new InstagramError('PROVIDER_ERROR', `RapidAPI network request failed: ${msg}`, 502);
     }
