@@ -7,6 +7,8 @@ import {
   getTranslations,
 } from '@/lib/i18n/translations';
 
+export const instant = false;
+
 export function generateStaticParams() {
   return SUPPORTED_LANGS.map((lang) => ({
     lang,

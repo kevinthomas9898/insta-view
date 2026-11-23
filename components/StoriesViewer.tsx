@@ -12,6 +12,7 @@ import {
   Maximize,
   Volume2,
   VolumeX,
+  Loader2,
 } from 'lucide-react';
 
 interface StoriesViewerProps {
@@ -24,18 +25,19 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
+  const [isMediaLoading, setIsMediaLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const currentStory = stories[currentIndex];
 
-  // Auto-progress timer for images
+  // Auto-progress timer for images (only ticks when image has finished loading)
   useEffect(() => {
     if (!currentStory) return;
 
     if (currentStory.type === 'image') {
-      if (!isPlaying) return;
+      if (!isPlaying || isMediaLoading) return;
       const duration = 5000; // 5 seconds per image
       const interval = 50;
       const step = (interval / duration) * 100;
@@ -55,7 +57,7 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
       // Handled by video onTimeUpdate
       setProgress(0);
     }
-  }, [currentIndex, isPlaying, currentStory?.type]);
+  }, [currentIndex, isPlaying, isMediaLoading, currentStory?.type]);
 
   // Preload adjacent stories in background for instant playback
   useEffect(() => {
@@ -91,6 +93,7 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
   const handleNext = () => {
     setProgress(0);
     if (currentIndex < stories.length - 1) {
+      setIsMediaLoading(true);
       setCurrentIndex((i) => i + 1);
     } else {
       onClose();
@@ -100,6 +103,7 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
   const handlePrev = () => {
     setProgress(0);
     if (currentIndex > 0) {
+      setIsMediaLoading(true);
       setCurrentIndex((i) => i - 1);
     }
   };
@@ -212,6 +216,18 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
 
         {/* Media Content Area */}
         <div className="relative flex-1 bg-black flex items-center justify-center overflow-hidden">
+          {/* Instant Loading Spinner Overlay */}
+          {isMediaLoading && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-xs z-15 transition-opacity duration-150 animate-fade-in pointer-events-none">
+              <div className="p-3 rounded-full bg-zinc-900/90 border border-white/10 shadow-2xl">
+                <Loader2 className="w-7 h-7 text-pink-500 animate-spin" />
+              </div>
+              <span className="text-[11px] font-medium text-white/90 mt-2.5 tracking-wide">
+                Loading story {currentIndex + 1} of {stories.length}...
+              </span>
+            </div>
+          )}
+
           {currentStory.type === 'video' ? (
             <video
               ref={videoRef}
@@ -220,7 +236,13 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
               autoPlay={isPlaying}
               muted={isMuted}
               playsInline
-              className="w-full h-full object-contain"
+              preload="auto"
+              onLoadedData={() => setIsMediaLoading(false)}
+              onWaiting={() => setIsMediaLoading(true)}
+              onPlaying={() => setIsMediaLoading(false)}
+              className={`w-full h-full object-contain transition-opacity duration-200 ${
+                isMediaLoading ? 'opacity-30' : 'opacity-100'
+              }`}
               onTimeUpdate={() => {
                 if (videoRef.current && videoRef.current.duration) {
                   const p = (videoRef.current.currentTime / videoRef.current.duration) * 100;
@@ -229,6 +251,7 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
               }}
               onEnded={handleNext}
               onError={(e) => {
+                setIsMediaLoading(false);
                 if (e.currentTarget.src !== currentStory.url) {
                   e.currentTarget.src = currentStory.url;
                 }
@@ -240,12 +263,16 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
               src={displayUrl}
               alt="Story"
               referrerPolicy="no-referrer"
-              className="w-full h-full object-contain"
+              onLoad={() => setIsMediaLoading(false)}
               onError={(e) => {
+                setIsMediaLoading(false);
                 if (e.currentTarget.src !== currentStory.url) {
                   e.currentTarget.src = currentStory.url;
                 }
               }}
+              className={`w-full h-full object-contain transition-opacity duration-200 ${
+                isMediaLoading ? 'opacity-30' : 'opacity-100'
+              }`}
             />
           )}
 

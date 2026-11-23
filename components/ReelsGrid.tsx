@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { ReelResult } from '@/lib/instagram/types';
-import { Play, Download, X, Film, Music, Sparkles } from 'lucide-react';
+import { Play, Download, X, Film, Music, Sparkles, Loader2 } from 'lucide-react';
 
 interface ReelsGridProps {
   reels: ReelResult[];
@@ -11,6 +11,7 @@ interface ReelsGridProps {
 
 export function ReelsGrid({ reels, username }: ReelsGridProps) {
   const [selectedReel, setSelectedReel] = useState<ReelResult | null>(null);
+  const [isReelLoading, setIsReelLoading] = useState(true);
 
   if (reels.length === 0) {
     return (
@@ -40,7 +41,10 @@ export function ReelsGrid({ reels, username }: ReelsGridProps) {
           return (
             <React.Fragment key={reel.id || idx}>
               <div
-                onClick={() => setSelectedReel(reel)}
+                onClick={() => {
+                  setSelectedReel(reel);
+                  setIsReelLoading(true);
+                }}
                 className="group relative bg-zinc-950 rounded-2xl overflow-hidden cursor-pointer aspect-[9/16] shadow-md hover:shadow-2xl transition-all border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700"
               >
                 <img
@@ -104,14 +108,32 @@ export function ReelsGrid({ reels, username }: ReelsGridProps) {
 
             {/* Video Player */}
             <div className="relative flex-1 flex items-center justify-center bg-black overflow-hidden">
+              {/* Loading Spinner Overlay */}
+              {isReelLoading && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-xs z-15 transition-opacity duration-150 animate-fade-in pointer-events-none">
+                  <div className="p-3 rounded-full bg-zinc-900/90 border border-white/10 shadow-2xl">
+                    <Loader2 className="w-7 h-7 text-pink-500 animate-spin" />
+                  </div>
+                  <span className="text-[11px] font-medium text-white/90 mt-2.5 tracking-wide">
+                    Loading reel...
+                  </span>
+                </div>
+              )}
+
               <video
                 controls
                 autoPlay
                 playsInline
-                preload="metadata"
-                className="w-full h-full object-contain"
+                preload="auto"
+                onLoadedData={() => setIsReelLoading(false)}
+                onWaiting={() => setIsReelLoading(true)}
+                onPlaying={() => setIsReelLoading(false)}
+                className={`w-full h-full object-contain transition-opacity duration-200 ${
+                  isReelLoading ? 'opacity-30' : 'opacity-100'
+                }`}
                 src={`/api/media?url=${encodeURIComponent(selectedReel.url)}`}
                 onError={(e) => {
+                  setIsReelLoading(false);
                   if (e.currentTarget.src !== selectedReel.url) {
                     e.currentTarget.src = selectedReel.url;
                   }

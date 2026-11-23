@@ -147,7 +147,8 @@ export function PostsGrid({
         {posts.map((post, idx) => {
           const thumbUrl = post.thumbnailUrl || post.url;
           const displayThumb = `/api/media?url=${encodeURIComponent(thumbUrl)}`;
-          const showAdAfter = (idx + 1) % 5 === 0 && idx !== posts.length - 1;
+          // Display full-width ad strictly after full 3-column rows (multiples of 6) to avoid empty grid gaps
+          const showAdAfter = (idx + 1) % 6 === 0 && idx !== posts.length - 1;
 
           return (
             <React.Fragment key={post.id || idx}>

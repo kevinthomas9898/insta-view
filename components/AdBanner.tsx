@@ -79,7 +79,7 @@ export function AdBanner({
         }
         #${containerId} {
           width: 100%;
-          min-height: 90px;
+          min-height: 190px;
           display: flex;
           justify-content: center;
           align-items: center;
@@ -112,11 +112,11 @@ export function AdBanner({
           ref={iframeRef}
           srcDoc={iframeContent}
           title="Advertisement"
-          className="w-full min-h-[90px] border-0 overflow-hidden"
+          className="w-full min-h-[190px] h-[200px] sm:h-[210px] md:h-[220px] border-0 overflow-hidden"
           scrolling="no"
           sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-top-navigation"
           onLoad={() => {
-            // Check immediately after load
+            // Check immediately after load and auto-fit height
             setTimeout(() => {
               try {
                 const iframe = iframeRef.current;
@@ -125,6 +125,10 @@ export function AdBanner({
                   if (ad && ad.children.length > 0) {
                     setIsAdLoaded(true);
                     setIsBlocked(false);
+                    const scrollH = iframe.contentDocument.body.scrollHeight;
+                    if (scrollH > 120) {
+                      iframe.style.height = `${scrollH + 10}px`;
+                    }
                   }
                 }
               } catch {
