@@ -722,6 +722,16 @@ export function InstaViewer({
                   </Link>
                 </li>
                 <li>
+                  <Link href="/story-saver" className="hover:text-pink-600 dark:hover:text-pink-400 transition-colors">
+                    Story Saver Online
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/instagram-to-mp4" className="hover:text-pink-600 dark:hover:text-pink-400 transition-colors">
+                    Instagram to MP4 Converter
+                  </Link>
+                </li>
+                <li>
                   <Link href="/iganony" className="hover:text-pink-600 dark:hover:text-pink-400 transition-colors">
                     IGAnony Alternative
                   </Link>
@@ -731,11 +741,26 @@ export function InstaViewer({
 
             {/* Col 3: Resources & Guides */}
             <div>
-              <h4 className="font-bold text-sm text-slate-900 dark:text-zinc-200 mb-3 tracking-tight">Resources</h4>
+              <h4 className="font-bold text-sm text-slate-900 dark:text-zinc-200 mb-3 tracking-tight">Comparisons & Guides</h4>
               <ul className="space-y-2">
                 <li>
                   <Link href="/blog" className="hover:text-pink-600 dark:hover:text-pink-400 transition-colors">
                     Editorial Blog & Guides
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/instaview-vs-snapinsta" className="hover:text-pink-600 dark:hover:text-pink-400 transition-colors">
+                    InstaView vs Snapinsta
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/instaview-vs-storiesig" className="hover:text-pink-600 dark:hover:text-pink-400 transition-colors">
+                    InstaView vs StoriesIG
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/instaview-vs-indown" className="hover:text-pink-600 dark:hover:text-pink-400 transition-colors">
+                    InstaView vs InDown
                   </Link>
                 </li>
                 <li>
