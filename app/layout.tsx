@@ -69,6 +69,16 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
+  verification: {
+    google: "googlee32dff6fdd44e534",
+    other: {
+      "google-site-verification": [
+        "googlee32dff6fdd44e534.html",
+        "googlee32dff6fdd44e534",
+        "e32dff6fdd44e534",
+      ],
+    },
+  },
 };
 
 export default function RootLayout({
@@ -192,6 +202,8 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark h-full bg-[#09090b] text-zinc-100 antialiased selection:bg-pink-500 selection:text-white">
       <head>
+        <meta name="google-site-verification" content="googlee32dff6fdd44e534" />
+        <meta name="google-site-verification" content="e32dff6fdd44e534" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdWebApp) }}
