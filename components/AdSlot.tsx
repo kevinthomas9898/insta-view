@@ -27,11 +27,11 @@ export function AdSlot({
   }, []);
 
   return (
-    <div className={`w-full flex justify-center my-6 overflow-hidden ${className}`}>
+    <div className={`w-full flex justify-center my-2 sm:my-3 overflow-hidden ${className}`}>
       <div
         ref={containerRef}
         id={id}
-        className="w-full max-w-4xl min-h-[90px] flex justify-center items-center"
+        className="w-full max-w-4xl min-h-[60px] sm:min-h-[90px] flex justify-center items-center"
       />
     </div>
   );
