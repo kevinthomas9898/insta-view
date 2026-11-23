@@ -14,6 +14,7 @@ export interface MediaItem {
   audioTitle?: string;
   audioArtist?: string;
   downloadUrl?: string;
+  shortcode?: string;
 }
 
 export interface Profile {

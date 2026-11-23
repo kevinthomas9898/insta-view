@@ -368,22 +368,17 @@ export class InstagramService {
       const result = await provider.getReels(username, maxId);
       const durationMs = Date.now() - startTime;
 
-      // Cross-enrich reels with video URLs from cached posts if available
-      const cachedPostsObj = globalCache.get<any>(`posts:${username}:${forceDemo ? 'demo' : 'live'}:initial`);
-      const cachedPosts = Array.isArray(cachedPostsObj) ? cachedPostsObj : cachedPostsObj?.posts;
-      const postsMap = new Map<string, string>();
-      if (Array.isArray(cachedPosts)) {
-        for (const p of cachedPosts) {
-          if (p.url && (p.url.includes('.mp4') || p.type === 'video')) {
-            postsMap.set(p.id, p.url);
-          }
-        }
-      }
+      // Cross-enrich reels with video URLs from pooled posts if available
+      const poolObj = globalCache.get<Record<string, { url: string; caption?: string }>>(`posts_pool:${username}`) || {};
 
       const processed = result.data.map((r) => {
         let reelItem = { ...r };
-        if ((!reelItem.url || !reelItem.url.includes('.mp4')) && postsMap.has(reelItem.id)) {
-          reelItem.url = postsMap.get(reelItem.id)!;
+        const poolEntry = poolObj[reelItem.id] || (reelItem.shortcode ? poolObj[reelItem.shortcode] : undefined);
+        if ((!reelItem.url || !reelItem.url.includes('.mp4')) && poolEntry?.url?.includes('.mp4')) {
+          reelItem.url = poolEntry.url;
+        }
+        if (!reelItem.caption && poolEntry?.caption) {
+          reelItem.caption = poolEntry.caption;
         }
         return {
           ...this.addMediaProxyUrls(reelItem, username),

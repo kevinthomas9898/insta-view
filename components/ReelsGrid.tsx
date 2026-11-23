@@ -49,16 +49,27 @@ export function ReelsGrid({
       setIsReelLoading(true);
       const playPromise = videoRef.current.play();
       if (playPromise !== undefined) {
-        playPromise.catch(() => {
-          if (videoRef.current) {
-            videoRef.current.muted = true;
-            setIsVideoMuted(true);
-            videoRef.current.play().catch(() => {
-              setIsVideoPlaying(false);
-              setIsReelLoading(false);
-            });
-          }
-        });
+        playPromise
+          .then(() => {
+            setIsVideoPlaying(true);
+            setIsReelLoading(false);
+          })
+          .catch(() => {
+            if (videoRef.current) {
+              videoRef.current.muted = true;
+              setIsVideoMuted(true);
+              videoRef.current
+                .play()
+                .then(() => {
+                  setIsVideoPlaying(true);
+                  setIsReelLoading(false);
+                })
+                .catch(() => {
+                  setIsVideoPlaying(false);
+                  setIsReelLoading(false);
+                });
+            }
+          });
       }
     }
   }, [selectedReel]);
@@ -146,6 +157,7 @@ export function ReelsGrid({
                   setIsReelLoading(true);
                   setIsCaptionExpanded(false);
                   setIsVideoPlaying(true);
+                  setIsVideoMuted(false);
                   setVideoProgress(0);
                   setCurrentTime(0);
                   setDuration(0);
@@ -280,6 +292,7 @@ export function ReelsGrid({
               )}
 
               <video
+                key={selectedReel.id || selectedReel.url}
                 ref={videoRef}
                 autoPlay
                 playsInline

@@ -8,6 +8,7 @@ import {
   MediaItem,
 } from '../types';
 import { InstagramError } from '../errors';
+import { globalCache, CACHE_TTL } from '../../cache';
 
 interface ScraperApiConfig {
   token: string;
@@ -258,36 +259,35 @@ export class ScraperApiProvider implements InstagramProvider {
       return trimmed.length > 0 && !trimmed.startsWith('http://') && !trimmed.startsWith('https://');
     };
 
-    const postsMap = new Map<string, PostVideoMeta>();
-    try {
-      const postsP1: any = await this.fetchEndpoint<any>('posts', { username });
-      const p1Items = postsP1.result?.items || [];
-      for (const p of p1Items) {
-        const vUrl = findMp4(p) || p.media?.[0]?.versions?.[0]?.url || p.media?.[0]?.url || p.video_url;
-        const captionText = p.caption?.text || (typeof p.caption === 'string' ? p.caption : undefined);
-        const meta: PostVideoMeta = {
-          url: vUrl || '',
-          caption: isValidCaption(captionText) ? captionText : undefined,
-          likeCount: p.likeCount,
-          commentCount: p.commentCount,
-        };
-        postsMap.set(String(p.id), meta);
-        const sc = extractShortcode(p);
-        if (sc) postsMap.set(sc, meta);
-      }
+    const poolKey = `posts_pool:${username}`;
+    const cursorKey = `posts_cursor:${username}`;
 
-      // Check if page 2 of posts is needed for older reels
-      const hasUnmatched = items.some(
-        (item) => {
-          const sc = extractShortcode(item);
-          return !postsMap.has(String(item.id)) && !(sc && postsMap.has(sc));
-        }
-      );
-      const maxId = postsP1.result?.pageInfo?.maxId;
-      if (hasUnmatched && maxId) {
-        const postsP2: any = await this.fetchEndpoint<any>('posts', { username, maxId });
-        const p2Items = postsP2.result?.items || [];
-        for (const p of p2Items) {
+    const cachedPool = globalCache.get<Record<string, PostVideoMeta>>(poolKey) || {};
+    const postsMap = new Map<string, PostVideoMeta>(Object.entries(cachedPool));
+    let nextPostsCursor = globalCache.get<string>(cursorKey) || undefined;
+
+    const hasUnmatched = () =>
+      items.some((item) => {
+        const sc = extractShortcode(item);
+        const m = postsMap.get(String(item.id)) || (sc ? postsMap.get(sc) : undefined);
+        return !m || !m.url || !m.url.includes('.mp4');
+      });
+
+    try {
+      let pageCount = 0;
+      const maxPagesToFetch = 4;
+
+      while (hasUnmatched() && pageCount < maxPagesToFetch) {
+        pageCount++;
+        const postsRes: any = await this.fetchEndpoint<any>('posts', {
+          username,
+          ...(nextPostsCursor ? { maxId: nextPostsCursor } : {}),
+        });
+
+        const pItems = postsRes.result?.items || [];
+        if (!Array.isArray(pItems) || pItems.length === 0) break;
+
+        for (const p of pItems) {
           const vUrl = findMp4(p) || p.media?.[0]?.versions?.[0]?.url || p.media?.[0]?.url || p.video_url;
           const captionText = p.caption?.text || (typeof p.caption === 'string' ? p.caption : undefined);
           const meta: PostVideoMeta = {
@@ -300,6 +300,18 @@ export class ScraperApiProvider implements InstagramProvider {
           const sc = extractShortcode(p);
           if (sc) postsMap.set(sc, meta);
         }
+
+        nextPostsCursor = postsRes.result?.pageInfo?.maxId || undefined;
+        if (!postsRes.result?.pageInfo?.hasNextPage || !nextPostsCursor) break;
+      }
+
+      const updatedPool: Record<string, PostVideoMeta> = {};
+      postsMap.forEach((v, k) => {
+        updatedPool[k] = v;
+      });
+      globalCache.set(poolKey, updatedPool, CACHE_TTL.POSTS);
+      if (nextPostsCursor) {
+        globalCache.set(cursorKey, nextPostsCursor, CACHE_TTL.POSTS);
       }
     } catch {
       // Non-blocking: continue if posts lookup encounters an issue
@@ -334,6 +346,7 @@ export class ScraperApiProvider implements InstagramProvider {
         playCount: item.playCount,
         audioTitle: item.audioTitle || 'Original Audio',
         audioArtist: item.audioArtist,
+        shortcode: reelSc || undefined,
       };
     });
 
