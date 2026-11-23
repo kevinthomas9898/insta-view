@@ -18,7 +18,6 @@ import {
   Sparkles,
   ExternalLink,
 } from 'lucide-react';
-import { AdSlot } from '@/components/AdSlot';
 
 interface PostsGridProps {
   posts: PostResult[];
@@ -168,14 +167,36 @@ export function PostsGrid({
 
       {/* Above Load More Sponsor Banner */}
       {hasMore && onLoadMore && (
-        <div className="w-full flex flex-col items-center justify-center mt-8 mb-2">
-          <div className="w-full max-w-xl p-3 rounded-2xl bg-white dark:bg-zinc-900/60 border border-slate-200/80 dark:border-zinc-800/80 flex flex-col items-center justify-center text-center shadow-xs">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 mb-1">
-              Advertisement
-            </span>
-            <div className="w-full min-h-[60px] sm:min-h-[90px] flex items-center justify-center">
-              <AdSlot id="container-posts-loadmore-ad" />
+        <div className="w-full flex justify-center mt-8 mb-2 px-2">
+          <div className="w-full max-w-2xl group rounded-2xl bg-gradient-to-r from-slate-50 via-white to-slate-50 dark:from-zinc-900/90 dark:via-zinc-900/60 dark:to-zinc-900/90 border border-slate-200/80 dark:border-zinc-800/80 p-4 sm:p-5 shadow-xs hover:border-pink-500/40 transition-all flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5 text-left">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-fuchsia-600 flex items-center justify-center shadow-sm shrink-0">
+                <Sparkles className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 font-bold text-[10px] tracking-wider uppercase border border-amber-200 dark:border-amber-500/20">
+                    Sponsored
+                  </span>
+                  <span className="text-[11px] text-slate-500 dark:text-zinc-500 font-medium">InstaView Partner</span>
+                </div>
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                  Anonymous HD Instagram Downloader & Private Viewer
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+                  Save stories, reels & albums in original HD quality with 100% privacy and zero digital trace.
+                </p>
+              </div>
             </div>
+            <button
+              onClick={() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pink-50 hover:bg-pink-100 dark:bg-pink-500/10 dark:hover:bg-pink-500/20 text-pink-600 dark:text-pink-400 text-xs font-semibold transition-colors border border-pink-200/60 dark:border-pink-500/20 cursor-pointer"
+            >
+              <span>Explore</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
       )}

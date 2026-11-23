@@ -456,9 +456,6 @@ export function InstaViewer({
                 )}
               </div>
             )}
-
-            {/* Media Results Sponsor Ad Slot */}
-            <AdSlot id="media-results-ad" />
           </div>
         )}
 
