@@ -269,6 +269,26 @@ export function InstaViewer({
         </div>
       </header>
 
+      {/* Desktop Left Skyscraper Ad (Screens >= 1536px, Auto-Hidden on Mobile/Tablets to preserve 100% mobile UX) */}
+      <aside aria-label="Advertisement" className="hidden 2xl:block fixed left-4 top-24 z-20 w-[160px] h-[600px] pointer-events-auto">
+        <div className="w-full h-full rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 bg-white/60 dark:bg-zinc-900/40 backdrop-blur-md p-1.5 flex flex-col items-center justify-center text-center shadow-xs">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 mb-1">
+            Ad
+          </span>
+          <div id="container-desktop-left-ad" className="w-[160px] h-[600px] flex items-center justify-center" />
+        </div>
+      </aside>
+
+      {/* Desktop Right Skyscraper Ad (Screens >= 1536px, Auto-Hidden on Mobile/Tablets to preserve 100% mobile UX) */}
+      <aside aria-label="Advertisement" className="hidden 2xl:block fixed right-4 top-24 z-20 w-[160px] h-[600px] pointer-events-auto">
+        <div className="w-full h-full rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 bg-white/60 dark:bg-zinc-900/40 backdrop-blur-md p-1.5 flex flex-col items-center justify-center text-center shadow-xs">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 mb-1">
+            Ad
+          </span>
+          <div id="container-desktop-right-ad" className="w-[160px] h-[600px] flex items-center justify-center" />
+        </div>
+      </aside>
+
       {/* Main Content Area */}
       <main className="max-w-6xl w-full mx-auto px-4 sm:px-6 pt-2 sm:pt-4 pb-12 flex-1 flex flex-col">
         {/* Hero & Search Section */}

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { ReelResult } from '@/lib/instagram/types';
-import { Play, Download, X, Film, Music } from 'lucide-react';
+import { Play, Download, X, Film, Music, Sparkles } from 'lucide-react';
 
 interface ReelsGridProps {
   reels: ReelResult[];
@@ -32,41 +32,65 @@ export function ReelsGrid({ reels, username }: ReelsGridProps) {
   return (
     <>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-        {reels.map((reel) => {
+        {reels.map((reel, idx) => {
           const thumbSrc = reel.thumbnailUrl || reel.url;
           const displayThumb = `/api/media?url=${encodeURIComponent(thumbSrc)}`;
+          const showAdAfter = (idx + 1) % 5 === 0 && idx !== reels.length - 1;
 
           return (
-            <div
-              key={reel.id}
-              onClick={() => setSelectedReel(reel)}
-              className="group relative bg-zinc-950 rounded-2xl overflow-hidden cursor-pointer aspect-[9/16] shadow-md hover:shadow-2xl transition-all border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700"
-            >
-              <img
-                src={displayThumb}
-                alt={reel.caption || 'Reel thumbnail'}
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                onError={(e) => {
-                  if (e.currentTarget.src !== thumbSrc) {
-                    e.currentTarget.src = thumbSrc;
-                  }
-                }}
-              />
+            <React.Fragment key={reel.id || idx}>
+              <div
+                onClick={() => setSelectedReel(reel)}
+                className="group relative bg-zinc-950 rounded-2xl overflow-hidden cursor-pointer aspect-[9/16] shadow-md hover:shadow-2xl transition-all border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700"
+              >
+                <img
+                  src={displayThumb}
+                  alt={reel.caption || 'Reel thumbnail'}
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  onError={(e) => {
+                    if (e.currentTarget.src !== thumbSrc) {
+                      e.currentTarget.src = thumbSrc;
+                    }
+                  }}
+                />
 
-              {/* Bottom Overlay with Views & Play Icon */}
-              <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 via-black/40 to-transparent text-white text-xs flex items-center justify-between">
-                <span className="flex items-center gap-1 font-semibold drop-shadow">
-                  <Play className="w-3.5 h-3.5 fill-current text-white" />
-                  {formatViews(reel.viewCount || reel.playCount) || 'Play'}
-                </span>
-                {reel.duration && (
-                  <span className="opacity-90 text-[11px] font-medium bg-black/60 px-1.5 py-0.5 rounded backdrop-blur-xs">
-                    {reel.duration}s
+                {/* Bottom Overlay with Views & Play Icon */}
+                <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 via-black/40 to-transparent text-white text-xs flex items-center justify-between">
+                  <span className="flex items-center gap-1 font-semibold drop-shadow">
+                    <Play className="w-3.5 h-3.5 fill-current text-white" />
+                    {formatViews(reel.viewCount || reel.playCount) || 'Play'}
                   </span>
-                )}
+                  {reel.duration && (
+                    <span className="opacity-90 text-[11px] font-medium bg-black/60 px-1.5 py-0.5 rounded backdrop-blur-xs">
+                      {reel.duration}s
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
+
+              {/* In-Feed Sponsored Reel Card */}
+              {showAdAfter && (
+                <div className="group relative bg-zinc-950 rounded-2xl overflow-hidden aspect-[9/16] shadow-md border border-slate-200 dark:border-zinc-800 hover:border-pink-500/40 transition-all flex flex-col justify-between p-3.5 bg-gradient-to-b from-zinc-900 via-zinc-950 to-zinc-900">
+                  <span className="self-start px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 text-[10px] font-bold uppercase tracking-wider border border-amber-500/30">
+                    Sponsored
+                  </span>
+                  <div className="text-center my-auto flex flex-col items-center px-1">
+                    <Sparkles className="w-7 h-7 text-pink-500 mb-2 opacity-90 animate-pulse" />
+                    <p className="text-xs font-bold text-white line-clamp-2">
+                      Featured Sponsor
+                    </p>
+                    <p className="text-[10px] text-zinc-400 mt-1 line-clamp-2">
+                      Trending tools & promotions
+                    </p>
+                  </div>
+                  <div className="text-[11px] text-zinc-400 flex items-center justify-between pt-2 border-t border-zinc-800/80">
+                    <span className="font-medium text-zinc-300">Partner</span>
+                    <span className="text-[10px] text-zinc-500">Ad</span>
+                  </div>
+                </div>
+              )}
+            </React.Fragment>
           );
         })}
       </div>

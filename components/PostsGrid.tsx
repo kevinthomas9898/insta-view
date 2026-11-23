@@ -15,7 +15,10 @@ import {
   Maximize2,
   Loader2,
   Image as ImageIcon,
+  Sparkles,
+  ExternalLink,
 } from 'lucide-react';
+import { AdSlot } from '@/components/AdSlot';
 
 interface PostsGridProps {
   posts: PostResult[];
@@ -69,75 +72,117 @@ export function PostsGrid({
     <>
       {/* Posts Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {posts.map((post) => {
+        {posts.map((post, idx) => {
           const thumbUrl = post.thumbnailUrl || post.url;
           const displayThumb = `/api/media?url=${encodeURIComponent(thumbUrl)}`;
+          const showAdAfter = (idx + 1) % 5 === 0 && idx !== posts.length - 1;
 
           return (
-            <div
-              key={post.id}
-              onClick={() => openPostModal(post)}
-              className="group relative bg-white dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl overflow-hidden cursor-pointer hover:border-slate-300 dark:hover:border-zinc-700 hover:shadow-xl transition-all flex flex-col shadow-xs"
-            >
-              {/* Media Thumbnail Container with 1:1 Aspect Ratio */}
-              <div className="relative aspect-square bg-slate-900 overflow-hidden">
-                <img
-                  src={displayThumb}
-                  alt={post.caption || 'Instagram Post'}
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  onError={(e) => {
-                    if (e.currentTarget.src !== thumbUrl) {
-                      e.currentTarget.src = thumbUrl;
-                    }
-                  }}
-                />
+            <React.Fragment key={post.id || idx}>
+              <div
+                onClick={() => openPostModal(post)}
+                className="group relative bg-white dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl overflow-hidden cursor-pointer hover:border-slate-300 dark:hover:border-zinc-700 hover:shadow-xl transition-all flex flex-col shadow-xs"
+              >
+                {/* Media Thumbnail Container with 1:1 Aspect Ratio */}
+                <div className="relative aspect-square bg-slate-900 overflow-hidden">
+                  <img
+                    src={displayThumb}
+                    alt={post.caption || 'Instagram Post'}
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    onError={(e) => {
+                      if (e.currentTarget.src !== thumbUrl) {
+                        e.currentTarget.src = thumbUrl;
+                      }
+                    }}
+                  />
 
-                {/* Badge for Type */}
-                <div className="absolute top-2.5 right-2.5 flex gap-1 z-10">
-                  {post.type === 'carousel' && (
-                    <span className="p-1.5 bg-black/70 text-white rounded-md text-xs flex items-center gap-1 backdrop-blur-md border border-white/10">
-                      <Layers className="w-3.5 h-3.5" />
-                    </span>
-                  )}
-                  {post.type === 'video' && (
-                    <span className="p-1.5 bg-black/70 text-white rounded-md text-xs flex items-center gap-1 backdrop-blur-md border border-white/10">
-                      <Play className="w-3.5 h-3.5 fill-current" />
-                    </span>
-                  )}
+                  {/* Badge for Type */}
+                  <div className="absolute top-2.5 right-2.5 flex gap-1 z-10">
+                    {post.type === 'carousel' && (
+                      <span className="p-1.5 bg-black/70 text-white rounded-md text-xs flex items-center gap-1 backdrop-blur-md border border-white/10">
+                        <Layers className="w-3.5 h-3.5" />
+                      </span>
+                    )}
+                    {post.type === 'video' && (
+                      <span className="p-1.5 bg-black/70 text-white rounded-md text-xs flex items-center gap-1 backdrop-blur-md border border-white/10">
+                        <Play className="w-3.5 h-3.5 fill-current" />
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Hover Overlay with Likes & Comments */}
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-6 text-white text-sm font-semibold backdrop-blur-[2px]">
+                    {post.likeCount !== undefined && (
+                      <span className="flex items-center gap-1.5 drop-shadow">
+                        <Heart className="w-4 h-4 fill-rose-500 text-rose-500" />
+                        {post.likeCount.toLocaleString()}
+                      </span>
+                    )}
+                    {post.commentCount !== undefined && (
+                      <span className="flex items-center gap-1.5 drop-shadow">
+                        <MessageCircle className="w-4 h-4 fill-white" />
+                        {post.commentCount.toLocaleString()}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                {/* Hover Overlay with Likes & Comments */}
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-6 text-white text-sm font-semibold backdrop-blur-[2px]">
-                  {post.likeCount !== undefined && (
-                    <span className="flex items-center gap-1.5 drop-shadow">
-                      <Heart className="w-4 h-4 fill-rose-500 text-rose-500" />
-                      {post.likeCount.toLocaleString()}
-                    </span>
-                  )}
-                  {post.commentCount !== undefined && (
-                    <span className="flex items-center gap-1.5 drop-shadow">
-                      <MessageCircle className="w-4 h-4 fill-white" />
-                      {post.commentCount.toLocaleString()}
-                    </span>
-                  )}
-                </div>
+                {/* Caption Snippet */}
+                {post.caption && (
+                  <div className="p-3 text-xs text-slate-700 dark:text-zinc-400 line-clamp-2 border-t border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/90 flex-1">
+                    {post.caption}
+                  </div>
+                )}
               </div>
 
-              {/* Caption Snippet */}
-              {post.caption && (
-                <div className="p-3 text-xs text-slate-700 dark:text-zinc-400 line-clamp-2 border-t border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/90 flex-1">
-                  {post.caption}
+              {/* In-Feed Sponsored Card (Every 5 posts, matching Instagram feed flow) */}
+              {showAdAfter && (
+                <div className="group relative bg-white dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl overflow-hidden flex flex-col shadow-xs transition-all hover:border-pink-500/40">
+                  <div className="relative aspect-square bg-gradient-to-tr from-pink-500/5 via-rose-500/5 to-amber-500/5 dark:from-zinc-900/90 dark:to-zinc-800/70 flex flex-col items-center justify-center p-5 text-center">
+                    <span className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 font-bold text-[10px] tracking-wider uppercase border border-amber-200 dark:border-amber-500/20">
+                      Sponsored
+                    </span>
+                    <Sparkles className="w-8 h-8 text-pink-500 mb-2 opacity-90 animate-pulse" />
+                    <p className="text-xs font-bold text-slate-900 dark:text-white line-clamp-2 px-2">
+                      Featured Partner Showcase
+                    </p>
+                    <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-1 max-w-[200px]">
+                      Verified partner promotion & offers
+                    </p>
+                    <span className="mt-3.5 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-pink-50 dark:bg-pink-500/10 text-pink-600 dark:text-pink-400 text-xs font-semibold group-hover:bg-pink-100 dark:group-hover:bg-pink-500/20 transition-colors">
+                      <span>Explore</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </span>
+                  </div>
+                  <div className="p-3 text-[11px] text-slate-500 dark:text-zinc-400 border-t border-slate-100 dark:border-zinc-800/80 bg-slate-50/70 dark:bg-zinc-900/60 flex items-center justify-between">
+                    <span className="font-medium text-slate-700 dark:text-zinc-300">InstaView Network</span>
+                    <span className="text-[10px] text-slate-400 dark:text-zinc-500">Ad</span>
+                  </div>
                 </div>
               )}
-            </div>
+            </React.Fragment>
           );
         })}
       </div>
 
+      {/* Above Load More Sponsor Banner */}
+      {hasMore && onLoadMore && (
+        <div className="w-full flex flex-col items-center justify-center mt-8 mb-2">
+          <div className="w-full max-w-xl p-3 rounded-2xl bg-white dark:bg-zinc-900/60 border border-slate-200/80 dark:border-zinc-800/80 flex flex-col items-center justify-center text-center shadow-xs">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 mb-1">
+              Advertisement
+            </span>
+            <div className="w-full min-h-[60px] sm:min-h-[90px] flex items-center justify-center">
+              <AdSlot id="container-posts-loadmore-ad" />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Load More Button */}
       {hasMore && onLoadMore ? (
-        <div className="mt-8 mb-6 text-center">
+        <div className="mt-4 mb-6 text-center">
           <button
             onClick={onLoadMore}
             disabled={isLoadingMore}
