@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { getSiteUrl } from '@/lib/utils/site';
 import { BLOG_POSTS } from '@/lib/data/blog';
+import { SUPPORTED_LANGS } from '@/lib/i18n/translations';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = getSiteUrl();
@@ -112,6 +113,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 
+  // Localized Multi-Language Pages (10 Languages x 5 Core Features = 50 URLs)
+  const localizedPages: MetadataRoute.Sitemap = [];
+  const localizedFeatures = ['', '/stories', '/reels', '/story-saver', '/instagram-to-mp4'];
+
+  for (const lang of SUPPORTED_LANGS) {
+    for (const feature of localizedFeatures) {
+      localizedPages.push({
+        url: `${baseUrl}/${lang}${feature}`,
+        lastModified: currentDate,
+        changeFrequency: 'daily',
+        priority: feature === '' ? 0.95 : 0.85,
+      });
+    }
+  }
+
   // Programmatic High-Traffic Blog Guides
   const blogPages: MetadataRoute.Sitemap = BLOG_POSTS.map((post) => ({
     url: `${baseUrl}/blog/${post.slug}`,
@@ -120,5 +136,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
-  return [...corePages, ...blogPages];
+  return [...corePages, ...localizedPages, ...blogPages];
 }

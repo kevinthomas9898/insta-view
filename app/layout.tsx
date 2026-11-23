@@ -42,6 +42,19 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://instagram-free-anonymous-viewer.vercel.app"),
   alternates: {
     canonical: "/",
+    languages: {
+      "x-default": "/",
+      "en": "/en",
+      "es": "/es",
+      "pt": "/pt",
+      "hi": "/hi",
+      "id": "/id",
+      "tr": "/tr",
+      "ru": "/ru",
+      "de": "/de",
+      "fr": "/fr",
+      "it": "/it",
+    },
   },
   icons: {
     icon: [

@@ -17,6 +17,8 @@ import { HighlightsViewer } from '@/components/HighlightsViewer';
 import { PostsGrid } from '@/components/PostsGrid';
 import { ReelsGrid } from '@/components/ReelsGrid';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { LanguageSelector } from '@/components/LanguageSelector';
+import { LANGUAGES, SUPPORTED_LANGS } from '@/lib/i18n/translations';
 import { AdSlot } from '@/components/AdSlot';
 import {
   Search,
@@ -49,6 +51,7 @@ const POPULAR_SUGGESTIONS = [
 
 export interface InstaViewerProps {
   initialTab?: TabKey;
+  lang?: string;
   heroBadge?: string;
   heroTitle?: string;
   heroHighlight?: string;
@@ -58,6 +61,7 @@ export interface InstaViewerProps {
 
 export function InstaViewer({
   initialTab = 'stories',
+  lang = 'en',
   heroBadge = 'Next-Gen Stealth Instagram Media Viewer & Downloader',
   heroTitle = 'Watch Instagram Stories ',
   heroHighlight = 'Anonymously',
@@ -265,6 +269,9 @@ export function InstaViewer({
             <span className="text-xs font-medium text-slate-600 dark:text-zinc-400 px-3 py-1 rounded-full bg-slate-100 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/60 hidden md:inline-flex">
               No Login Required
             </span>
+
+            {/* Language Selector Dropdown */}
+            <LanguageSelector currentLang={lang} />
 
             {/* Dark / Light Mode Switch Option */}
             <ThemeToggle />
@@ -812,6 +819,21 @@ export function InstaViewer({
                 </li>
               </ul>
             </div>
+          </div>
+
+          {/* Regional Languages Footer Bar */}
+          <div className="py-6 border-t border-slate-200/80 dark:border-zinc-800/80 flex flex-wrap items-center justify-center gap-2.5 sm:gap-4 text-xs text-slate-500 dark:text-zinc-400">
+            <span className="font-semibold text-slate-700 dark:text-zinc-300">Languages:</span>
+            {SUPPORTED_LANGS.map((l) => (
+              <Link
+                key={l}
+                href={`/${l}`}
+                className="hover:text-pink-600 dark:hover:text-pink-400 transition-colors inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-800/50"
+              >
+                <span>{LANGUAGES[l].flag}</span>
+                <span>{LANGUAGES[l].name}</span>
+              </Link>
+            ))}
           </div>
 
           <div className="pt-8 border-t border-slate-200 dark:border-zinc-800 flex flex-col md:flex-row items-center justify-between gap-4">
