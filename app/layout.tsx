@@ -200,8 +200,13 @@ export default function RootLayout({
   };
 
   return (
-    <html lang="en" className="dark h-full bg-[#09090b] text-zinc-100 antialiased selection:bg-pink-500 selection:text-white">
+    <html lang="en" className="dark h-full antialiased selection:bg-pink-500 selection:text-white" suppressHydrationWarning>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='light'){document.documentElement.classList.remove('dark');document.documentElement.classList.add('light');}else{document.documentElement.classList.add('dark');document.documentElement.classList.remove('light');}}catch(e){document.documentElement.classList.add('dark');}})();`,
+          }}
+        />
         <meta name="google-site-verification" content="googlee32dff6fdd44e534" />
         <meta name="google-site-verification" content="e32dff6fdd44e534" />
         <script
@@ -217,7 +222,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdHowTo) }}
         />
       </head>
-      <body className="min-h-full flex flex-col bg-[#09090b] text-zinc-100">
+      <body className="min-h-full flex flex-col bg-slate-50 dark:bg-[#09090b] text-slate-900 dark:text-zinc-100 transition-colors duration-200">
         {children}
       </body>
     </html>

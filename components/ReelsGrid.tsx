@@ -14,10 +14,10 @@ export function ReelsGrid({ reels, username }: ReelsGridProps) {
 
   if (reels.length === 0) {
     return (
-      <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-12 text-center text-zinc-400 backdrop-blur-sm">
-        <Film className="w-10 h-10 mx-auto mb-2 text-zinc-600 stroke-1" />
-        <p className="text-base font-semibold text-zinc-200">No reels found</p>
-        <p className="text-sm mt-1 text-zinc-500">This account has not published any public reels.</p>
+      <div className="bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-2xl p-12 text-center text-slate-500 dark:text-zinc-400 backdrop-blur-sm shadow-xs">
+        <Film className="w-10 h-10 mx-auto mb-2 text-slate-400 dark:text-zinc-600 stroke-1" />
+        <p className="text-base font-semibold text-slate-900 dark:text-zinc-200">No reels found</p>
+        <p className="text-sm mt-1 text-slate-500 dark:text-zinc-500">This account has not published any public reels.</p>
       </div>
     );
   }
@@ -40,7 +40,7 @@ export function ReelsGrid({ reels, username }: ReelsGridProps) {
             <div
               key={reel.id}
               onClick={() => setSelectedReel(reel)}
-              className="group relative bg-zinc-950 rounded-2xl overflow-hidden cursor-pointer aspect-[9/16] shadow-lg hover:shadow-2xl transition-all border border-zinc-800 hover:border-zinc-700"
+              className="group relative bg-zinc-950 rounded-2xl overflow-hidden cursor-pointer aspect-[9/16] shadow-md hover:shadow-2xl transition-all border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700"
             >
               <img
                 src={displayThumb}

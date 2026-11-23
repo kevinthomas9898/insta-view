@@ -15,10 +15,10 @@ export function StoriesList({ stories, username }: StoriesListProps) {
 
   if (stories.length === 0) {
     return (
-      <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-12 text-center text-zinc-400 backdrop-blur-sm">
-        <PlaySquare className="w-10 h-10 mx-auto mb-2 text-zinc-600 stroke-1" />
-        <p className="text-base font-semibold text-zinc-200">No active stories</p>
-        <p className="text-sm mt-1 text-zinc-500">This account has no active 24-hour stories published right now.</p>
+      <div className="bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-2xl p-12 text-center text-slate-500 dark:text-zinc-400 backdrop-blur-sm shadow-xs">
+        <PlaySquare className="w-10 h-10 mx-auto mb-2 text-slate-400 dark:text-zinc-600 stroke-1" />
+        <p className="text-base font-semibold text-slate-900 dark:text-zinc-200">No active stories</p>
+        <p className="text-sm mt-1 text-slate-500 dark:text-zinc-500">This account has no active 24-hour stories published right now.</p>
       </div>
     );
   }
@@ -26,15 +26,15 @@ export function StoriesList({ stories, username }: StoriesListProps) {
   return (
     <>
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
+        <h2 className="text-sm font-semibold text-slate-800 dark:text-zinc-300 flex items-center gap-2">
           <span>Active 24-Hour Stories</span>
-          <span className="px-2 py-0.5 rounded-full bg-pink-500/10 text-pink-400 text-xs font-bold border border-pink-500/20">
+          <span className="px-2 py-0.5 rounded-full bg-pink-500/10 text-pink-600 dark:text-pink-400 text-xs font-bold border border-pink-500/20">
             {stories.length}
           </span>
         </h2>
         <button
           onClick={() => setSelectedStoryIndex(0)}
-          className="px-4 py-2 bg-gradient-to-r from-pink-600 via-rose-600 to-amber-600 hover:opacity-95 text-white text-xs font-semibold rounded-xl shadow-lg shadow-rose-950/40 transition-all cursor-pointer flex items-center gap-1.5"
+          className="px-4 py-2 bg-gradient-to-r from-pink-600 via-rose-600 to-amber-600 hover:opacity-95 text-white text-xs font-semibold rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-1.5"
         >
           <Sparkles className="w-3.5 h-3.5" />
           Watch All Stories
@@ -52,7 +52,7 @@ export function StoriesList({ stories, username }: StoriesListProps) {
             <div
               key={story.id || idx}
               onClick={() => setSelectedStoryIndex(idx)}
-              className="group relative bg-zinc-950 rounded-2xl overflow-hidden cursor-pointer aspect-[9/16] shadow-lg hover:shadow-2xl transition-all border border-zinc-800 hover:border-zinc-700"
+              className="group relative bg-zinc-950 rounded-2xl overflow-hidden cursor-pointer aspect-[9/16] shadow-md hover:shadow-2xl transition-all border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700"
             >
               {thumbSrc ? (
                 <img
@@ -78,7 +78,7 @@ export function StoriesList({ stories, username }: StoriesListProps) {
 
               {/* Type Badge */}
               <div className="absolute top-2.5 left-2.5 z-10">
-                <span className="px-2 py-0.5 bg-zinc-950/80 backdrop-blur-md text-white rounded-md text-[10px] font-bold tracking-wider border border-white/10">
+                <span className="px-2 py-0.5 bg-black/70 backdrop-blur-md text-white rounded-md text-[10px] font-bold tracking-wider border border-white/10">
                   {story.type.toUpperCase()}
                 </span>
               </div>

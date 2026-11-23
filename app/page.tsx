@@ -15,6 +15,7 @@ import { StoriesList } from '@/components/StoriesList';
 import { HighlightsViewer } from '@/components/HighlightsViewer';
 import { PostsGrid } from '@/components/PostsGrid';
 import { ReelsGrid } from '@/components/ReelsGrid';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import {
   Search,
   Loader2,
@@ -243,9 +244,9 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col font-sans">
-      {/* Sleek Dark Header */}
-      <header className="sticky top-0 z-30 bg-[#09090b]/80 backdrop-blur-md border-b border-zinc-800/80 px-4 sm:px-8 py-3.5 transition-all">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#09090b] text-slate-900 dark:text-zinc-100 flex flex-col font-sans transition-colors duration-200">
+      {/* Header with Dark / Light Switch */}
+      <header className="sticky top-0 z-30 bg-white/85 dark:bg-[#09090b]/85 backdrop-blur-md border-b border-slate-200/80 dark:border-zinc-800/80 px-4 sm:px-8 py-3.5 transition-all">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <a
             href="/"
@@ -259,24 +260,27 @@ export default function Home() {
               }
             }}
           >
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-amber-500 via-rose-500 to-fuchsia-600 flex items-center justify-center shadow-lg shadow-rose-950/40 group-hover:scale-105 transition-transform">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-amber-500 via-rose-500 to-fuchsia-600 flex items-center justify-center shadow-md shadow-rose-950/20 group-hover:scale-105 transition-transform">
               <EyeOff className="w-4 h-4 text-white" />
             </div>
             <div className="flex flex-col">
-              <span className="font-extrabold text-lg tracking-tight text-white flex items-center gap-1.5">
+              <span className="font-extrabold text-lg tracking-tight text-slate-900 dark:text-white flex items-center gap-1.5">
                 Insta<span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500">View</span>
               </span>
             </div>
           </a>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
               100% Anonymous
             </span>
-            <span className="text-xs font-medium text-zinc-400 px-3 py-1 rounded-full bg-zinc-800/80 border border-zinc-700/60 hidden md:inline-flex">
+            <span className="text-xs font-medium text-slate-600 dark:text-zinc-400 px-3 py-1 rounded-full bg-slate-100 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/60 hidden md:inline-flex">
               No Login Required
             </span>
+
+            {/* Dark / Light Mode Switch Option */}
+            <ThemeToggle />
           </div>
         </div>
       </header>
@@ -287,17 +291,17 @@ export default function Home() {
         <section className={`transition-all duration-300 ${profile ? 'mb-6' : 'my-6 sm:my-12 text-center'}`}>
           {!profile && (
             <div className="max-w-3xl mx-auto mb-8">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-xs text-zinc-300 font-medium mb-4 shadow-sm">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-xs text-slate-700 dark:text-zinc-300 font-medium mb-4 shadow-xs">
                 <Sparkles className="w-3.5 h-3.5 text-pink-500" />
                 <span>Next-Gen Stealth Instagram Media Viewer & Downloader</span>
               </div>
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight mb-4">
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white tracking-tight leading-tight mb-4">
                 Watch Instagram Stories{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-rose-500 to-amber-400">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500">
                   Anonymously
                 </span>
               </h1>
-              <p className="text-sm sm:text-base text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+              <p className="text-sm sm:text-base text-slate-600 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed">
                 View public Instagram stories, highlights, reels, and posts without an account or login.
                 Save high-definition photos and MP4 videos with 100% privacy and zero digital footprint.
               </p>
@@ -311,10 +315,10 @@ export default function Home() {
                 e.preventDefault();
                 handleSearch();
               }}
-              className="relative flex flex-col sm:flex-row gap-2.5 p-1.5 sm:p-2 bg-zinc-900/90 border border-zinc-800 focus-within:border-pink-500/80 focus-within:ring-2 focus-within:ring-pink-500/20 rounded-2xl shadow-2xl backdrop-blur-md transition-all"
+              className="relative flex flex-col sm:flex-row gap-2.5 p-1.5 sm:p-2 bg-white dark:bg-zinc-900/90 border border-slate-200 dark:border-zinc-800 focus-within:border-pink-500/80 focus-within:ring-2 focus-within:ring-pink-500/20 rounded-2xl shadow-lg dark:shadow-2xl backdrop-blur-md transition-all"
             >
               <div className="relative flex-1 flex items-center">
-                <span className="absolute left-4 text-zinc-500 font-bold text-base">@</span>
+                <span className="absolute left-4 text-slate-400 dark:text-zinc-500 font-bold text-base">@</span>
                 <input
                   type="text"
                   value={usernameInput}
@@ -323,14 +327,14 @@ export default function Home() {
                   autoCapitalize="none"
                   autoCorrect="off"
                   spellCheck="false"
-                  className="w-full pl-9 pr-4 py-3 bg-transparent text-sm sm:text-base text-white placeholder-zinc-500 focus:outline-none"
+                  className="w-full pl-9 pr-4 py-3 bg-transparent text-sm sm:text-base text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={isLoadingProfile}
-                className="px-6 py-3 bg-gradient-to-r from-pink-600 via-rose-600 to-amber-600 hover:opacity-95 text-white text-sm font-bold rounded-xl shadow-lg shadow-rose-950/40 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                className="px-6 py-3 bg-gradient-to-r from-pink-600 via-rose-600 to-amber-600 hover:opacity-95 text-white text-sm font-bold rounded-xl shadow-lg shadow-rose-950/20 dark:shadow-rose-950/40 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
               >
                 {isLoadingProfile ? (
                   <>
@@ -347,8 +351,8 @@ export default function Home() {
             </form>
 
             {/* Popular / Trending Suggestions */}
-            <div className="mt-3.5 flex items-center justify-center gap-2 text-xs text-zinc-500 flex-wrap">
-              <span className="font-medium text-zinc-400">Popular:</span>
+            <div className="mt-3.5 flex items-center justify-center gap-2 text-xs text-slate-500 dark:text-zinc-500 flex-wrap">
+              <span className="font-medium text-slate-600 dark:text-zinc-400">Popular:</span>
               {POPULAR_SUGGESTIONS.map((user) => (
                 <button
                   key={user}
@@ -357,7 +361,7 @@ export default function Home() {
                     setUsernameInput(user);
                     handleSearch(user);
                   }}
-                  className="px-2.5 py-1 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800/80 transition-colors cursor-pointer text-xs font-medium"
+                  className="px-2.5 py-1 rounded-lg bg-white hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 dark:bg-zinc-900/80 dark:hover:bg-zinc-800 dark:text-zinc-300 dark:hover:text-white dark:border-zinc-800/80 transition-colors cursor-pointer text-xs font-medium shadow-2xs"
                 >
                   @{user}
                 </button>
@@ -368,12 +372,12 @@ export default function Home() {
 
         {/* Profile Error Banner */}
         {profileError && (
-          <div className="max-w-2xl mx-auto w-full p-4 mb-8 bg-rose-950/40 border border-rose-900/60 rounded-2xl text-rose-200 text-sm flex items-start gap-3 backdrop-blur-sm animate-fade-in">
-            <AlertCircle className="w-5 h-5 text-rose-400 flex-shrink-0 mt-0.5" />
+          <div className="max-w-2xl mx-auto w-full p-4 mb-8 bg-rose-50 border border-rose-200 dark:bg-rose-950/40 dark:border-rose-900/60 rounded-2xl text-rose-900 dark:text-rose-200 text-sm flex items-start gap-3 backdrop-blur-sm animate-fade-in shadow-xs">
+            <AlertCircle className="w-5 h-5 text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5" />
             <div>
-              <strong className="font-semibold text-rose-100">Unable to retrieve profile: </strong>
+              <strong className="font-semibold text-rose-950 dark:text-rose-100">Unable to retrieve profile: </strong>
               <span>{profileError}</span>
-              <p className="text-xs text-rose-300/80 mt-1.5 leading-relaxed">
+              <p className="text-xs text-rose-700 dark:text-rose-300/80 mt-1.5 leading-relaxed">
                 Please verify that the username is spelled correctly and the account is public. Private Instagram accounts cannot be accessed.
               </p>
             </div>
@@ -398,23 +402,23 @@ export default function Home() {
 
             {/* Tab Loading Spinner */}
             {isLoadingTab && (
-              <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-16 text-center text-zinc-400 flex flex-col items-center justify-center gap-3 backdrop-blur-sm">
+              <div className="bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-2xl p-16 text-center text-slate-500 dark:text-zinc-400 flex flex-col items-center justify-center gap-3 backdrop-blur-sm shadow-xs">
                 <Loader2 className="w-8 h-8 animate-spin text-pink-500" />
-                <p className="text-sm font-semibold text-zinc-200">
+                <p className="text-sm font-semibold text-slate-900 dark:text-zinc-200">
                   Retrieving {activeTab} media anonymously...
                 </p>
-                <p className="text-xs text-zinc-500">Connecting to secure proxy mirror</p>
+                <p className="text-xs text-slate-500 dark:text-zinc-500">Connecting to secure proxy mirror</p>
               </div>
             )}
 
             {/* Tab Specific Notice / Error */}
             {!isLoadingTab && tabError && (
-              <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-10 text-center backdrop-blur-sm">
+              <div className="bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-2xl p-10 text-center backdrop-blur-sm shadow-xs">
                 <AlertCircle className="w-10 h-10 mx-auto text-amber-500 mb-3" />
-                <h3 className="font-bold text-zinc-100 text-base mb-1">
+                <h3 className="font-bold text-slate-900 dark:text-zinc-100 text-base mb-1">
                   Content Notice
                 </h3>
-                <p className="text-xs text-zinc-400 max-w-md mx-auto leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-zinc-400 max-w-md mx-auto leading-relaxed">
                   {tabError.message}
                 </p>
               </div>
@@ -452,51 +456,51 @@ export default function Home() {
             {/* Features Grid */}
             <section>
               <div className="text-center mb-8">
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                   Why InstaView Ranks #1 for Anonymous Viewing
                 </h2>
-                <p className="text-sm text-zinc-400 mt-2 max-w-xl mx-auto">
+                <p className="text-sm text-slate-600 dark:text-zinc-400 mt-2 max-w-xl mx-auto">
                   Engineered with military-grade proxy routing and direct CDN media streaming for maximum privacy and speed.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-zinc-900/60 border border-zinc-800 p-6 rounded-2xl backdrop-blur-sm hover:border-zinc-700 transition-all">
-                  <div className="w-12 h-12 rounded-xl bg-pink-500/10 text-pink-400 border border-pink-500/20 flex items-center justify-center mb-4">
+                <div className="bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 p-6 rounded-2xl backdrop-blur-sm hover:border-slate-300 dark:hover:border-zinc-700 transition-all shadow-xs">
+                  <div className="w-12 h-12 rounded-xl bg-pink-500/10 text-pink-500 dark:text-pink-400 border border-pink-500/20 flex items-center justify-center mb-4">
                     <EyeOff className="w-6 h-6" />
                   </div>
-                  <h3 className="text-base font-bold text-white mb-2">100% Anonymous</h3>
-                  <p className="text-xs text-zinc-400 leading-relaxed">
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">100% Anonymous</h3>
+                  <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
                     Watch stories in stealth mode. The creator will never see your username in their viewer list. No traces or digital footprints left behind.
                   </p>
                 </div>
 
-                <div className="bg-zinc-900/60 border border-zinc-800 p-6 rounded-2xl backdrop-blur-sm hover:border-zinc-700 transition-all">
-                  <div className="w-12 h-12 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center mb-4">
+                <div className="bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 p-6 rounded-2xl backdrop-blur-sm hover:border-slate-300 dark:hover:border-zinc-700 transition-all shadow-xs">
+                  <div className="w-12 h-12 rounded-xl bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-500/20 flex items-center justify-center mb-4">
                     <Lock className="w-6 h-6" />
                   </div>
-                  <h3 className="text-base font-bold text-white mb-2">Zero Login Required</h3>
-                  <p className="text-xs text-zinc-400 leading-relaxed">
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">Zero Login Required</h3>
+                  <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
                     Never risk your account. No Instagram credentials, passwords, or app installations needed. Browse all public accounts freely.
                   </p>
                 </div>
 
-                <div className="bg-zinc-900/60 border border-zinc-800 p-6 rounded-2xl backdrop-blur-sm hover:border-zinc-700 transition-all">
-                  <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center mb-4">
+                <div className="bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 p-6 rounded-2xl backdrop-blur-sm hover:border-slate-300 dark:hover:border-zinc-700 transition-all shadow-xs">
+                  <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center mb-4">
                     <Download className="w-6 h-6" />
                   </div>
-                  <h3 className="text-base font-bold text-white mb-2">Original HD Downloads</h3>
-                  <p className="text-xs text-zinc-400 leading-relaxed">
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">Original HD Downloads</h3>
+                  <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
                     Save photos, reels, and stories in full original resolution (1080p and 4K MP4) directly to your device without quality compression.
                   </p>
                 </div>
 
-                <div className="bg-zinc-900/60 border border-zinc-800 p-6 rounded-2xl backdrop-blur-sm hover:border-zinc-700 transition-all">
-                  <div className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center mb-4">
+                <div className="bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 p-6 rounded-2xl backdrop-blur-sm hover:border-slate-300 dark:hover:border-zinc-700 transition-all shadow-xs">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center mb-4">
                     <Smartphone className="w-6 h-6" />
                   </div>
-                  <h3 className="text-base font-bold text-white mb-2">All Devices & OS</h3>
-                  <p className="text-xs text-zinc-400 leading-relaxed">
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">All Devices & OS</h3>
+                  <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
                     Optimized for lightning-fast playback on iOS (iPhone/iPad), Android, macOS, Windows, and Linux. No app downloads required.
                   </p>
                 </div>
@@ -504,43 +508,43 @@ export default function Home() {
             </section>
 
             {/* How It Works (HowTo 3 Steps) */}
-            <section className="bg-zinc-900/40 border border-zinc-800/80 rounded-3xl p-6 sm:p-10 backdrop-blur-sm">
+            <section className="bg-slate-100/80 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-3xl p-6 sm:p-10 backdrop-blur-sm">
               <div className="text-center mb-10">
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                   How to View Instagram Stories Anonymously
                 </h2>
-                <p className="text-sm text-zinc-400 mt-2">
+                <p className="text-sm text-slate-600 dark:text-zinc-400 mt-2">
                   Three simple steps to watch and download any public Instagram media in complete privacy.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-zinc-900/80 border border-zinc-800">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-pink-600 to-rose-600 text-white font-bold flex items-center justify-center mb-4 text-sm shadow-md shadow-rose-950/40">
+                <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-white dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 shadow-xs">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-pink-600 to-rose-600 text-white font-bold flex items-center justify-center mb-4 text-sm shadow-md shadow-rose-950/20">
                     1
                   </div>
-                  <h3 className="text-base font-bold text-white mb-2">Enter Username</h3>
-                  <p className="text-xs text-zinc-400 leading-relaxed">
-                    Type any public Instagram username into the search bar (e.g. <span className="text-zinc-200 font-mono">cristiano</span>) or paste the complete profile link.
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">Enter Username</h3>
+                  <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
+                    Type any public Instagram username into the search bar (e.g. <span className="text-slate-800 dark:text-zinc-200 font-mono">cristiano</span>) or paste the complete profile link.
                   </p>
                 </div>
 
-                <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-zinc-900/80 border border-zinc-800">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-rose-600 to-amber-600 text-white font-bold flex items-center justify-center mb-4 text-sm shadow-md shadow-amber-950/40">
+                <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-white dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 shadow-xs">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-rose-600 to-amber-600 text-white font-bold flex items-center justify-center mb-4 text-sm shadow-md shadow-amber-950/20">
                     2
                   </div>
-                  <h3 className="text-base font-bold text-white mb-2">Select Stories or Reels</h3>
-                  <p className="text-xs text-zinc-400 leading-relaxed">
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">Select Stories or Reels</h3>
+                  <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
                     Browse active 24-hour Stories, permanent Highlights, timeline Posts, and Reels with interactive fullscreen previews.
                   </p>
                 </div>
 
-                <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-zinc-900/80 border border-zinc-800">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-amber-600 to-emerald-600 text-white font-bold flex items-center justify-center mb-4 text-sm shadow-md shadow-emerald-950/40">
+                <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-white dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 shadow-xs">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-amber-600 to-emerald-600 text-white font-bold flex items-center justify-center mb-4 text-sm shadow-md shadow-emerald-950/20">
                     3
                   </div>
-                  <h3 className="text-base font-bold text-white mb-2">View & Download in HD</h3>
-                  <p className="text-xs text-zinc-400 leading-relaxed">
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">View & Download in HD</h3>
+                  <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
                     Watch videos smoothly without buffering. Click the Download icon to save original resolution files directly to your gallery or files.
                   </p>
                 </div>
@@ -550,51 +554,51 @@ export default function Home() {
             {/* Media Types Breakdown */}
             <section>
               <div className="text-center mb-8">
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                   Comprehensive Instagram Content Support
                 </h2>
-                <p className="text-sm text-zinc-400 mt-2 max-w-xl mx-auto">
+                <p className="text-sm text-slate-600 dark:text-zinc-400 mt-2 max-w-xl mx-auto">
                   InstaView supports every major public media format on Instagram with native video streaming and direct downloads.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800">
+                <div className="p-5 rounded-2xl bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 shadow-xs">
                   <div className="flex items-center gap-2 mb-2">
                     <PlaySquare className="w-5 h-5 text-pink-500" />
-                    <h3 className="font-bold text-sm text-white">Instagram Stories</h3>
+                    <h3 className="font-bold text-sm text-slate-900 dark:text-white">Instagram Stories</h3>
                   </div>
-                  <p className="text-xs text-zinc-400 leading-relaxed">
+                  <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
                     Watch disappearing 24-hour photos and video stories without showing up in the seen list.
                   </p>
                 </div>
 
-                <div className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800">
+                <div className="p-5 rounded-2xl bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 shadow-xs">
                   <div className="flex items-center gap-2 mb-2">
                     <Bookmark className="w-5 h-5 text-amber-500" />
-                    <h3 className="font-bold text-sm text-white">Profile Highlights</h3>
+                    <h3 className="font-bold text-sm text-slate-900 dark:text-white">Profile Highlights</h3>
                   </div>
-                  <p className="text-xs text-zinc-400 leading-relaxed">
+                  <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
                     Access permanent archived story collections with their original album covers and titles.
                   </p>
                 </div>
 
-                <div className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800">
+                <div className="p-5 rounded-2xl bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 shadow-xs">
                   <div className="flex items-center gap-2 mb-2">
                     <Grid className="w-5 h-5 text-rose-500" />
-                    <h3 className="font-bold text-sm text-white">Posts & Carousels</h3>
+                    <h3 className="font-bold text-sm text-slate-900 dark:text-white">Posts & Carousels</h3>
                   </div>
-                  <p className="text-xs text-zinc-400 leading-relaxed">
+                  <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
                     Browse full timeline posts with captions, like counts, comment counts, and multi-slide carousel albums.
                   </p>
                 </div>
 
-                <div className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800">
+                <div className="p-5 rounded-2xl bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 shadow-xs">
                   <div className="flex items-center gap-2 mb-2">
                     <Film className="w-5 h-5 text-fuchsia-500" />
-                    <h3 className="font-bold text-sm text-white">Instagram Reels</h3>
+                    <h3 className="font-bold text-sm text-slate-900 dark:text-white">Instagram Reels</h3>
                   </div>
-                  <p className="text-xs text-zinc-400 leading-relaxed">
+                  <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
                     Watch trending short videos in full screen with audio and download high-bitrate MP4s instantly.
                   </p>
                 </div>
@@ -604,14 +608,14 @@ export default function Home() {
             {/* Comprehensive FAQ & Recently Asked Questions Accordion */}
             <section className="max-w-4xl mx-auto w-full">
               <div className="text-center mb-8">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-xs text-pink-400 font-semibold mb-2">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-xs text-pink-600 dark:text-pink-400 font-semibold mb-2 shadow-2xs">
                   <HelpCircle className="w-3.5 h-3.5" />
                   Frequently Asked Questions
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                   Everything You Need to Know About Anonymous Viewing
                 </h2>
-                <p className="text-sm text-zinc-400 mt-2">
+                <p className="text-sm text-slate-600 dark:text-zinc-400 mt-2">
                   Answers to the most common questions regarding privacy, downloads, and how InstaView works.
                 </p>
               </div>
@@ -622,26 +626,26 @@ export default function Home() {
                   return (
                     <div
                       key={idx}
-                      className="border border-zinc-800 bg-zinc-900/60 rounded-2xl overflow-hidden transition-colors hover:border-zinc-700"
+                      className="border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 rounded-2xl overflow-hidden transition-colors hover:border-slate-300 dark:hover:border-zinc-700 shadow-xs"
                     >
                       <button
                         onClick={() => toggleFaq(idx)}
                         className="w-full p-5 text-left flex items-center justify-between gap-4 cursor-pointer focus:outline-none"
                       >
-                        <span className="font-bold text-sm sm:text-base text-zinc-100 flex items-center gap-2">
-                          <span className="text-xs px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 font-mono font-normal hidden sm:inline">
+                        <span className="font-bold text-sm sm:text-base text-slate-900 dark:text-zinc-100 flex items-center gap-2">
+                          <span className="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400 font-mono font-normal hidden sm:inline">
                             Q{idx + 1}
                           </span>
                           {faq.question}
                         </span>
                         <ChevronDown
-                          className={`w-5 h-5 text-zinc-400 flex-shrink-0 transition-transform duration-200 ${
-                            isOpen ? 'rotate-180 text-pink-400' : ''
+                          className={`w-5 h-5 text-slate-400 dark:text-zinc-400 flex-shrink-0 transition-transform duration-200 ${
+                            isOpen ? 'rotate-180 text-pink-500' : ''
                           }`}
                         />
                       </button>
                       {isOpen && (
-                        <div className="px-5 pb-5 pt-1 text-xs sm:text-sm text-zinc-400 leading-relaxed border-t border-zinc-800/60 animate-fade-in">
+                        <div className="px-5 pb-5 pt-1 text-xs sm:text-sm text-slate-600 dark:text-zinc-400 leading-relaxed border-t border-slate-100 dark:border-zinc-800/60 animate-fade-in">
                           {faq.answer}
                         </div>
                       )}
@@ -654,19 +658,19 @@ export default function Home() {
         )}
       </main>
 
-      {/* Sleek Dark Footer */}
-      <footer className="mt-auto border-t border-zinc-800/80 bg-zinc-950 py-10 px-4 sm:px-8 text-xs text-zinc-500">
+      {/* Footer */}
+      <footer className="mt-auto border-t border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-950 py-10 px-4 sm:px-8 text-xs text-slate-500 dark:text-zinc-500 transition-colors">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex flex-col items-center md:items-start gap-1">
-            <span className="font-bold text-sm text-white flex items-center gap-1.5">
+            <span className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
               Insta<span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500">View</span>
             </span>
-            <p className="text-zinc-500 text-xs">
+            <p className="text-slate-500 dark:text-zinc-500 text-xs">
               Fast, free, and anonymous public Instagram media browser & downloader.
             </p>
           </div>
 
-          <div className="text-center md:text-right max-w-xl text-[11px] text-zinc-500 leading-relaxed">
+          <div className="text-center md:text-right max-w-xl text-[11px] text-slate-500 dark:text-zinc-500 leading-relaxed">
             <p>
               <strong>Disclaimer:</strong> InstaView is an independent utility not affiliated with, endorsed by, or associated with Instagram, Meta Platforms, Inc. We do not host or store copyrighted media. All media is retrieved directly from publicly accessible web servers adhering to public internet accessibility standards.
             </p>

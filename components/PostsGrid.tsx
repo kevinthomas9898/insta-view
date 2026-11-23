@@ -37,10 +37,10 @@ export function PostsGrid({
 
   if (posts.length === 0) {
     return (
-      <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-12 text-center text-zinc-400 backdrop-blur-sm">
-        <ImageIcon className="w-10 h-10 mx-auto mb-2 text-zinc-600 stroke-1" />
-        <p className="text-base font-semibold text-zinc-200">No posts found</p>
-        <p className="text-sm mt-1 text-zinc-500">This account has no public posts available.</p>
+      <div className="bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-2xl p-12 text-center text-slate-500 dark:text-zinc-400 backdrop-blur-sm shadow-xs">
+        <ImageIcon className="w-10 h-10 mx-auto mb-2 text-slate-400 dark:text-zinc-600 stroke-1" />
+        <p className="text-base font-semibold text-slate-900 dark:text-zinc-200">No posts found</p>
+        <p className="text-sm mt-1 text-slate-500 dark:text-zinc-500">This account has no public posts available.</p>
       </div>
     );
   }
@@ -77,10 +77,10 @@ export function PostsGrid({
             <div
               key={post.id}
               onClick={() => openPostModal(post)}
-              className="group relative bg-zinc-900/80 border border-zinc-800 rounded-xl overflow-hidden cursor-pointer hover:border-zinc-700 hover:shadow-2xl transition-all flex flex-col"
+              className="group relative bg-white dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl overflow-hidden cursor-pointer hover:border-slate-300 dark:hover:border-zinc-700 hover:shadow-xl transition-all flex flex-col shadow-xs"
             >
               {/* Media Thumbnail Container with 1:1 Aspect Ratio */}
-              <div className="relative aspect-square bg-zinc-950 overflow-hidden">
+              <div className="relative aspect-square bg-slate-900 overflow-hidden">
                 <img
                   src={displayThumb}
                   alt={post.caption || 'Instagram Post'}
@@ -96,12 +96,12 @@ export function PostsGrid({
                 {/* Badge for Type */}
                 <div className="absolute top-2.5 right-2.5 flex gap-1 z-10">
                   {post.type === 'carousel' && (
-                    <span className="p-1.5 bg-zinc-950/80 text-white rounded-md text-xs flex items-center gap-1 backdrop-blur-md border border-white/10">
+                    <span className="p-1.5 bg-black/70 text-white rounded-md text-xs flex items-center gap-1 backdrop-blur-md border border-white/10">
                       <Layers className="w-3.5 h-3.5" />
                     </span>
                   )}
                   {post.type === 'video' && (
-                    <span className="p-1.5 bg-zinc-950/80 text-white rounded-md text-xs flex items-center gap-1 backdrop-blur-md border border-white/10">
+                    <span className="p-1.5 bg-black/70 text-white rounded-md text-xs flex items-center gap-1 backdrop-blur-md border border-white/10">
                       <Play className="w-3.5 h-3.5 fill-current" />
                     </span>
                   )}
@@ -126,7 +126,7 @@ export function PostsGrid({
 
               {/* Caption Snippet */}
               {post.caption && (
-                <div className="p-3 text-xs text-zinc-400 line-clamp-2 border-t border-zinc-800/80 bg-zinc-900/90 flex-1">
+                <div className="p-3 text-xs text-slate-700 dark:text-zinc-400 line-clamp-2 border-t border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/90 flex-1">
                   {post.caption}
                 </div>
               )}
@@ -141,11 +141,11 @@ export function PostsGrid({
           <button
             onClick={onLoadMore}
             disabled={isLoadingMore}
-            className="px-6 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700 rounded-xl text-sm font-semibold shadow-lg inline-flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            className="px-6 py-2.5 bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 shadow-sm dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-100 dark:border-zinc-700 rounded-xl text-sm font-semibold inline-flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             {isLoadingMore ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin text-pink-400" />
+                <Loader2 className="w-4 h-4 animate-spin text-pink-500" />
                 <span>Loading more posts...</span>
               </>
             ) : (
@@ -157,7 +157,7 @@ export function PostsGrid({
           </button>
         </div>
       ) : posts.length > 0 ? (
-        <div className="mt-8 mb-6 text-center text-xs text-zinc-500 font-medium">
+        <div className="mt-8 mb-6 text-center text-xs text-slate-500 dark:text-zinc-500 font-medium">
           Showing all {posts.length} loaded posts
         </div>
       ) : null}
@@ -165,11 +165,11 @@ export function PostsGrid({
       {/* Post Detail & Media Viewer Modal */}
       {selectedPost && activeItem && (
         <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5">
-          <div className="relative w-full max-w-4xl max-h-[92vh] bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl">
+          <div className="relative w-full max-w-4xl max-h-[92vh] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl">
             {/* Close Button */}
             <button
               onClick={closePostModal}
-              className="absolute top-3 right-3 z-30 p-2 bg-zinc-950/80 hover:bg-zinc-950 text-white rounded-full border border-white/10 transition-colors cursor-pointer"
+              className="absolute top-3 right-3 z-30 p-2 bg-black/70 hover:bg-black text-white rounded-full border border-white/10 transition-colors cursor-pointer"
               title="Close"
             >
               <X className="w-5 h-5" />
@@ -215,7 +215,7 @@ export function PostsGrid({
                     {carouselIndex > 0 && (
                       <button
                         onClick={() => setCarouselIndex((i) => i - 1)}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-zinc-950/80 hover:bg-zinc-950 text-white z-20 border border-white/10 cursor-pointer"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/70 hover:bg-black text-white z-20 border border-white/10 cursor-pointer"
                         title="Previous item"
                       >
                         <ChevronLeft className="w-5 h-5" />
@@ -224,14 +224,14 @@ export function PostsGrid({
                     {carouselIndex < selectedPost.carouselMedia.length - 1 && (
                       <button
                         onClick={() => setCarouselIndex((i) => i + 1)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-zinc-950/80 hover:bg-zinc-950 text-white z-20 border border-white/10 cursor-pointer"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/70 hover:bg-black text-white z-20 border border-white/10 cursor-pointer"
                         title="Next item"
                       >
                         <ChevronRight className="w-5 h-5" />
                       </button>
                     )}
                     {/* Carousel Counter */}
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-zinc-950/80 text-white text-xs font-semibold z-20 border border-white/10">
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/75 text-white text-xs font-semibold z-20 border border-white/10">
                       {carouselIndex + 1} / {selectedPost.carouselMedia.length}
                     </div>
                   </>
@@ -239,47 +239,47 @@ export function PostsGrid({
             </div>
 
             {/* Sidebar Details & Actions */}
-            <div className="w-full md:w-80 p-5 flex flex-col justify-between border-t md:border-t-0 md:border-l border-zinc-800 bg-zinc-900">
+            <div className="w-full md:w-80 p-5 flex flex-col justify-between border-t md:border-t-0 md:border-l border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
               <div className="overflow-y-auto max-h-[40vh] md:max-h-[60vh] pr-1">
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="font-bold text-white text-sm">@{username}</span>
+                  <span className="font-bold text-slate-900 dark:text-white text-sm">@{username}</span>
                   {selectedPost.timestamp && (
-                    <span className="text-xs text-zinc-500">
+                    <span className="text-xs text-slate-500 dark:text-zinc-500">
                       • {new Date(selectedPost.timestamp).toLocaleDateString()}
                     </span>
                   )}
                 </div>
 
                 {selectedPost.caption && (
-                  <p className="text-xs sm:text-sm text-zinc-300 whitespace-pre-line leading-relaxed mb-4">
+                  <p className="text-xs sm:text-sm text-slate-700 dark:text-zinc-300 whitespace-pre-line leading-relaxed mb-4">
                     {selectedPost.caption}
                   </p>
                 )}
 
                 {/* Stats */}
-                <div className="flex gap-4 text-xs text-zinc-400 py-3 border-y border-zinc-800">
+                <div className="flex gap-4 text-xs text-slate-600 dark:text-zinc-400 py-3 border-y border-slate-200 dark:border-zinc-800">
                   {selectedPost.likeCount !== undefined && (
                     <span>
-                      <strong className="text-white font-semibold">{selectedPost.likeCount.toLocaleString()}</strong> likes
+                      <strong className="text-slate-900 dark:text-white font-semibold">{selectedPost.likeCount.toLocaleString()}</strong> likes
                     </span>
                   )}
                   {selectedPost.commentCount !== undefined && (
                     <span>
-                      <strong className="text-white font-semibold">{selectedPost.commentCount.toLocaleString()}</strong> comments
+                      <strong className="text-slate-900 dark:text-white font-semibold">{selectedPost.commentCount.toLocaleString()}</strong> comments
                     </span>
                   )}
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-4 border-t border-zinc-800 flex flex-col gap-2">
+              <div className="pt-4 border-t border-slate-200 dark:border-zinc-800 flex flex-col gap-2">
                 <a
                   href={
                     activeItem.downloadUrl ||
                     `/api/media?url=${encodeURIComponent(activeItem.url)}&download=true&filename=instagram_${username}_${activeItem.id}.${activeItem.type === 'video' ? 'mp4' : 'jpg'}`
                   }
                   download
-                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-gradient-to-r from-pink-600 via-rose-600 to-amber-600 hover:opacity-95 text-white text-sm font-semibold rounded-xl shadow-lg shadow-rose-950/40 transition-all cursor-pointer"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-gradient-to-r from-pink-600 via-rose-600 to-amber-600 hover:opacity-95 text-white text-sm font-semibold rounded-xl shadow-md transition-all cursor-pointer"
                 >
                   <Download className="w-4 h-4" />
                   Download {activeItem.type === 'video' ? 'Video' : 'Image'}
@@ -290,7 +290,7 @@ export function PostsGrid({
                   href={activeItem.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full flex items-center justify-center gap-1.5 py-2 px-3 border border-zinc-700/80 hover:bg-zinc-800 text-zinc-300 text-xs font-medium rounded-xl text-center transition-colors"
+                  className="w-full flex items-center justify-center gap-1.5 py-2 px-3 border border-slate-200 hover:bg-slate-100 dark:border-zinc-700/80 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-medium rounded-xl text-center transition-colors"
                 >
                   <Maximize2 className="w-3.5 h-3.5" />
                   Direct Source URL
