@@ -31,16 +31,18 @@ const STORY_AD_HTML = `
     html, body {
       width: 100%;
       height: 100%;
-      background: transparent;
+      background: #09090b;
+      color: #fff;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      overflow: hidden;
+      overflow-y: auto;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
     #container-4ff02455261b1454e019ced3534847d2 {
       width: 100%;
+      min-height: 280px;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -76,7 +78,7 @@ export function StoriesViewer({ stories, initialIndex = 0, username = 'user', on
 
   const currentStory = stories[currentIndex];
 
-  // Compulsory Ad Countdown timer (3s)
+  // Compulsory Ad Countdown timer (3s) + auto-advance
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (showingAd) {
@@ -85,10 +87,10 @@ export function StoriesViewer({ stories, initialIndex = 0, username = 'user', on
           setAdSecondsLeft((s) => s - 1);
         }, 1000);
       } else {
-        // Automatically proceed after 5 seconds total if user doesn't manually click
+        // Once 3..2..1 reaches 0, button stays as "Skip Ad" and automatically advances after 2.5s
         timer = setTimeout(() => {
           handleSkipAd();
-        }, 3500);
+        }, 2500);
       }
     }
     return () => clearTimeout(timer);
@@ -97,8 +99,14 @@ export function StoriesViewer({ stories, initialIndex = 0, username = 'user', on
   const handleSkipAd = () => {
     if (adSecondsLeft > 0) return;
     setShowingAd(false);
+    setAdSecondsLeft(3);
+    setViewsCount(0);
     setIsMediaLoading(true);
-    setCurrentIndex((i) => i + 1);
+    if (currentIndex < stories.length - 1) {
+      setCurrentIndex((i) => i + 1);
+    } else {
+      onClose();
+    }
   };
 
   // Check if active story is already in the offline vault
@@ -129,9 +137,9 @@ export function StoriesViewer({ stories, initialIndex = 0, username = 'user', on
     setIsVaulted(true);
   };
 
-  // Auto-progress timer for images (only ticks when image has finished loading)
+  // Auto-progress timer for images (only ticks when image has finished loading and ad is not showing)
   useEffect(() => {
-    if (!currentStory) return;
+    if (!currentStory || showingAd) return;
 
     if (currentStory.type === 'image') {
       if (!isPlaying || isMediaLoading) return;
@@ -154,18 +162,18 @@ export function StoriesViewer({ stories, initialIndex = 0, username = 'user', on
       // Handled by video onTimeUpdate
       setProgress(0);
     }
-  }, [currentIndex, isPlaying, isMediaLoading, currentStory?.type]);
+  }, [currentIndex, isPlaying, isMediaLoading, currentStory?.type, showingAd]);
 
   // Synchronize play/pause and mute state directly with HTML5 video element
   useEffect(() => {
     if (currentStory?.type === 'video' && videoRef.current) {
-      if (isPlaying) {
+      if (isPlaying && !showingAd) {
         videoRef.current.play().catch(() => {});
       } else {
         videoRef.current.pause();
       }
     }
-  }, [isPlaying, currentStory?.type, currentIndex]);
+  }, [isPlaying, currentStory?.type, currentIndex, showingAd]);
 
   useEffect(() => {
     if (videoRef.current) {
@@ -208,7 +216,7 @@ export function StoriesViewer({ stories, initialIndex = 0, username = 'user', on
     setProgress(0);
     if (currentIndex < stories.length - 1) {
       // Show sponsored ad every 3 stories viewed (like Instagram Stories)
-      if (viewsCount >= 2 && !showingAd) {
+      if (viewsCount >= 3 && !showingAd) {
         setShowingAd(true);
         setAdSecondsLeft(3);
         setViewsCount(0);
@@ -302,38 +310,16 @@ export function StoriesViewer({ stories, initialIndex = 0, username = 'user', on
             </div>
           </div>
 
-          {/* Ad Content Display Frame */}
-          <div className="relative flex-1 bg-gradient-to-b from-zinc-950 via-zinc-900 to-black flex flex-col items-center justify-center p-4 pt-16 pb-24 overflow-hidden">
-            {/* Native Instagram Sponsored Story Card */}
-            <div className="w-full max-w-xs mx-auto flex flex-col items-center text-center space-y-4 z-0">
-              <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-pink-500 via-rose-500 to-amber-500 p-0.5 shadow-xl animate-pulse">
-                <div className="w-full h-full bg-zinc-950 rounded-[22px] flex items-center justify-center text-pink-400">
-                  <Sparkles className="w-8 h-8 text-pink-500" />
-                </div>
-              </div>
-
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-pink-500 bg-pink-500/10 px-2.5 py-0.5 rounded-full border border-pink-500/20">
-                  Featured Sponsor
-                </span>
-                <h4 className="text-lg font-black text-white mt-1.5 tracking-tight">
-                  InstaView Pro Stealth
-                </h4>
-                <p className="text-xs text-zinc-400 mt-1 leading-relaxed max-w-xs">
-                  Watch stories anonymously, download full HD reels & batch-save 24h stories directly to your private Vault.
-                </p>
-              </div>
-
-              {/* Dynamic Network Ad Placement (via srcDoc HTML container) */}
-              <div className="w-full min-h-[140px] flex items-center justify-center rounded-2xl overflow-hidden bg-black/40 border border-white/5">
-                <iframe
-                  srcDoc={STORY_AD_HTML}
-                  title="Sponsored Advertisement"
-                  className="w-full min-h-[140px] border-0"
-                  scrolling="no"
-                  sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-top-navigation"
-                />
-              </div>
+          {/* Ad Content Display Frame (Full Height for Complete Ad Visibility) */}
+          <div className="relative flex-1 bg-gradient-to-b from-zinc-950 via-zinc-900 to-black flex flex-col items-center justify-center p-3 pt-14 pb-20 overflow-hidden w-full h-full">
+            <div className="w-full h-full max-w-sm mx-auto flex items-center justify-center">
+              <iframe
+                srcDoc={STORY_AD_HTML}
+                title="Sponsored Advertisement"
+                className="w-full h-full min-h-[350px] max-h-[500px] border-0 rounded-2xl bg-zinc-950 shadow-2xl"
+                scrolling="auto"
+                sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-top-navigation"
+              />
             </div>
           </div>
 
@@ -347,7 +333,7 @@ export function StoriesViewer({ stories, initialIndex = 0, username = 'user', on
               <span>Learn More ↗</span>
             </button>
             <span className="text-[10px] text-zinc-400">
-              {adSecondsLeft > 0 ? `Story resumes in ${adSecondsLeft}s` : 'Tap to continue stories'}
+              {adSecondsLeft > 0 ? `Skip available in ${adSecondsLeft}s` : 'Tap Skip Ad or auto-advancing...'}
             </span>
           </div>
         </div>
