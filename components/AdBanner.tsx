@@ -84,11 +84,42 @@ export function AdBanner({
           justify-content: center;
           align-items: center;
         }
+        /* Mobile Viewport Optimization: Show strictly 1 ad unit on mobile (< 640px) to prevent 4 stacked ads in a row */
+        @media (max-width: 640px) {
+          #${containerId} > * > *:nth-child(n+2),
+          #${containerId} > div > div:nth-child(n+2),
+          #${containerId} [class*="__bn-container"]:nth-child(n+2),
+          #${containerId} [class*="__bn"]:nth-child(n+2) {
+            display: none !important;
+          }
+        }
       </style>
     </head>
     <body>
       <div id="${containerId}"></div>
       <script async="async" data-cfasync="false" src="${scriptSrc}"></script>
+      <script>
+        // Enforce exactly 1 single ad item on mobile screens (< 640px)
+        function limitMobileAdUnits() {
+          if (window.innerWidth <= 640) {
+            var c = document.getElementById('${containerId}');
+            if (c) {
+              var parent = c.querySelector('[class*="__stand"]') || c.firstElementChild || c;
+              if (parent && parent.children.length > 1) {
+                for (var i = 1; i < parent.children.length; i++) {
+                  parent.children[i].style.setProperty('display', 'none', 'important');
+                }
+              }
+            }
+          }
+        }
+        var attempts = 0;
+        var checkTimer = setInterval(function() {
+          limitMobileAdUnits();
+          attempts++;
+          if (attempts > 25) clearInterval(checkTimer);
+        }, 150);
+      </script>
     </body>
     </html>
   `;

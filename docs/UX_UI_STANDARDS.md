@@ -82,9 +82,11 @@ All interactive modal dialogs (Watchlist, Story Vault, Media Fullscreen Viewers,
 
 ### Approved Native Placements (Instagram Parity)
 1. **In-Feed Posts Grid (`PostsGrid.tsx`):**
-   - Ads appear natively inserted between posts (every 5-6 items), matching Instagram's native feed algorithm.
+   - Ads appear natively inserted between posts (every 6 items), matching Instagram's native feed algorithm.
+   - **Responsive Unit Standard:** On PC/desktop (wide screen), up to 4 ad units display in a clean horizontal row. On mobile (< 640px), the ad is strictly restricted to **1 single ad card** via CSS and JS clipping to avoid 4 vertically stacked ads overwhelming the mobile feed.
 2. **In-Feed Reels Grid (`ReelsGrid.tsx`):**
-   - Ads appear natively inserted in the reels grid (every 4 items).
+   - Ads appear natively inserted between reels (every 6 items).
+   - Follows the same responsive 1-ad on mobile rule.
 3. **Instagram-Style Story Interstitial (`StoriesViewer.tsx`):**
    - While viewing full-screen stories, a sponsored interstitial appears every 3 stories.
    - Includes a **compulsory 3-second countdown** (`⏳ Skip in 3s` &rarr; `Skip Ad ⏭️`) to ensure advertiser impressions while respecting user experience.
