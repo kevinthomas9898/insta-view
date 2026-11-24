@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   ExternalLink,
   Sparkles,
+  Info,
 } from 'lucide-react';
 
 interface StoryVaultModalProps {
@@ -29,6 +30,7 @@ export function StoryVaultModal({ isOpen, onClose }: StoryVaultModalProps) {
   const [items, setItems] = useState<VaultStoryItem[]>([]);
   const [activeStory, setActiveStory] = useState<VaultStoryItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showInfo, setShowInfo] = useState(false);
 
   const loadItems = async () => {
     setIsLoading(true);
@@ -101,11 +103,41 @@ export function StoryVaultModal({ isOpen, onClose }: StoryVaultModalProps) {
                 <span className="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-pink-500/10 text-pink-600 dark:text-pink-400 border border-pink-500/20 shrink-0">
                   {items.length} {items.length === 1 ? 'Story' : 'Stories'}
                 </span>
+
+                {/* Privacy Info Popover / Tooltip */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowInfo((prev) => !prev)}
+                    onMouseEnter={() => setShowInfo(true)}
+                    onMouseLeave={() => setShowInfo(false)}
+                    className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300 hover:bg-slate-200/60 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                    aria-label="Privacy Info"
+                    title="100% Private Client Storage"
+                  >
+                    <Info className="w-3.5 h-3.5" />
+                  </button>
+
+                  {showInfo && (
+                    <div
+                      className="absolute left-0 sm:left-auto top-full mt-2 z-40 w-64 sm:w-72 p-3 rounded-2xl bg-zinc-950/95 text-white shadow-2xl border border-zinc-800 backdrop-blur-md animate-fade-in"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="flex items-start gap-2.5">
+                        <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-bold text-[11px] text-zinc-100">
+                            100% Private Client Storage
+                          </p>
+                          <p className="text-zinc-400 text-[10px] mt-0.5 leading-normal">
+                            Re-watch anytime, even after 24h expiration. Stored exclusively inside your browser&apos;s local storage with zero server transmission.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-              <p className="text-[11px] text-slate-500 dark:text-zinc-400 hidden sm:flex items-center gap-1 mt-0.5 truncate">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                100% Private on-device storage — re-watch anytime after 24h expiration
-              </p>
             </div>
           </div>
 
