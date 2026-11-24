@@ -47,14 +47,14 @@ All interactive modal dialogs (Watchlist, Story Vault, Media Fullscreen Viewers,
      }, [isOpen, onClose]);
      ```
 4. **Body Scroll Lock:** Dialog content has its own internal scroll (`overflow-y-auto max-h-[85vh]`).
-5. **Single-Line Header Rule (No Mobile Wrapping):**
-   - Modal titles must be concise (e.g., `Watchlist` rather than `Secret Watchlist`, `Story Vault` rather than `Offline Story Vault`).
-   - Header title container must use `min-w-0 flex-1` with `truncate` on the title to guarantee header text never awkwardly wraps across multiple rows on small mobile viewports (≤ 380px).
+5. **Single-Line Header Rule (No Mobile Truncation or Wrapping):**
+   - Modal titles must be concise (e.g., `Watchlist`, `Story Vault`) and styled with `whitespace-nowrap` so titles never truncate into awkward ellipses (e.g., `Story Va...`).
+   - Header left flex container must remain minimal: `[Icon] Title [Count] (i)`. Never stuff text badges (`INFO`) into the mobile title line.
 6. **Privacy Reassurance & In-Modal Info Banner Pattern (`(i)` Button):**
    - **Never** render multi-line explanatory paragraphs directly in mobile modal headers.
    - **Never** use absolute floating tooltips that can overflow the right edge of small mobile viewports (≤ 380px) or get clipped by modal `overflow-hidden`.
-   - Privacy guarantees (e.g. *"100% Private client storage — re-watch anytime, even after 24h expiration"*) are toggled via a compact `(i)` button in the header.
-   - When tapped, it reveals an **in-flow responsive banner** (`mx-4 sm:mx-6 mt-3.5`) situated neatly between the header and media items, with an explicit `(X)` dismiss button. This guarantees 100% horizontal responsiveness without clipping on any screen width.
+   - **Theme Consistency:** In-modal privacy banners must use theme-adaptive emerald glass styling (`bg-emerald-500/10 border border-emerald-500/25` with `dark:text-zinc-300`). Never hardcode bright light-mode white backgrounds (`bg-slate-50`) that jar with dark mode.
+   - Privacy guarantees are toggled via a compact circular `(i)` button in the header. When opened, it reveals an in-flow responsive banner with an `(X)` dismiss button that saves the dismissed state in `localStorage`.
 
 ---
 

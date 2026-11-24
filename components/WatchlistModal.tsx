@@ -67,36 +67,33 @@ export function WatchlistModal({
       >
         {/* Responsive Modal Header */}
         <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between bg-slate-50/70 dark:bg-zinc-900/70">
-          <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
+          <div className="flex items-center gap-2.5 min-w-0">
             <div className="p-2 rounded-xl bg-gradient-to-tr from-amber-500 to-pink-500 text-white shadow-xs shrink-0">
               <Bookmark className="w-4 h-4 fill-white" />
             </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white truncate">
-                  Watchlist
-                </h3>
+            <div className="flex items-center gap-2 min-w-0">
+              <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white whitespace-nowrap">
+                Watchlist
+              </h3>
+              {watchlist.length > 0 && (
                 <span className="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0">
-                  {watchlist.length} {watchlist.length === 1 ? 'Profile' : 'Profiles'}
+                  {watchlist.length}
                 </span>
-
-                {/* Prominent Privacy Badge & Info Trigger */}
-                <button
-                  type="button"
-                  onClick={() => setShowInfo((prev) => !prev)}
-                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 transition-all cursor-pointer shrink-0 border ${
-                    showInfo
-                      ? 'bg-emerald-500 text-white border-emerald-600 shadow-xs'
-                      : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
-                  }`}
-                  aria-label="Toggle Watchlist Privacy Info"
-                  title="100% Private Local Bookmarks — Click to view details"
-                >
-                  <ShieldCheck className="w-3 h-3 text-emerald-500" />
-                  <span className="hidden sm:inline">100% Private</span>
-                  <span className="sm:hidden font-mono text-[9px] font-bold">INFO</span>
-                </button>
-              </div>
+              )}
+              {/* Sleek info (i) button */}
+              <button
+                type="button"
+                onClick={() => setShowInfo((prev) => !prev)}
+                className={`p-1 rounded-full transition-colors cursor-pointer shrink-0 ${
+                  showInfo
+                    ? 'text-amber-500 bg-amber-500/15'
+                    : 'text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300 hover:bg-slate-200/60 dark:hover:bg-zinc-800'
+                }`}
+                aria-label="Toggle watchlist privacy info"
+                title="Privacy details"
+              >
+                <Info className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
 
@@ -122,17 +119,17 @@ export function WatchlistModal({
           </div>
         </div>
 
-        {/* In-Modal Privacy Info Banner (100% responsive, never clipped) */}
+        {/* In-Modal Privacy Info Banner (Dark-mode native, high contrast, 100% responsive) */}
         {showInfo && (
-          <div className="mx-4 sm:mx-6 mt-3.5 p-3 rounded-2xl bg-slate-50 dark:bg-zinc-850 border border-slate-200 dark:border-zinc-700/80 shadow-sm flex items-start gap-2.5 animate-fade-in text-xs">
-            <div className="p-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5">
+          <div className="mx-4 sm:mx-6 mt-3.5 p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 shadow-xs flex items-start gap-2.5 animate-fade-in text-xs">
+            <div className="p-1.5 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5">
               <ShieldCheck className="w-4 h-4" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-bold text-[11px] text-slate-900 dark:text-zinc-100">
+              <p className="font-bold text-[11px] text-emerald-600 dark:text-emerald-400">
                 100% Private Local Bookmarks
               </p>
-              <p className="text-[11px] text-slate-600 dark:text-zinc-400 mt-0.5 leading-relaxed">
+              <p className="text-[11px] text-slate-600 dark:text-zinc-300 mt-0.5 leading-relaxed">
                 Saved exclusively on this device. Never tracked, shared, or sent to any server.
               </p>
             </div>
@@ -144,7 +141,7 @@ export function WatchlistModal({
                   localStorage.setItem('instaview_watchlist_info_seen', 'true');
                 } catch {}
               }}
-              className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-750 transition-colors cursor-pointer shrink-0"
+              className="p-1 text-slate-400 hover:text-slate-600 dark:text-zinc-400 dark:hover:text-white rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors cursor-pointer shrink-0"
               aria-label="Dismiss info"
             >
               <X className="w-3.5 h-3.5" />
