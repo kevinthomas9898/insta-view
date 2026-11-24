@@ -93,7 +93,7 @@ export function ProfileHeader({ profile, isWatchlisted, onToggleWatchlist }: Pro
                 title={isWatchlisted ? 'Remove from Secret Watchlist' : 'Add to Secret Watchlist (100% Private)'}
               >
                 <Bookmark className={`w-3 h-3 ${isWatchlisted ? 'fill-amber-500 text-amber-500' : ''}`} />
-                <span>{isWatchlisted ? 'In Watchlist' : 'Secret Watchlist'}</span>
+                <span>{isWatchlisted ? 'Watchlisted' : 'Watchlist'}</span>
               </button>
             )}
           </div>

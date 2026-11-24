@@ -47,6 +47,10 @@ All interactive modal dialogs (Watchlist, Story Vault, Media Fullscreen Viewers,
      }, [isOpen, onClose]);
      ```
 4. **Body Scroll Lock:** Dialog content has its own internal scroll (`overflow-y-auto max-h-[85vh]`).
+5. **Single-Line Header Rule (No Mobile Wrapping):**
+   - Modal titles must be concise (e.g., `Watchlist` rather than `Secret Watchlist`, `Story Vault` rather than `Offline Story Vault`).
+   - Header title container must use `min-w-0 flex-1` with `truncate` on the title to guarantee header text never awkwardly wraps across multiple rows on small mobile viewports (≤ 380px).
+   - Long explanatory subtexts must be hidden or truncated on mobile screens (`hidden sm:flex items-center`) to eliminate vertical crowding above the fold.
 
 ---
 
