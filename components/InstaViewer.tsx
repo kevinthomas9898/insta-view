@@ -21,6 +21,8 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { LANGUAGES, SUPPORTED_LANGS, getTranslations } from '@/lib/i18n/translations';
 import { AdSlot } from '@/components/AdSlot';
+import { PWAInstallPrompt } from '@/components/PWAInstallPrompt';
+import { parseInstagramInput } from '@/lib/utils/instagram-url';
 import {
   Search,
   Loader2,
@@ -38,6 +40,9 @@ import {
   HelpCircle,
   CheckCircle2,
   ShieldAlert,
+  Clock,
+  X,
+  Trash2,
 } from 'lucide-react';
 
 import { FAQ_ITEMS, type FaqItem } from '@/lib/data/faq';
@@ -123,19 +128,82 @@ export function InstaViewer({
   const [isLoadingMoreReels, setIsLoadingMoreReels] = useState(false);
 
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [watchlist, setWatchlist] = useState<Profile[]>([]);
+  const [showWatchlist, setShowWatchlist] = useState(false);
+
+  // Load Recent Searches & Watchlist on mount
+  useEffect(() => {
+    try {
+      const savedSearches = localStorage.getItem('instaview_recent_searches');
+      if (savedSearches) setRecentSearches(JSON.parse(savedSearches));
+
+      const savedWatchlist = localStorage.getItem('instaview_watchlist');
+      if (savedWatchlist) setWatchlist(JSON.parse(savedWatchlist));
+    } catch {}
+  }, []);
+
+  const removeRecentSearch = (user: string) => {
+    setRecentSearches((prev) => {
+      const updated = prev.filter((u) => u.toLowerCase() !== user.toLowerCase());
+      try {
+        localStorage.setItem('instaview_recent_searches', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
+
+  const clearRecentSearches = () => {
+    setRecentSearches([]);
+    try {
+      localStorage.removeItem('instaview_recent_searches');
+    } catch {}
+  };
+
+  const toggleWatchlist = (targetProfile?: Profile | null) => {
+    const target = targetProfile || profile;
+    if (!target) return;
+
+    setWatchlist((prev) => {
+      const exists = prev.some((p) => p.username.toLowerCase() === target.username.toLowerCase());
+      let updated: Profile[];
+      if (exists) {
+        updated = prev.filter((p) => p.username.toLowerCase() !== target.username.toLowerCase());
+      } else {
+        updated = [target, ...prev];
+      }
+      try {
+        localStorage.setItem('instaview_watchlist', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
 
   const cleanUsername = (input: string) => {
-    let cleaned = input.trim();
-    cleaned = cleaned.replace(/^https?:\/\/(www\.)?instagram\.com\//i, '');
-    cleaned = cleaned.replace(/\/.*$/, '');
-    cleaned = cleaned.replace(/^@/, '');
-    return cleaned;
+    const parsed = parseInstagramInput(input);
+    return parsed.username || '';
   };
 
   const handleSearch = async (targetUsername?: string) => {
     const raw = targetUsername || usernameInput;
-    const userToFetch = cleanUsername(raw);
+    const parsed = parseInstagramInput(raw);
+    const userToFetch = parsed.username;
     if (!userToFetch) return;
+
+    // Switch tab if direct URL pointed to reels/posts/stories
+    if (parsed.targetTab && parsed.targetTab !== activeTab) {
+      setActiveTab(parsed.targetTab);
+    }
+
+    // Save to Recent Searches (deduped, max 8)
+    setRecentSearches((prev) => {
+      const filtered = prev.filter((u) => u.toLowerCase() !== userToFetch.toLowerCase());
+      const updated = [userToFetch, ...filtered].slice(0, 8);
+      try {
+        localStorage.setItem('instaview_recent_searches', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
 
     setSearchedUsername(userToFetch);
     setIsLoadingProfile(true);
@@ -356,6 +424,21 @@ export function InstaViewer({
               {tNav.noLogin}
             </span>
 
+            {/* Secret Watchlist Trigger */}
+            <button
+              type="button"
+              onClick={() => setShowWatchlist((prev) => !prev)}
+              className={`text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1.5 transition-colors cursor-pointer border ${
+                showWatchlist
+                  ? 'bg-amber-500/20 text-amber-500 border-amber-500/40'
+                  : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-zinc-800/80 dark:text-zinc-300 dark:border-zinc-700/60 hover:bg-slate-200 dark:hover:bg-zinc-700'
+              }`}
+              title="View your secret private watchlist"
+            >
+              <Bookmark className={`w-3.5 h-3.5 ${watchlist.length > 0 ? 'fill-amber-500 text-amber-500' : 'text-slate-500 dark:text-zinc-400'}`} />
+              <span>Watchlist {watchlist.length > 0 ? `(${watchlist.length})` : ''}</span>
+            </button>
+
             {/* Language Selector Dropdown */}
             <LanguageSelector currentLang={lang} />
 
@@ -449,6 +532,51 @@ export function InstaViewer({
               </button>
             </form>
 
+            {/* Recent Searches */}
+            {recentSearches.length > 0 && (
+              <div className="mt-2.5 flex items-center justify-center gap-1.5 sm:gap-2 text-xs text-slate-500 dark:text-zinc-400 flex-wrap animate-fade-in">
+                <span className="font-semibold text-slate-700 dark:text-zinc-300 text-[11px] sm:text-xs flex items-center gap-1">
+                  <Clock className="w-3 h-3 text-pink-500" />
+                  Recent:
+                </span>
+                {recentSearches.map((user) => (
+                  <span
+                    key={user}
+                    className="inline-flex items-center gap-1 pl-2.5 pr-1 py-0.5 rounded-lg bg-white dark:bg-zinc-900/90 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-800 hover:border-pink-500/40 transition-colors text-[11px] sm:text-xs font-medium shadow-2xs group"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUsernameInput(user);
+                        handleSearch(user);
+                      }}
+                      className="hover:underline cursor-pointer"
+                    >
+                      @{user}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeRecentSearch(user);
+                      }}
+                      className="p-0.5 text-slate-400 hover:text-rose-500 dark:text-zinc-500 dark:hover:text-rose-400 rounded transition-colors cursor-pointer"
+                      title={`Remove @${user} from recent searches`}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+                <button
+                  type="button"
+                  onClick={clearRecentSearches}
+                  className="text-[10px] text-slate-400 hover:text-rose-500 dark:text-zinc-500 dark:hover:text-rose-400 underline ml-1 cursor-pointer"
+                >
+                  Clear all
+                </button>
+              </div>
+            )}
+
             {/* Popular / Trending Suggestions */}
             <div className="mt-2.5 flex items-center justify-center gap-1.5 sm:gap-2 text-xs text-slate-500 dark:text-zinc-500 flex-wrap">
               <span className="font-medium text-slate-600 dark:text-zinc-400 text-[11px] sm:text-xs">Popular:</span>
@@ -466,6 +594,90 @@ export function InstaViewer({
                 </button>
               ))}
             </div>
+
+            {/* Secret Watchlist Drawer / Modal */}
+            {showWatchlist && (
+              <div className="max-w-2xl mx-auto my-4 p-4 rounded-2xl bg-white/95 dark:bg-zinc-900/95 border border-amber-500/30 dark:border-amber-500/20 shadow-2xl backdrop-blur-md animate-fade-in text-left">
+                <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100 dark:border-zinc-800">
+                  <div className="flex items-center gap-2">
+                    <Bookmark className="w-4 h-4 text-amber-500 fill-amber-500" />
+                    <h3 className="font-bold text-sm text-slate-900 dark:text-white">Secret Watchlist</h3>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold border border-emerald-500/20">
+                      100% Private (Local Only)
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowWatchlist(false)}
+                    className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 rounded-lg cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {watchlist.length === 0 ? (
+                  <div className="text-center py-6 text-xs text-slate-500 dark:text-zinc-400">
+                    <Bookmark className="w-8 h-8 mx-auto mb-2 text-slate-300 dark:text-zinc-700" />
+                    <p className="font-bold text-slate-800 dark:text-zinc-200 mb-1">Your Watchlist is empty</p>
+                    <p className="text-[11px] text-slate-400 dark:text-zinc-500 max-w-sm mx-auto">
+                      Click &ldquo;Secret Watchlist&rdquo; on any profile to anonymously bookmark them here for 1-click access anytime.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-72 overflow-y-auto pr-1">
+                    {watchlist.map((item) => (
+                      <div
+                        key={item.username}
+                        className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200/80 dark:border-zinc-700/60 hover:border-pink-500/40 transition-all"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowWatchlist(false);
+                            setUsernameInput(item.username);
+                            handleSearch(item.username);
+                          }}
+                          className="flex items-center gap-2.5 min-w-0 flex-1 text-left cursor-pointer"
+                        >
+                          <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-200 dark:bg-zinc-700 flex-shrink-0">
+                            {item.avatarUrl ? (
+                              <img
+                                src={`/api/media?url=${encodeURIComponent(item.avatarUrl)}`}
+                                alt={item.username}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  if (item.avatarUrl && e.currentTarget.src !== item.avatarUrl) {
+                                    e.currentTarget.src = item.avatarUrl;
+                                  }
+                                }}
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center font-bold text-xs text-slate-600 dark:text-zinc-300">
+                                {item.username.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-bold text-slate-900 dark:text-white truncate">@{item.username}</p>
+                            {item.fullName && (
+                              <p className="text-[10px] text-slate-500 dark:text-zinc-400 truncate">{item.fullName}</p>
+                            )}
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => toggleWatchlist(item)}
+                          className="p-1.5 text-slate-400 hover:text-rose-500 dark:text-zinc-500 dark:hover:text-rose-400 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+                          title="Remove from Watchlist"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </section>
 
@@ -491,7 +703,12 @@ export function InstaViewer({
         {/* Active Profile Results */}
         {profile && (
           <div className="w-full animate-fade-in overflow-hidden">
-            <ProfileHeader profile={profile} metadata={profileMetadata} />
+            <ProfileHeader
+              profile={profile}
+              metadata={profileMetadata}
+              isWatchlisted={watchlist.some((w) => w.username.toLowerCase() === profile.username.toLowerCase())}
+              onToggleWatchlist={() => toggleWatchlist(profile)}
+            />
 
             {/* If profile is private, show dedicated private notice and skip tabs */}
             {profile.isPrivate || tabError?.code === 'PRIVATE_ACCOUNT' ? (
@@ -968,6 +1185,9 @@ export function InstaViewer({
           </div>
         </div>
       </footer>
+
+      {/* Installable PWA Prompt */}
+      <PWAInstallPrompt />
     </div>
   );
 }

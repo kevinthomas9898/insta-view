@@ -9,6 +9,7 @@ import {
 } from '../types';
 import { InstagramError } from '../errors';
 import { globalCache, CACHE_TTL } from '../../cache';
+import { scraperApiIntercept } from '../token-pool';
 
 interface ScraperApiConfig {
   token?: string;
@@ -18,39 +19,8 @@ interface ScraperApiConfig {
 export class ScraperApiProvider implements InstagramProvider {
   public readonly name = 'ScraperAPI Instagram';
   public readonly isDemo = false;
-  private tokens: string[] = [];
-  private currentTokenIndex = 0;
 
-  constructor(config?: Partial<ScraperApiConfig>) {
-    if (config?.tokens && config.tokens.length > 0) {
-      this.tokens = config.tokens.filter(Boolean);
-    } else if (config?.token) {
-      this.tokens = [config.token];
-    } else {
-      const envTokens = process.env.SCRAPERAPI_TOKENS
-        ? process.env.SCRAPERAPI_TOKENS.split(',').map((t) => t.trim()).filter(Boolean)
-        : [];
-      if (envTokens.length > 0) {
-        this.tokens = envTokens;
-      } else if (process.env.SCRAPERAPI_TOKEN) {
-        this.tokens = [process.env.SCRAPERAPI_TOKEN.trim()];
-      }
-    }
-
-    if (this.tokens.length === 0) {
-      throw new InstagramError(
-        'PROVIDER_ERROR',
-        'ScraperAPI provider requires SCRAPERAPI_TOKEN or SCRAPERAPI_TOKENS environment variable',
-        500
-      );
-    }
-  }
-
-  private getNextToken(): string {
-    const token = this.tokens[this.currentTokenIndex % this.tokens.length];
-    this.currentTokenIndex = (this.currentTokenIndex + 1) % this.tokens.length;
-    return token;
-  }
+  constructor() {}
 
   private static extractShortcode(obj: any): string {
     if (obj?.code) return String(obj.code);
@@ -88,57 +58,7 @@ export class ScraperApiProvider implements InstagramProvider {
   }
 
   private async fetchEndpoint<T>(endpoint: string, body: Record<string, unknown>): Promise<T> {
-    const url = `https://scraperapi.to/scrape/instagram-scraper/${endpoint}`;
-
-    let lastError: Error | null = null;
-    const maxAttempts = Math.min(this.tokens.length, 3);
-
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      const activeToken = this.getNextToken();
-      let res: Response;
-      try {
-        res = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${activeToken}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          body: JSON.stringify(body),
-        });
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : 'Network error';
-        lastError = new InstagramError('PROVIDER_ERROR', `ScraperAPI network request failed: ${msg}`, 502);
-        continue;
-      }
-
-      if (res.status === 404) {
-        throw new InstagramError('PROFILE_NOT_FOUND', 'Target profile or content not found', 404);
-      }
-
-      // If token is rate-limited (429) or payment/quota required (402), failover to next token
-      if (res.status === 429 || res.status === 402) {
-        lastError = new InstagramError(
-          'RATE_LIMITED',
-          `ScraperAPI token quota or rate limit reached (${res.status}). Rotating to next token.`,
-          res.status
-        );
-        continue;
-      }
-
-      if (!res.ok) {
-        const errText = await res.text().catch(() => '');
-        if (res.status === 403 || errText.includes('private') || errText.includes('Private')) {
-          throw new InstagramError('PRIVATE_ACCOUNT', 'This Instagram account is private. Its media cannot be viewed without following the account.', 403);
-        }
-        lastError = new InstagramError('PROVIDER_ERROR', `ScraperAPI error [${res.status}]: ${errText.slice(0, 100)}`, res.status);
-        continue;
-      }
-
-      return (await res.json()) as T;
-    }
-
-    throw lastError || new InstagramError('RATE_LIMITED', 'All ScraperAPI tokens in pool have reached their rate or quota limits.', 429);
+    return scraperApiIntercept<T>(endpoint, body);
   }
 
   public async getProfile(username: string): Promise<ProviderResult<Profile>> {

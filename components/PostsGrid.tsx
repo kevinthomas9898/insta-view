@@ -21,6 +21,10 @@ import {
   Image as ImageIcon,
   Sparkles,
   ExternalLink,
+  Copy,
+  Hash,
+  Check,
+  Archive,
 } from 'lucide-react';
 
 interface PostsGridProps {
@@ -47,8 +51,67 @@ export function PostsGrid({
   const [videoProgress, setVideoProgress] = useState(0);
   const [videoCurrentTime, setVideoCurrentTime] = useState(0);
   const [videoDuration, setVideoDuration] = useState(0);
+  const [copyState, setCopyState] = useState<'idle' | 'caption' | 'tags'>('idle');
+  const [isZipping, setIsZipping] = useState(false);
+  const [zipProgress, setZipProgress] = useState('');
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const lastTimeUpdateRef = useRef<number>(0);
+
+  const copyCaption = (text: string) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopyState('caption');
+    setTimeout(() => setCopyState('idle'), 2000);
+  };
+
+  const copyHashtags = (text: string) => {
+    const matches = text.match(/#[a-zA-Z0-9_\u00c0-\u024e]+/g);
+    if (!matches || matches.length === 0) return;
+    navigator.clipboard.writeText(matches.join(' '));
+    setCopyState('tags');
+    setTimeout(() => setCopyState('idle'), 2000);
+  };
+
+  const downloadAllZip = async (post: PostResult) => {
+    const mediaList = post.carouselMedia && post.carouselMedia.length > 0
+      ? post.carouselMedia
+      : [{ id: post.id, type: post.type === 'video' ? 'video' : 'image', url: post.url }];
+
+    setIsZipping(true);
+    setZipProgress(`1/${mediaList.length}`);
+
+    try {
+      const JSZip = (await import('jszip')).default;
+      const zip = new JSZip();
+
+      for (let i = 0; i < mediaList.length; i++) {
+        const item = mediaList[i];
+        setZipProgress(`${i + 1}/${mediaList.length}`);
+        const isVid = item.type === 'video' || (item.url && item.url.includes('.mp4'));
+        const ext = isVid ? 'mp4' : 'jpg';
+        const proxyUrl = `/api/media?url=${encodeURIComponent(item.url)}`;
+        const res = await fetch(proxyUrl);
+        if (!res.ok) continue;
+        const blob = await res.blob();
+        zip.file(`${username}_post_${post.id}_slide_${i + 1}.${ext}`, blob);
+      }
+
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const downloadUrl = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = `instagram_${username}_${post.id}_all_media.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(downloadUrl);
+    } catch (err) {
+      console.error('Failed to create ZIP:', err);
+    } finally {
+      setIsZipping(false);
+      setZipProgress('');
+    }
+  };
 
   const formatTime = (secs: number) => {
     if (isNaN(secs) || secs < 0) return '0:00';
@@ -579,6 +642,19 @@ export function PostsGrid({
                     Download {activeItem.type === 'video' && activeItem.url && activeItem.url.includes('.mp4') ? 'Video' : 'Image'}
                     {selectedPost.type === 'carousel' && ` (${carouselIndex + 1}/${selectedPost.carouselMedia?.length})`}
                   </a>
+
+                  {selectedPost.type === 'carousel' && (selectedPost.carouselMedia?.length || 0) > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => downloadAllZip(selectedPost)}
+                      disabled={isZipping}
+                      className="flex items-center justify-center gap-1.5 py-2 px-3 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-xl border border-white/20 shadow-md cursor-pointer transition-colors disabled:opacity-50"
+                      title="Download all carousel media as a single ZIP file"
+                    >
+                      {isZipping ? <Loader2 className="w-3.5 h-3.5 animate-spin text-pink-400" /> : <Archive className="w-3.5 h-3.5 text-pink-400" />}
+                      <span>{isZipping ? `Zipping ${zipProgress}...` : 'Download All (ZIP)'}</span>
+                    </button>
+                  )}
                   <a
                     href={activeItem.url}
                     target="_blank"
@@ -618,6 +694,28 @@ export function PostsGrid({
                         {isCaptionExpanded ? 'Show less' : '... more'}
                       </button>
                     )}
+
+                    {/* Desktop Copiers */}
+                    <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-100 dark:border-zinc-800">
+                      <button
+                        type="button"
+                        onClick={() => copyCaption(selectedPost.caption || '')}
+                        className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 font-medium flex items-center gap-1 transition-colors cursor-pointer"
+                      >
+                        {copyState === 'caption' ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                        <span>{copyState === 'caption' ? 'Copied!' : 'Copy Caption'}</span>
+                      </button>
+                      {selectedPost.caption.includes('#') && (
+                        <button
+                          type="button"
+                          onClick={() => copyHashtags(selectedPost.caption || '')}
+                          className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-pink-600 dark:text-pink-400 font-medium flex items-center gap-1 transition-colors cursor-pointer"
+                        >
+                          {copyState === 'tags' ? <Check className="w-3 h-3 text-emerald-500" /> : <Hash className="w-3 h-3" />}
+                          <span>{copyState === 'tags' ? 'Copied Tags!' : 'Copy Tags'}</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -692,6 +790,18 @@ export function PostsGrid({
                   Download {activeItem.type === 'video' && activeItem.url && activeItem.url.includes('.mp4') ? 'Video' : 'Image'}
                   {selectedPost.type === 'carousel' && ` (${carouselIndex + 1}/${selectedPost.carouselMedia?.length})`}
                 </a>
+
+                {selectedPost.type === 'carousel' && (selectedPost.carouselMedia?.length || 0) > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => downloadAllZip(selectedPost)}
+                    disabled={isZipping}
+                    className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-pink-500/30 bg-pink-50 hover:bg-pink-100 dark:bg-pink-950/20 dark:hover:bg-pink-900/30 text-pink-600 dark:text-pink-400 text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {isZipping ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Archive className="w-3.5 h-3.5" />}
+                    <span>{isZipping ? `Generating ZIP (${zipProgress})...` : 'Download All (ZIP)'}</span>
+                  </button>
+                )}
 
                 <a
                   href={activeItem.url}

@@ -2,14 +2,16 @@
 
 import React from 'react';
 import { Profile, ProviderMetadata } from '@/lib/instagram/types';
-import { CheckCircle2, Lock, ExternalLink, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, Lock, ExternalLink, ShieldCheck, Bookmark } from 'lucide-react';
 
 interface ProfileHeaderProps {
   profile: Profile;
   metadata?: ProviderMetadata;
+  isWatchlisted?: boolean;
+  onToggleWatchlist?: () => void;
 }
 
-export function ProfileHeader({ profile }: ProfileHeaderProps) {
+export function ProfileHeader({ profile, isWatchlisted, onToggleWatchlist }: ProfileHeaderProps) {
   const formatNumber = (num?: number) => {
     if (num === undefined || num === null) return '-';
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
@@ -77,6 +79,22 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
                 <ShieldCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                 Public Profile
               </span>
+            )}
+
+            {onToggleWatchlist && (
+              <button
+                type="button"
+                onClick={onToggleWatchlist}
+                className={`text-[11px] px-2.5 py-0.5 rounded-full flex items-center gap-1 font-medium transition-colors cursor-pointer ${
+                  isWatchlisted
+                    ? 'bg-amber-50 text-amber-700 border border-amber-300 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/30'
+                    : 'bg-slate-100 text-slate-700 border border-slate-200 dark:bg-zinc-800/80 dark:text-zinc-300 dark:border-zinc-700 hover:bg-slate-200 dark:hover:bg-zinc-700'
+                }`}
+                title={isWatchlisted ? 'Remove from Secret Watchlist' : 'Add to Secret Watchlist (100% Private)'}
+              >
+                <Bookmark className={`w-3 h-3 ${isWatchlisted ? 'fill-amber-500 text-amber-500' : ''}`} />
+                <span>{isWatchlisted ? 'In Watchlist' : 'Secret Watchlist'}</span>
+              </button>
             )}
           </div>
 

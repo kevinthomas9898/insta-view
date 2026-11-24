@@ -14,6 +14,9 @@ import {
   Loader2,
   Maximize2,
   ChevronDown,
+  Copy,
+  Hash,
+  Check,
 } from 'lucide-react';
 
 interface ReelsGridProps {
@@ -40,8 +43,24 @@ export function ReelsGrid({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [copyState, setCopyState] = useState<'idle' | 'caption' | 'tags'>('idle');
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const lastTimeUpdateRef = useRef<number>(0);
+
+  const copyCaption = (text: string) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopyState('caption');
+    setTimeout(() => setCopyState('idle'), 2000);
+  };
+
+  const copyHashtags = (text: string) => {
+    const matches = text.match(/#[a-zA-Z0-9_\u00c0-\u024e]+/g);
+    if (!matches || matches.length === 0) return;
+    navigator.clipboard.writeText(matches.join(' '));
+    setCopyState('tags');
+    setTimeout(() => setCopyState('idle'), 2000);
+  };
 
   // Seamless Autoplay with fallback to muted autoplay if browser policy restricts unmuted audio
   useEffect(() => {
@@ -406,6 +425,30 @@ export function ReelsGrid({
                     </div>
                   )}
 
+                  {/* Caption & Hashtag Quick Copiers */}
+                  {selectedReel.caption && !selectedReel.caption.startsWith('http') && (
+                    <div className="flex items-center gap-2 pt-0.5">
+                      <button
+                        type="button"
+                        onClick={() => copyCaption(selectedReel.caption || '')}
+                        className="text-[10px] px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white font-medium flex items-center gap-1 transition-colors cursor-pointer"
+                      >
+                        {copyState === 'caption' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                        <span>{copyState === 'caption' ? 'Copied Caption!' : 'Copy Caption'}</span>
+                      </button>
+                      {selectedReel.caption.includes('#') && (
+                        <button
+                          type="button"
+                          onClick={() => copyHashtags(selectedReel.caption || '')}
+                          className="text-[10px] px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-pink-300 font-medium flex items-center gap-1 transition-colors cursor-pointer"
+                        >
+                          {copyState === 'tags' ? <Check className="w-3 h-3 text-emerald-400" /> : <Hash className="w-3 h-3" />}
+                          <span>{copyState === 'tags' ? 'Copied Tags!' : 'Copy Tags'}</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
+
                   {/* Timeline Progress Bar & Time (only if playable video) */}
                   {isPlayableVideo && (
                     <div className="flex flex-col gap-1 pt-1">
@@ -463,6 +506,18 @@ export function ReelsGrid({
                       <Download className="w-3.5 h-3.5" />
                       {isPlayableVideo ? 'Download Reel' : 'Download Cover'}
                     </a>
+
+                    {isPlayableVideo && (
+                      <a
+                        href={`/api/media?url=${encodeURIComponent(selectedReel.url)}&download=true&audioOnly=true&filename=audio_${username}_${selectedReel.id}.m4a`}
+                        download
+                        className="flex items-center justify-center gap-1.5 py-2 px-3 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-xl border border-white/20 shadow-md cursor-pointer transition-colors"
+                        title="Extract and download reel audio track (M4A)"
+                      >
+                        <Music className="w-3.5 h-3.5 text-pink-400" />
+                        <span>Audio (M4A)</span>
+                      </a>
+                    )}
 
                     <a
                       href={selectedReel.url}

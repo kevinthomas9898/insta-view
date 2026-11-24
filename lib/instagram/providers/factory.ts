@@ -21,9 +21,10 @@ export class ProviderFactory {
     }
 
     // 3. ScraperAPI explicitly set or token present
+    const scraperToken = (process.env.SCRAPERAPI_TOKEN || process.env.SCRAPERAPI_TOKENS || '').trim();
     if (
       process.env.INSTAGRAM_PROVIDER === 'scraperapi' ||
-      (process.env.SCRAPERAPI_TOKEN && process.env.SCRAPERAPI_TOKEN.trim() !== '' && process.env.INSTAGRAM_PROVIDER !== 'rapidapi.com')
+      (scraperToken !== '' && process.env.INSTAGRAM_PROVIDER !== 'rapidapi.com')
     ) {
       return new ScraperApiProvider();
     }

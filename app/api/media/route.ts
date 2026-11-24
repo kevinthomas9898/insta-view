@@ -109,7 +109,8 @@ export async function GET(request: NextRequest) {
         urlStr.includes('video_dashinit') ||
         urlStr.includes('t51.2885-29'));
 
-    const effectiveContentType = isVideo ? 'video/mp4' : upstreamContentType;
+    const isAudioOnly = searchParams.get('audioOnly') === 'true';
+    const effectiveContentType = isAudioOnly ? 'audio/mp4' : (isVideo ? 'video/mp4' : upstreamContentType);
 
     const contentLength = upstreamRes.headers.get('content-length');
     const contentRange = upstreamRes.headers.get('content-range');
@@ -128,16 +129,22 @@ export async function GET(request: NextRequest) {
 
     // Determine clean safe filename for download
     if (download) {
-      const defaultExt = isVideo ? 'mp4' : 'jpg';
+      const defaultExt = isAudioOnly ? 'm4a' : (isVideo ? 'mp4' : 'jpg');
       let cleanFilename = (filename || `instagram_media.${defaultExt}`).replace(/[^a-zA-Z0-9._-]/g, '_');
 
-      // Safety guard: if the file is actually an image, ensure the extension is .jpg, not .mp4
-      if (isImage && cleanFilename.toLowerCase().endsWith('.mp4')) {
-        cleanFilename = cleanFilename.replace(/\.mp4$/i, '.jpg');
-      }
-      // Safety guard: if the file is actually a video, ensure the extension is .mp4
-      if (isVideo && !cleanFilename.toLowerCase().endsWith('.mp4')) {
-        cleanFilename = cleanFilename.replace(/\.[a-zA-Z0-9]+$/i, '') + '.mp4';
+      if (isAudioOnly) {
+        if (!cleanFilename.toLowerCase().endsWith('.m4a') && !cleanFilename.toLowerCase().endsWith('.mp3')) {
+          cleanFilename = cleanFilename.replace(/\.[a-zA-Z0-9]+$/i, '') + '.m4a';
+        }
+      } else {
+        // Safety guard: if the file is actually an image, ensure the extension is .jpg, not .mp4
+        if (isImage && cleanFilename.toLowerCase().endsWith('.mp4')) {
+          cleanFilename = cleanFilename.replace(/\.mp4$/i, '.jpg');
+        }
+        // Safety guard: if the file is actually a video, ensure the extension is .mp4
+        if (isVideo && !cleanFilename.toLowerCase().endsWith('.mp4')) {
+          cleanFilename = cleanFilename.replace(/\.[a-zA-Z0-9]+$/i, '') + '.mp4';
+        }
       }
 
       responseHeaders.set('Content-Disposition', `attachment; filename="${cleanFilename}"`);
