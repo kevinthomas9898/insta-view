@@ -53,4 +53,16 @@ export const FAQ_ITEMS: FaqItem[] = [
       'Instagram stories naturally disappear 24 hours after publication. If a user has not posted a new story within the last 24 hours, the Stories tab will indicate that no active stories are available. You can still view their permanent Highlights, Posts, and Reels.',
     category: 'Features',
   },
+  {
+    question: 'What is the Offline Story Vault and how does it save 24-hour stories?',
+    answer:
+      'The Offline Story Vault is a proprietary client-side feature that allows you to bookmark and save public Instagram stories directly to your browser’s local IndexedDB database. Once saved to your Vault, you can re-watch video and photo stories forever—even after the original 24-hour expiration window on Instagram. Because storage is 100% on-device, your saved stories remain strictly confidential and are never transmitted to any third-party server.',
+    category: 'Features & Privacy',
+  },
+  {
+    question: 'What is the Secret Watchlist and is my bookmark list sent to your servers?',
+    answer:
+      'The Secret Watchlist lets you pin your favorite Instagram creators for 1-click access without retyping their usernames. Your watchlist is stored 100% locally in your browser’s private storage (localStorage). It is never sent to our servers, never synced with an account, and completely invisible to Meta and profile owners.',
+    category: 'Features & Privacy',
+  },
 ];

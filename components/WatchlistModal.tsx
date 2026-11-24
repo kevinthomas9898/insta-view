@@ -31,6 +31,17 @@ export function WatchlistModal({
   onClearWatchlist,
 }: WatchlistModalProps) {
   const [showInfo, setShowInfo] = useState(false);
+
+  // Show banner once on initial discovery if not previously dismissed
+  useEffect(() => {
+    if (isOpen) {
+      try {
+        const seen = localStorage.getItem('instaview_watchlist_info_seen');
+        if (!seen) setShowInfo(true);
+      } catch {}
+    }
+  }, [isOpen]);
+
   // Close on Escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -69,19 +80,21 @@ export function WatchlistModal({
                   {watchlist.length} {watchlist.length === 1 ? 'Profile' : 'Profiles'}
                 </span>
 
-                {/* Privacy Info Toggle Button */}
+                {/* Prominent Privacy Badge & Info Trigger */}
                 <button
                   type="button"
                   onClick={() => setShowInfo((prev) => !prev)}
-                  className={`p-1 rounded-full transition-colors cursor-pointer shrink-0 ${
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 transition-all cursor-pointer shrink-0 border ${
                     showInfo
-                      ? 'text-amber-500 bg-amber-500/15 ring-1 ring-amber-500/30'
-                      : 'text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300 hover:bg-slate-200/60 dark:hover:bg-zinc-800'
+                      ? 'bg-emerald-500 text-white border-emerald-600 shadow-xs'
+                      : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
                   }`}
                   aria-label="Toggle Watchlist Privacy Info"
-                  title="100% Private Local Bookmarks Information"
+                  title="100% Private Local Bookmarks — Click to view details"
                 >
-                  <Info className="w-3.5 h-3.5" />
+                  <ShieldCheck className="w-3 h-3 text-emerald-500" />
+                  <span className="hidden sm:inline">100% Private</span>
+                  <span className="sm:hidden font-mono text-[9px] font-bold">INFO</span>
                 </button>
               </div>
             </div>
@@ -125,7 +138,12 @@ export function WatchlistModal({
             </div>
             <button
               type="button"
-              onClick={() => setShowInfo(false)}
+              onClick={() => {
+                setShowInfo(false);
+                try {
+                  localStorage.setItem('instaview_watchlist_info_seen', 'true');
+                } catch {}
+              }}
               className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-750 transition-colors cursor-pointer shrink-0"
               aria-label="Dismiss info"
             >
@@ -133,15 +151,6 @@ export function WatchlistModal({
             </button>
           </div>
         )}
-              type="button"
-              onClick={onClose}
-              className="p-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
-              aria-label="Close Watchlist"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
 
         {/* Modal Body */}
         <div className="flex-1 overflow-y-auto p-3.5 sm:p-5">

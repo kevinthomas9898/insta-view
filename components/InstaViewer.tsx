@@ -802,7 +802,7 @@ export function InstaViewer({
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 p-6 rounded-2xl backdrop-blur-sm hover:border-slate-300 dark:hover:border-zinc-700 transition-all shadow-xs">
                   <div className="w-12 h-12 rounded-xl bg-pink-500/10 text-pink-500 dark:text-pink-400 border border-pink-500/20 flex items-center justify-center mb-4">
                     <EyeOff className="w-6 h-6" />
@@ -810,6 +810,26 @@ export function InstaViewer({
                   <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">100% Anonymous</h3>
                   <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
                     Watch stories in stealth mode. The creator will never see your username in their viewer list. No traces or digital footprints left behind.
+                  </p>
+                </div>
+
+                <div className="bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 p-6 rounded-2xl backdrop-blur-sm hover:border-slate-300 dark:hover:border-zinc-700 transition-all shadow-xs">
+                  <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center mb-4">
+                    <HardDrive className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">Offline Story Vault</h3>
+                  <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
+                    Save disappearing 24-hour stories permanently to your device&apos;s private Vault. Re-watch video &amp; photo stories anytime, even after expiration. 100% on-device storage.
+                  </p>
+                </div>
+
+                <div className="bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 p-6 rounded-2xl backdrop-blur-sm hover:border-slate-300 dark:hover:border-zinc-700 transition-all shadow-xs">
+                  <div className="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 flex items-center justify-center mb-4">
+                    <Bookmark className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">Secret Watchlist</h3>
+                  <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
+                    Bookmark your favorite profiles for instant 1-click stealth access without retyping usernames. Stored privately on your device with zero server tracking.
                   </p>
                 </div>
 
@@ -824,7 +844,7 @@ export function InstaViewer({
                 </div>
 
                 <div className="bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 p-6 rounded-2xl backdrop-blur-sm hover:border-slate-300 dark:hover:border-zinc-700 transition-all shadow-xs">
-                  <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center mb-4">
                     <Download className="w-6 h-6" />
                   </div>
                   <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">Original HD Downloads</h3>
@@ -834,10 +854,10 @@ export function InstaViewer({
                 </div>
 
                 <div className="bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 p-6 rounded-2xl backdrop-blur-sm hover:border-slate-300 dark:hover:border-zinc-700 transition-all shadow-xs">
-                  <div className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center justify-center mb-4">
                     <Smartphone className="w-6 h-6" />
                   </div>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">All Devices & OS</h3>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">All Devices &amp; OS</h3>
                   <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
                     Optimized for lightning-fast playback on iOS (iPhone/iPad), Android, macOS, Windows, and Linux. No app downloads required.
                   </p>
