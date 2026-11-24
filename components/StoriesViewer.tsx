@@ -37,15 +37,23 @@ const STORY_AD_HTML = `
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      overflow-y: auto;
+      overflow: hidden;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    html::-webkit-scrollbar, body::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
     }
     #container-4ff02455261b1454e019ced3534847d2 {
       width: 100%;
-      min-height: 280px;
+      height: 100%;
       display: flex;
       justify-content: center;
       align-items: center;
+      overflow: hidden;
     }
   </style>
 </head>
@@ -314,8 +322,8 @@ export function StoriesViewer({ stories, initialIndex = 0, username = 'user', on
               <iframe
                 srcDoc={STORY_AD_HTML}
                 title="Sponsored Advertisement"
-                className="w-full h-full min-h-[350px] max-h-[500px] border-0 rounded-2xl bg-zinc-950 shadow-2xl"
-                scrolling="auto"
+                className="w-full h-full min-h-[350px] max-h-[500px] border-0 rounded-2xl bg-zinc-950 shadow-2xl overflow-hidden"
+                scrolling="no"
                 sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-top-navigation"
               />
             </div>
