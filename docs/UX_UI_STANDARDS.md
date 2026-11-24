@@ -67,6 +67,7 @@ All interactive modal dialogs (Watchlist, Story Vault, Media Fullscreen Viewers,
 - When a user lands on the site (`!profile`):
   - Hero search is prominent.
   - **"Top 50 Most Viewed Accounts"** is rendered **outside** the search card as its own dedicated discovery section below the hero, featuring collapsible controls, category filters (`Trending`, `Sports`, `Music`, `Cinema`, `Creators`), and follower badges.
+  - **Mobile Clutter Prevention Rule:** On mobile screens (`< 768px`), the directory **MUST default to collapsed**, displaying a sleek 44px 1-line bar (`🔥 Top 50 Most Viewed Accounts [Explore ▾]`). This saves over 350px of vertical space and prevents an overwhelming wall of pill buttons from dominating mobile viewports. On desktop (`≥ 768px`), it automatically expands.
 - When a user views an active profile (`profile !== null`):
   - **All directory widgets, promotional grids, and discovery carousels are completely hidden.**
   - 100% of the screen is dedicated to the creator's profile header, active tab navigation, and requested media.

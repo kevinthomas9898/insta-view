@@ -558,18 +558,18 @@ export function InstaViewer({
         {/* Hero & Search Section */}
         <section className={`transition-all duration-300 ${profile ? 'mb-4' : 'my-2 sm:my-4 text-center'}`}>
           {!profile && (
-            <div className="max-w-3xl mx-auto mb-3 sm:mb-5">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-xs text-slate-700 dark:text-zinc-300 font-medium mb-2.5 shadow-xs">
+            <div className="max-w-3xl mx-auto mb-2 sm:mb-5">
+              <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-xs text-slate-700 dark:text-zinc-300 font-medium mb-2.5 shadow-xs">
                 <Sparkles className="w-3.5 h-3.5 text-pink-500" />
                 <span>{heroBadge}</span>
               </div>
-              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-tight mb-2 sm:mb-2.5">
+              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-tight mb-1.5 sm:mb-2.5">
                 {heroTitle}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500">
                   {heroHighlight}
                 </span>
               </h1>
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-zinc-400 max-w-xl mx-auto leading-relaxed">
+              <p className="hidden sm:block text-xs sm:text-sm text-slate-600 dark:text-zinc-400 max-w-xl mx-auto leading-relaxed">
                 {heroDescription}
               </p>
             </div>
