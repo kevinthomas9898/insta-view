@@ -34,6 +34,7 @@ export interface Profile {
 export interface StoryResult extends MediaItem {
   storyId: string;
   expiresAt?: string;
+  takenAt?: number;
 }
 
 export interface HighlightResult {

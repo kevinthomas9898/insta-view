@@ -22,6 +22,8 @@ import { LanguageSelector } from '@/components/LanguageSelector';
 import { LANGUAGES, SUPPORTED_LANGS, getTranslations } from '@/lib/i18n/translations';
 import { AdSlot } from '@/components/AdSlot';
 import { PWAInstallPrompt } from '@/components/PWAInstallPrompt';
+import { StoryVaultModal } from '@/components/StoryVaultModal';
+import { TopAccountsDirectory } from '@/components/TopAccountsDirectory';
 import { parseInstagramInput } from '@/lib/utils/instagram-url';
 import {
   Search,
@@ -44,6 +46,7 @@ import {
   X,
   Trash2,
   Menu,
+  HardDrive,
 } from 'lucide-react';
 
 import { FAQ_ITEMS, type FaqItem } from '@/lib/data/faq';
@@ -132,6 +135,7 @@ export function InstaViewer({
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [watchlist, setWatchlist] = useState<Profile[]>([]);
   const [showWatchlist, setShowWatchlist] = useState(false);
+  const [showStoryVault, setShowStoryVault] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   // Load Recent Searches & Watchlist on mount
@@ -438,6 +442,17 @@ export function InstaViewer({
               )}
             </button>
 
+            {/* Offline Story Vault Trigger */}
+            <button
+              type="button"
+              onClick={() => setShowStoryVault(true)}
+              className="text-xs font-semibold px-2 sm:px-3 py-1.5 rounded-full flex items-center gap-1.5 transition-colors cursor-pointer border flex-shrink-0 bg-slate-100 text-slate-700 border-slate-200 dark:bg-zinc-800/80 dark:text-zinc-300 dark:border-zinc-700/60 hover:bg-slate-200 dark:hover:bg-zinc-700"
+              title="View your offline saved story vault"
+            >
+              <HardDrive className="w-3.5 h-3.5 text-pink-500" />
+              <span className="hidden sm:inline">Vault</span>
+            </button>
+
             {/* Language Selector Dropdown (Hidden on mobile < sm, available in mobile drawer) */}
             <div className="hidden sm:block">
               <LanguageSelector currentLang={lang} />
@@ -526,6 +541,22 @@ export function InstaViewer({
                 <span>{tNav.faq}</span>
               </Link>
             </div>
+
+            {/* Mobile Story Vault Action Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setIsMobileNavOpen(false);
+                setShowStoryVault(true);
+              }}
+              className="w-full flex items-center justify-between px-3 py-2 bg-gradient-to-r from-pink-500/10 via-rose-500/10 to-amber-500/10 text-pink-600 dark:text-pink-400 rounded-xl text-xs font-semibold border border-pink-500/20 cursor-pointer"
+            >
+              <span className="flex items-center gap-2">
+                <HardDrive className="w-3.5 h-3.5" />
+                <span>Offline Story Vault (Saved Stories)</span>
+              </span>
+              <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400">Open ↗</span>
+            </button>
           </div>
         )}
       </header>
@@ -676,6 +707,14 @@ export function InstaViewer({
                 </button>
               ))}
             </div>
+
+            {/* Top 50 Most Viewed Accounts Directory */}
+            <TopAccountsDirectory
+              onSelectAccount={(user) => {
+                setUsernameInput(user);
+                handleSearch(user);
+              }}
+            />
 
             {/* Secret Watchlist Drawer / Modal */}
             {showWatchlist && (
@@ -1267,6 +1306,12 @@ export function InstaViewer({
           </div>
         </div>
       </footer>
+
+      {/* Offline Story Vault Modal */}
+      <StoryVaultModal
+        isOpen={showStoryVault}
+        onClose={() => setShowStoryVault(false)}
+      />
 
       {/* Installable PWA Prompt */}
       <PWAInstallPrompt />
