@@ -100,12 +100,20 @@ All interactive modal dialogs (Watchlist, Story Vault, Media Fullscreen Viewers,
 ### Clear Call-to-Actions for Saving Media
 - **On Story Cards (`StoriesList.tsx`):**
   - Explicit action button: `[📌 Vault]` (or `[✓ Saved]` once stored).
-  - Clear visual feedback with color transition (neutral black/white &rarr; amber/gold).
+  - Clear visual feedback with color transition (neutral black/white → amber/gold).
 - **In Full-Screen Story Viewer (`StoriesViewer.tsx`):**
   - Bottom action bar includes `[📌 Save to Vault]` next to the download button.
   - Tapping saves the story directly into client-side IndexedDB with zero server transmission.
 - **Empty State Guidance (`StoryVaultModal.tsx` & `WatchlistModal.tsx`):**
   - When empty, modals display a numbered 3-step illustrated guide explaining exactly how to bookmark or vault stories.
+
+### Media Resilience & Zero-Black-Box Rule
+- **The Problem:** In Chromium and WebKit mobile browsers, rendering a paused `<video preload="metadata">` without an explicit `poster` or `autoplay` renders a 100% solid pitch-black rectangle.
+- **Mandatory Video Preview Standards:**
+  1. **Autoplay Loop Preview:** Muted inline video preview tags must use `autoPlay muted loop playsInline preload="auto"`.
+  2. **Timestamp Offset Fallback:** Video source URLs must append `#t=0.001` so that decoder engines seek to frame 0 immediately.
+  3. **Layered Gradient Fallback:** Every media card must contain a layered background with avatar initials and `@username` so users never see a black void during network fetching or buffering.
+  4. **Glassmorphic Play Affordance:** Video cards must feature a centered glassmorphic Play badge (`fill-white`) so users intuitively understand that the card is playable.
 
 ---
 
