@@ -11,24 +11,45 @@ import { InstagramError } from '../errors';
 import { globalCache, CACHE_TTL } from '../../cache';
 
 interface ScraperApiConfig {
-  token: string;
+  token?: string;
+  tokens?: string[];
 }
 
 export class ScraperApiProvider implements InstagramProvider {
   public readonly name = 'ScraperAPI Instagram';
   public readonly isDemo = false;
-  private token: string;
+  private tokens: string[] = [];
+  private currentTokenIndex = 0;
 
   constructor(config?: Partial<ScraperApiConfig>) {
-    this.token = config?.token || process.env.SCRAPERAPI_TOKEN || '';
+    if (config?.tokens && config.tokens.length > 0) {
+      this.tokens = config.tokens.filter(Boolean);
+    } else if (config?.token) {
+      this.tokens = [config.token];
+    } else {
+      const envTokens = process.env.SCRAPERAPI_TOKENS
+        ? process.env.SCRAPERAPI_TOKENS.split(',').map((t) => t.trim()).filter(Boolean)
+        : [];
+      if (envTokens.length > 0) {
+        this.tokens = envTokens;
+      } else if (process.env.SCRAPERAPI_TOKEN) {
+        this.tokens = [process.env.SCRAPERAPI_TOKEN.trim()];
+      }
+    }
 
-    if (!this.token) {
+    if (this.tokens.length === 0) {
       throw new InstagramError(
         'PROVIDER_ERROR',
-        'ScraperAPI provider requires SCRAPERAPI_TOKEN environment variable',
+        'ScraperAPI provider requires SCRAPERAPI_TOKEN or SCRAPERAPI_TOKENS environment variable',
         500
       );
     }
+  }
+
+  private getNextToken(): string {
+    const token = this.tokens[this.currentTokenIndex % this.tokens.length];
+    this.currentTokenIndex = (this.currentTokenIndex + 1) % this.tokens.length;
+    return token;
   }
 
   private static extractShortcode(obj: any): string {
@@ -69,39 +90,55 @@ export class ScraperApiProvider implements InstagramProvider {
   private async fetchEndpoint<T>(endpoint: string, body: Record<string, unknown>): Promise<T> {
     const url = `https://scraperapi.to/scrape/instagram-scraper/${endpoint}`;
 
-    let res: Response;
-    try {
-      res = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify(body),
-      });
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Network error';
-      throw new InstagramError('PROVIDER_ERROR', `ScraperAPI network request failed: ${msg}`, 502);
-    }
+    let lastError: Error | null = null;
+    const maxAttempts = Math.min(this.tokens.length, 3);
 
-    if (res.status === 404) {
-      throw new InstagramError('PROFILE_NOT_FOUND', 'Target profile or content not found', 404);
-    }
-
-    if (res.status === 429) {
-      throw new InstagramError('RATE_LIMITED', 'ScraperAPI rate limit reached (2 req/s on Free). Cached results will serve shortly.', 429);
-    }
-
-    if (!res.ok) {
-      const errText = await res.text();
-      if (res.status === 403 || errText.includes('private') || errText.includes('Private')) {
-        throw new InstagramError('PRIVATE_ACCOUNT', 'This Instagram account is private. Its media cannot be viewed without following the account.', 403);
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const activeToken = this.getNextToken();
+      let res: Response;
+      try {
+        res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${activeToken}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify(body),
+        });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'Network error';
+        lastError = new InstagramError('PROVIDER_ERROR', `ScraperAPI network request failed: ${msg}`, 502);
+        continue;
       }
-      throw new InstagramError('PROVIDER_ERROR', `ScraperAPI error [${res.status}]: ${errText.slice(0, 100)}`, res.status);
+
+      if (res.status === 404) {
+        throw new InstagramError('PROFILE_NOT_FOUND', 'Target profile or content not found', 404);
+      }
+
+      // If token is rate-limited (429) or payment/quota required (402), failover to next token
+      if (res.status === 429 || res.status === 402) {
+        lastError = new InstagramError(
+          'RATE_LIMITED',
+          `ScraperAPI token quota or rate limit reached (${res.status}). Rotating to next token.`,
+          res.status
+        );
+        continue;
+      }
+
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        if (res.status === 403 || errText.includes('private') || errText.includes('Private')) {
+          throw new InstagramError('PRIVATE_ACCOUNT', 'This Instagram account is private. Its media cannot be viewed without following the account.', 403);
+        }
+        lastError = new InstagramError('PROVIDER_ERROR', `ScraperAPI error [${res.status}]: ${errText.slice(0, 100)}`, res.status);
+        continue;
+      }
+
+      return (await res.json()) as T;
     }
 
-    return (await res.json()) as T;
+    throw lastError || new InstagramError('RATE_LIMITED', 'All ScraperAPI tokens in pool have reached their rate or quota limits.', 429);
   }
 
   public async getProfile(username: string): Promise<ProviderResult<Profile>> {
@@ -258,42 +295,13 @@ export class ScraperApiProvider implements InstagramProvider {
     const items = json.result?.items || [];
     if (!Array.isArray(items)) return [];
 
-    // Pre-enrich the top 4 highlights upfront so users immediately see story counts and enjoy 0ms instant click
-    const topItems = items.slice(0, 4);
-    const restItems = items.slice(4);
-
-    const topEnriched = await Promise.all(
-      topItems.map(async (h: any) => {
-        try {
-          const stories = await this.getHighlightStories(String(h.id));
-          return {
-            id: String(h.id),
-            title: h.title || 'Highlight',
-            coverUrl: h.coverImageUrl || '',
-            mediaCount: stories.length,
-            items: stories,
-          };
-        } catch {
-          return {
-            id: String(h.id),
-            title: h.title || 'Highlight',
-            coverUrl: h.coverImageUrl || '',
-            mediaCount: 0,
-            items: [],
-          };
-        }
-      })
-    );
-
-    const restMapped = restItems.map((h: any) => ({
+    return items.map((h: any) => ({
       id: String(h.id),
       title: h.title || 'Highlight',
       coverUrl: h.coverImageUrl || '',
-      mediaCount: 0,
+      mediaCount: h.mediaCount || 0,
       items: [],
     }));
-
-    return [...topEnriched, ...restMapped];
   }
 
   public async getReels(username: string, maxId?: string): Promise<ProviderResult<ReelResult[]>> {
