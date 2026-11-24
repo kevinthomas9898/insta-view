@@ -31,6 +31,41 @@ export class ScraperApiProvider implements InstagramProvider {
     }
   }
 
+  private static extractShortcode(obj: any): string {
+    if (obj?.code) return String(obj.code);
+    if (obj?.shortcode) return String(obj.shortcode);
+    const permalink = obj?.permalink || obj?.url || '';
+    const match = permalink.match(/\/(?:p|reel|reels)\/([A-Za-z0-9_-]+)/);
+    return match ? match[1] : '';
+  }
+
+  private static findMp4(obj: any): string {
+    if (!obj) return '';
+    if (typeof obj.url === 'string' && obj.url.includes('.mp4')) return obj.url;
+    if (typeof obj.video_url === 'string' && obj.video_url.includes('.mp4')) return obj.video_url;
+    if (Array.isArray(obj.video_versions)) {
+      const v = obj.video_versions.find((x: any) => x.url?.includes('.mp4')) || obj.video_versions[0];
+      if (v?.url && v.url.includes('.mp4')) return v.url;
+    }
+    if (Array.isArray(obj.versions)) {
+      const v = obj.versions.find((x: any) => x.url?.includes('.mp4'));
+      if (v?.url) return v.url;
+    }
+    if (Array.isArray(obj.media)) {
+      for (const m of obj.media) {
+        const u = ScraperApiProvider.findMp4(m);
+        if (u) return u;
+      }
+    }
+    return '';
+  }
+
+  private static isValidCaption(c?: string): boolean {
+    if (!c || typeof c !== 'string') return false;
+    const trimmed = c.trim();
+    return trimmed.length > 0 && !trimmed.startsWith('http://') && !trimmed.startsWith('https://');
+  }
+
   private async fetchEndpoint<T>(endpoint: string, body: Record<string, unknown>): Promise<T> {
     const url = `https://scraperapi.to/scrape/instagram-scraper/${endpoint}`;
 
@@ -115,9 +150,10 @@ export class ScraperApiProvider implements InstagramProvider {
 
       if (isCarousel && Array.isArray(item.media)) {
         carouselMedia = item.media.map((sub: any, idx: number) => {
-          const subIsVideo = sub.type === 'video';
-          const subUrl = sub.versions?.[0]?.url || sub.url || '';
-          const subThumb = sub.thumbnailUrl || subUrl;
+          const subMp4 = ScraperApiProvider.findMp4(sub);
+          const subIsVideo = sub.type === 'video' || Boolean(subMp4);
+          const subThumb = sub.thumbnailUrl || sub.versions?.[0]?.url || sub.url || '';
+          const subUrl = subMp4 || subThumb;
           return {
             id: String(sub.id || `${item.id}_${idx}`),
             type: subIsVideo ? 'video' : 'image',
@@ -130,17 +166,25 @@ export class ScraperApiProvider implements InstagramProvider {
         primaryUrl = carouselMedia?.[0]?.url || '';
         primaryThumb = carouselMedia?.[0]?.thumbnailUrl || primaryUrl;
       } else {
+        const itemMp4 = ScraperApiProvider.findMp4(item);
         const m = item.media?.[0];
-        primaryUrl = m?.versions?.[0]?.url || m?.url || '';
-        primaryThumb = m?.thumbnailUrl || primaryUrl;
+        const mThumb = m?.thumbnailUrl || m?.versions?.[0]?.url || m?.url || '';
+        primaryUrl = itemMp4 || mThumb;
+        primaryThumb = mThumb || primaryUrl;
       }
+
+      const postMp4 = ScraperApiProvider.findMp4(item);
+      const effectiveIsVideo = isVideo && (Boolean(postMp4) || isCarousel);
+
+      const rawCaption = item.caption?.text || (typeof item.caption === 'string' ? item.caption : '');
+      const cleanCaption = ScraperApiProvider.isValidCaption(rawCaption) ? rawCaption : '';
 
       return {
         id: String(item.id),
-        type: isCarousel ? 'carousel' : (isVideo ? 'video' : 'image'),
+        type: isCarousel ? 'carousel' : (effectiveIsVideo ? 'video' : 'image'),
         url: primaryUrl,
         thumbnailUrl: primaryThumb || primaryUrl,
-        caption: item.caption?.text || item.caption || '',
+        caption: cleanCaption,
         timestamp: item.timestamp ? new Date(item.timestamp * 1000).toISOString() : undefined,
         likeCount: item.likeCount,
         commentCount: item.commentCount,
@@ -164,16 +208,17 @@ export class ScraperApiProvider implements InstagramProvider {
 
     const stories: StoryResult[] = items.map((item: any, idx: number) => {
       const isVideo = item.type === 'video';
+      const mp4Url = isVideo ? ScraperApiProvider.findMp4(item) : '';
       const m = item.media?.[0];
-      const url = item.url || item.versions?.[0]?.url || m?.versions?.[0]?.url || m?.url || '';
-      const thumbUrl = item.thumbnailUrl || m?.thumbnailUrl || item.versions?.[0]?.url || url;
+      const thumbUrl = item.thumbnailUrl || m?.thumbnailUrl || m?.versions?.[0]?.url || '';
+      const url = mp4Url || item.url || item.versions?.[0]?.url || m?.versions?.[0]?.url || m?.url || '';
 
       return {
         id: String(item.id || `story_${idx}`),
         storyId: String(item.id || `story_${idx}`),
-        type: isVideo ? 'video' : 'image',
+        type: isVideo && Boolean(mp4Url) ? 'video' : 'image',
         url,
-        thumbnailUrl: thumbUrl,
+        thumbnailUrl: thumbUrl || url,
         duration: item.duration,
         timestamp: item.takenAt
           ? new Date(item.takenAt * 1000).toISOString()
@@ -185,23 +230,70 @@ export class ScraperApiProvider implements InstagramProvider {
     return { data: stories };
   }
 
+  public async getHighlightStories(highlightId: string): Promise<MediaItem[]> {
+    const json = await this.fetchEndpoint<any>('highlightStories', { highlightId });
+    const items = json.result?.items || [];
+    if (!Array.isArray(items)) return [];
+
+    return items.map((m: any, idx: number) => {
+      const isVideo = m.type === 'video';
+      const mp4Url = isVideo ? ScraperApiProvider.findMp4(m) : '';
+      const thumbUrl = m.thumbnailUrl || m.coverImageUrl || m.versions?.[0]?.url || '';
+      const url = mp4Url || m.url || m.versions?.[0]?.url || '';
+      return {
+        id: String(m.id || `${highlightId}_${idx}`),
+        type: isVideo && Boolean(mp4Url) ? 'video' : 'image',
+        url,
+        thumbnailUrl: thumbUrl || url,
+        duration: m.duration,
+        width: m.width,
+        height: m.height,
+        timestamp: m.takenAt ? new Date(m.takenAt * 1000).toISOString() : undefined,
+      };
+    });
+  }
+
   public async getHighlights(username: string): Promise<HighlightResult[]> {
     const json = await this.fetchEndpoint<any>('highlights', { username });
     const items = json.result?.items || [];
     if (!Array.isArray(items)) return [];
 
-    return items.map((h: any) => ({
+    // Pre-enrich the top 4 highlights upfront so users immediately see story counts and enjoy 0ms instant click
+    const topItems = items.slice(0, 4);
+    const restItems = items.slice(4);
+
+    const topEnriched = await Promise.all(
+      topItems.map(async (h: any) => {
+        try {
+          const stories = await this.getHighlightStories(String(h.id));
+          return {
+            id: String(h.id),
+            title: h.title || 'Highlight',
+            coverUrl: h.coverImageUrl || '',
+            mediaCount: stories.length,
+            items: stories,
+          };
+        } catch {
+          return {
+            id: String(h.id),
+            title: h.title || 'Highlight',
+            coverUrl: h.coverImageUrl || '',
+            mediaCount: 0,
+            items: [],
+          };
+        }
+      })
+    );
+
+    const restMapped = restItems.map((h: any) => ({
       id: String(h.id),
       title: h.title || 'Highlight',
       coverUrl: h.coverImageUrl || '',
-      mediaCount: h.mediaCount || 0,
-      items: (h.items || []).map((m: any, idx: number) => ({
-        id: String(m.id || `${h.id}_${idx}`),
-        type: m.type === 'video' ? 'video' : 'image',
-        url: m.versions?.[0]?.url || m.url || '',
-        thumbnailUrl: m.thumbnailUrl || m.versions?.[0]?.url || m.url || '',
-      })),
+      mediaCount: 0,
+      items: [],
     }));
+
+    return [...topEnriched, ...restMapped];
   }
 
   public async getReels(username: string, maxId?: string): Promise<ProviderResult<ReelResult[]>> {
@@ -224,41 +316,6 @@ export class ScraperApiProvider implements InstagramProvider {
       commentCount?: number;
     }
 
-    const extractShortcode = (obj: any): string => {
-      if (obj?.code) return String(obj.code);
-      if (obj?.shortcode) return String(obj.shortcode);
-      const permalink = obj?.permalink || obj?.url || '';
-      const match = permalink.match(/\/(?:p|reel|reels)\/([A-Za-z0-9_-]+)/);
-      return match ? match[1] : '';
-    };
-
-    const findMp4 = (obj: any): string => {
-      if (!obj) return '';
-      if (typeof obj.url === 'string' && obj.url.includes('.mp4')) return obj.url;
-      if (typeof obj.video_url === 'string' && obj.video_url.includes('.mp4')) return obj.video_url;
-      if (Array.isArray(obj.video_versions)) {
-        const v = obj.video_versions.find((x: any) => x.url?.includes('.mp4')) || obj.video_versions[0];
-        if (v?.url && v.url.includes('.mp4')) return v.url;
-      }
-      if (Array.isArray(obj.versions)) {
-        const v = obj.versions.find((x: any) => x.url?.includes('.mp4'));
-        if (v?.url) return v.url;
-      }
-      if (Array.isArray(obj.media)) {
-        for (const m of obj.media) {
-          const u = findMp4(m);
-          if (u) return u;
-        }
-      }
-      return '';
-    };
-
-    const isValidCaption = (c?: string): boolean => {
-      if (!c || typeof c !== 'string') return false;
-      const trimmed = c.trim();
-      return trimmed.length > 0 && !trimmed.startsWith('http://') && !trimmed.startsWith('https://');
-    };
-
     const poolKey = `posts_pool:${username}`;
     const cursorKey = `posts_cursor:${username}`;
 
@@ -268,14 +325,14 @@ export class ScraperApiProvider implements InstagramProvider {
 
     const hasUnmatched = () =>
       items.some((item) => {
-        const sc = extractShortcode(item);
+        const sc = ScraperApiProvider.extractShortcode(item);
         const m = postsMap.get(String(item.id)) || (sc ? postsMap.get(sc) : undefined);
         return !m || !m.url || !m.url.includes('.mp4');
       });
 
     try {
       let pageCount = 0;
-      const maxPagesToFetch = 4;
+      const maxPagesToFetch = 2;
 
       while (hasUnmatched() && pageCount < maxPagesToFetch) {
         pageCount++;
@@ -288,16 +345,16 @@ export class ScraperApiProvider implements InstagramProvider {
         if (!Array.isArray(pItems) || pItems.length === 0) break;
 
         for (const p of pItems) {
-          const vUrl = findMp4(p) || p.media?.[0]?.versions?.[0]?.url || p.media?.[0]?.url || p.video_url;
+          const vUrl = ScraperApiProvider.findMp4(p) || p.video_url;
           const captionText = p.caption?.text || (typeof p.caption === 'string' ? p.caption : undefined);
           const meta: PostVideoMeta = {
             url: vUrl || '',
-            caption: isValidCaption(captionText) ? captionText : undefined,
+            caption: ScraperApiProvider.isValidCaption(captionText) ? captionText : undefined,
             likeCount: p.likeCount,
             commentCount: p.commentCount,
           };
           postsMap.set(String(p.id), meta);
-          const sc = extractShortcode(p);
+          const sc = ScraperApiProvider.extractShortcode(p);
           if (sc) postsMap.set(sc, meta);
         }
 
@@ -320,19 +377,19 @@ export class ScraperApiProvider implements InstagramProvider {
     const reels: ReelResult[] = items.map((item: any) => {
       const m = item.media?.[0];
       const thumbUrl = m?.thumbnailUrl || '';
-      const reelSc = extractShortcode(item);
+      const reelSc = ScraperApiProvider.extractShortcode(item);
       const matched =
         postsMap.get(String(item.id)) ||
         (reelSc ? postsMap.get(reelSc) : undefined);
       const videoUrl =
         matched?.url && matched.url.includes('.mp4')
           ? matched.url
-          : m?.versions?.[0]?.url || m?.url || thumbUrl;
+          : (ScraperApiProvider.findMp4(item) || thumbUrl);
 
       // Extract genuine caption text, never leak raw URL permalinks as the caption
       const rawCaption = item.caption?.text || (typeof item.caption === 'string' ? item.caption : '');
       const caption =
-        matched?.caption || (isValidCaption(rawCaption) ? rawCaption : '');
+        matched?.caption || (ScraperApiProvider.isValidCaption(rawCaption) ? rawCaption : '');
 
       return {
         id: String(item.id),

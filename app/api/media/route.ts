@@ -89,19 +89,25 @@ export async function GET(request: NextRequest) {
     }
 
     const upstreamContentType = upstreamRes.headers.get('content-type') || 'application/octet-stream';
+    const urlStr = validatedUrl.toString().toLowerCase();
     const isImage =
       upstreamContentType.includes('image') ||
-      validatedUrl.pathname.endsWith('.jpg') ||
-      validatedUrl.pathname.endsWith('.jpeg') ||
-      validatedUrl.pathname.endsWith('.png') ||
-      validatedUrl.pathname.endsWith('.webp');
+      urlStr.includes('.jpg') ||
+      urlStr.includes('.jpeg') ||
+      urlStr.includes('.png') ||
+      urlStr.includes('.webp') ||
+      urlStr.includes('dst-jpg') ||
+      urlStr.includes('dst-png') ||
+      urlStr.includes('_photo') ||
+      urlStr.includes('t51.2885-15') ||
+      urlStr.includes('t51.82787-15');
 
     const isVideo =
       !isImage &&
       (upstreamContentType.includes('video') ||
-        validatedUrl.pathname.endsWith('.mp4') ||
-        validatedUrl.pathname.includes('.mp4') ||
-        validatedUrl.toString().includes('.mp4'));
+        urlStr.includes('.mp4') ||
+        urlStr.includes('video_dashinit') ||
+        urlStr.includes('t51.2885-29'));
 
     const effectiveContentType = isVideo ? 'video/mp4' : upstreamContentType;
 

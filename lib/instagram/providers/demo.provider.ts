@@ -5,6 +5,7 @@ import {
   HighlightResult,
   PostResult,
   ReelResult,
+  MediaItem,
 } from '../types';
 
 export class DemoProvider implements InstagramProvider {
@@ -78,6 +79,12 @@ export class DemoProvider implements InstagramProvider {
       data: stories,
       notice: 'DEMO DATA — NOT LIVE INSTAGRAM DATA',
     };
+  }
+
+  public async getHighlightStories(highlightId: string): Promise<MediaItem[]> {
+    const highlights = await this.getHighlights('demo');
+    const hl = highlights.find((h) => h.id === highlightId);
+    return hl ? hl.items : [];
   }
 
   public async getHighlights(username: string): Promise<HighlightResult[]> {

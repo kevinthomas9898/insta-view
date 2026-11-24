@@ -244,6 +244,72 @@ export class InstagramService {
     }
   }
 
+  public static async getHighlightStories(
+    highlightId: string,
+    username: string,
+    forceDemo: boolean = false
+  ): Promise<ApiResponse<MediaItem[]>> {
+    const cacheKey = `highlight_stories:${highlightId}:${forceDemo ? 'demo' : 'live'}`;
+    const cached = globalCache.get<MediaItem[]>(cacheKey);
+
+    const provider = ProviderFactory.getProvider({ forceDemo });
+    const startTime = Date.now();
+
+    if (cached) {
+      return {
+        success: true,
+        data: cached,
+        metadata: {
+          provider: provider.name,
+          executionTimeMs: 0,
+          isDemo: provider.isDemo,
+          timestamp: new Date().toISOString(),
+        },
+      };
+    }
+
+    try {
+      let items: MediaItem[] = [];
+      if (typeof provider.getHighlightStories === 'function') {
+        items = await provider.getHighlightStories(highlightId);
+      } else {
+        const cachedHighlights = globalCache.get<HighlightResult[]>(`highlights:${username}:${forceDemo ? 'demo' : 'live'}`);
+        const hl = cachedHighlights?.find((h) => h.id === highlightId);
+        if (hl && hl.items.length > 0) {
+          items = hl.items;
+        }
+      }
+
+      const durationMs = Date.now() - startTime;
+      const processed = items.map((it) => this.addMediaProxyUrls(it, username));
+
+      globalCache.set(cacheKey, processed, CACHE_TTL.HIGHLIGHTS);
+
+      // Also update the highlight in cached highlights if present
+      const cachedHighlights = globalCache.get<HighlightResult[]>(`highlights:${username}:${forceDemo ? 'demo' : 'live'}`);
+      if (cachedHighlights) {
+        const targetHl = cachedHighlights.find((h) => h.id === highlightId);
+        if (targetHl) {
+          targetHl.items = processed;
+          targetHl.mediaCount = processed.length;
+        }
+      }
+
+      return {
+        success: true,
+        data: processed,
+        metadata: {
+          provider: provider.name,
+          executionTimeMs: durationMs,
+          isDemo: provider.isDemo,
+          timestamp: new Date().toISOString(),
+        },
+      };
+    } catch (err: unknown) {
+      return this.handleServiceError(err, 'getHighlightStories', username, provider, startTime);
+    }
+  }
+
   public static async getPosts(
     username: string,
     forceDemo: boolean = false,

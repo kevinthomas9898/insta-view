@@ -4,6 +4,7 @@ import {
   HighlightResult,
   PostResult,
   ReelResult,
+  MediaItem,
 } from '../types';
 
 export interface ProviderResult<T> {
@@ -22,6 +23,8 @@ export interface InstagramProvider {
   getStories(username: string): Promise<ProviderResult<StoryResult[]>>;
 
   getHighlights(username: string): Promise<HighlightResult[]>;
+
+  getHighlightStories?(highlightId: string): Promise<MediaItem[]>;
 
   getPosts(username: string, maxId?: string): Promise<ProviderResult<PostResult[]>>;
 

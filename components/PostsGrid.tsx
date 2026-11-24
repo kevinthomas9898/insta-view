@@ -570,13 +570,13 @@ export function PostsGrid({
                   <a
                     href={
                       activeItem.downloadUrl ||
-                      `/api/media?url=${encodeURIComponent(activeItem.url)}&download=true&filename=instagram_${username}_${activeItem.id}.${activeItem.type === 'video' ? 'mp4' : 'jpg'}`
+                      `/api/media?url=${encodeURIComponent(activeItem.url)}&download=true&filename=instagram_${username}_${activeItem.id}.${activeItem.type === 'video' && activeItem.url && activeItem.url.includes('.mp4') ? 'mp4' : 'jpg'}`
                     }
                     download
                     className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-gradient-to-r from-pink-600 via-rose-600 to-amber-600 hover:opacity-95 text-white text-xs font-semibold rounded-xl shadow-md cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    Download {activeItem.type === 'video' ? 'Video' : 'Image'}
+                    Download {activeItem.type === 'video' && activeItem.url && activeItem.url.includes('.mp4') ? 'Video' : 'Image'}
                     {selectedPost.type === 'carousel' && ` (${carouselIndex + 1}/${selectedPost.carouselMedia?.length})`}
                   </a>
                   <a
@@ -683,13 +683,13 @@ export function PostsGrid({
                 <a
                   href={
                     activeItem.downloadUrl ||
-                    `/api/media?url=${encodeURIComponent(activeItem.url)}&download=true&filename=instagram_${username}_${activeItem.id}.${activeItem.type === 'video' ? 'mp4' : 'jpg'}`
+                    `/api/media?url=${encodeURIComponent(activeItem.url)}&download=true&filename=instagram_${username}_${activeItem.id}.${activeItem.type === 'video' && activeItem.url && activeItem.url.includes('.mp4') ? 'mp4' : 'jpg'}`
                   }
                   download
                   className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-gradient-to-r from-pink-600 via-rose-600 to-amber-600 hover:opacity-95 text-white text-sm font-semibold rounded-xl shadow-md transition-all cursor-pointer"
                 >
                   <Download className="w-4 h-4" />
-                  Download {activeItem.type === 'video' ? 'Video' : 'Image'}
+                  Download {activeItem.type === 'video' && activeItem.url && activeItem.url.includes('.mp4') ? 'Video' : 'Image'}
                   {selectedPost.type === 'carousel' && ` (${carouselIndex + 1}/${selectedPost.carouselMedia?.length})`}
                 </a>
 

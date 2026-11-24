@@ -21,8 +21,19 @@ export async function GET(request: NextRequest) {
   }
 
   const { searchParams } = new URL(request.url);
+  const highlightId = searchParams.get('highlightId') || undefined;
+  const usernameParam = searchParams.get('username') || '';
+  const demoParam = searchParams.get('demo') === 'true';
+
+  // If highlightId is provided, fetch stories for that specific highlight
+  if (highlightId) {
+    const result = await InstagramService.getHighlightStories(highlightId, usernameParam, demoParam);
+    const status = result.success ? 200 : (result.error?.code === 'UNSUPPORTED_FEATURE' ? 501 : 400);
+    return NextResponse.json(result, { status });
+  }
+
   const parsed = apiQuerySchema.safeParse({
-    username: searchParams.get('username') || '',
+    username: usernameParam,
     demo: searchParams.get('demo') || undefined,
   });
 

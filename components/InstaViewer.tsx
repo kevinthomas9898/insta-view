@@ -554,7 +554,7 @@ export function InstaViewer({
                       <StoriesList stories={stories} username={searchedUsername} />
                     )}
                     {activeTab === 'highlights' && (
-                      <HighlightsViewer highlights={highlights} />
+                      <HighlightsViewer highlights={highlights} username={searchedUsername} />
                     )}
                     {activeTab === 'posts' && (
                       <PostsGrid
