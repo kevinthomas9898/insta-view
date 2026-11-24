@@ -32,10 +32,38 @@ export function StoriesViewer({ stories, initialIndex = 0, username = 'user', on
   const [isMediaLoading, setIsMediaLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [isVaulted, setIsVaulted] = useState(false);
+  const [showingAd, setShowingAd] = useState(false);
+  const [adSecondsLeft, setAdSecondsLeft] = useState(3);
+  const [viewsCount, setViewsCount] = useState(0);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const currentStory = stories[currentIndex];
+
+  // Compulsory Ad Countdown timer (3s)
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (showingAd) {
+      if (adSecondsLeft > 0) {
+        timer = setTimeout(() => {
+          setAdSecondsLeft((s) => s - 1);
+        }, 1000);
+      } else {
+        // Automatically proceed after 5 seconds total if user doesn't manually click
+        timer = setTimeout(() => {
+          handleSkipAd();
+        }, 3500);
+      }
+    }
+    return () => clearTimeout(timer);
+  }, [showingAd, adSecondsLeft]);
+
+  const handleSkipAd = () => {
+    if (adSecondsLeft > 0) return;
+    setShowingAd(false);
+    setIsMediaLoading(true);
+    setCurrentIndex((i) => i + 1);
+  };
 
   // Check if active story is already in the offline vault
   useEffect(() => {
@@ -143,6 +171,15 @@ export function StoriesViewer({ stories, initialIndex = 0, username = 'user', on
   const handleNext = () => {
     setProgress(0);
     if (currentIndex < stories.length - 1) {
+      // Show sponsored ad every 3 stories viewed (like Instagram Stories)
+      if (viewsCount >= 2 && !showingAd) {
+        setShowingAd(true);
+        setAdSecondsLeft(3);
+        setViewsCount(0);
+        return;
+      }
+
+      setViewsCount((c) => c + 1);
       setIsMediaLoading(true);
       setCurrentIndex((i) => i + 1);
     } else {
@@ -166,6 +203,96 @@ export function StoriesViewer({ stories, initialIndex = 0, username = 'user', on
       document.exitFullscreen?.();
     }
   };
+
+  // Native Instagram-Style Sponsored Interstitial Story Ad
+  if (showingAd) {
+    return (
+      <div
+        ref={containerRef}
+        className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center p-0 sm:p-4 select-none animate-fade-in"
+      >
+        <div className="absolute inset-0" onClick={onClose} />
+
+        <div
+          className="relative w-full max-w-sm sm:max-w-md h-full sm:h-[88vh] bg-zinc-950 sm:rounded-2xl overflow-hidden flex flex-col justify-between shadow-2xl z-10 border border-zinc-800"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Top Bar with Sponsored Tag & Compulsory Skip Timer */}
+          <div className="absolute top-0 inset-x-0 z-30 p-3 bg-gradient-to-b from-black/90 via-black/50 to-transparent flex flex-col gap-2">
+            {/* Story Progress Bar filling */}
+            <div className="h-1 w-full bg-white/20 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-pink-500 to-amber-500 transition-all duration-1000 ease-linear"
+                style={{ width: `${((3 - adSecondsLeft) / 3) * 100}%` }}
+              />
+            </div>
+
+            <div className="flex items-center justify-between text-white text-xs mt-1">
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold tracking-tight text-white drop-shadow">Sponsored</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded bg-pink-500/20 text-pink-400 font-bold border border-pink-500/30">
+                  Ad
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {/* Skip button with mandatory countdown */}
+                <button
+                  type="button"
+                  onClick={handleSkipAd}
+                  disabled={adSecondsLeft > 0}
+                  className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                    adSecondsLeft > 0
+                      ? 'bg-black/60 text-zinc-400 border border-white/10 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-lg animate-pulse hover:opacity-90'
+                  }`}
+                >
+                  {adSecondsLeft > 0 ? (
+                    <span>⏳ Skip in {adSecondsLeft}s</span>
+                  ) : (
+                    <span>Skip Ad ⏭️</span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="p-1.5 hover:bg-white/20 active:scale-90 rounded-full text-white transition-all cursor-pointer"
+                  title="Close"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Ad Content Display Frame */}
+          <div className="relative flex-1 bg-black flex items-center justify-center p-3 pt-16 pb-20 overflow-hidden">
+            <iframe
+              src="https://bicea.org/21/4ff02455261b1454e019ced3534847d2"
+              title="Sponsored Advertisement"
+              className="w-full h-full border-0 rounded-2xl bg-zinc-900"
+              sandbox="allow-scripts allow-same-origin allow-popups"
+            />
+          </div>
+
+          {/* Bottom Call-To-Action (Instagram-style Swipe Up) */}
+          <div className="absolute bottom-4 inset-x-0 z-30 p-3 bg-gradient-to-t from-black via-black/80 to-transparent flex flex-col items-center gap-1.5 pointer-events-auto">
+            <button
+              type="button"
+              onClick={handleSkipAd}
+              className="w-full py-2.5 bg-gradient-to-r from-pink-600 via-rose-600 to-amber-600 text-white text-xs font-bold rounded-xl shadow-lg transition-transform active:scale-98 flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <span>Learn More ↗</span>
+            </button>
+            <span className="text-[10px] text-zinc-400">
+              {adSecondsLeft > 0 ? `Story resumes in ${adSecondsLeft}s` : 'Tap to continue stories'}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!currentStory) return null;
 

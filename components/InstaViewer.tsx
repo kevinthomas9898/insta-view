@@ -814,11 +814,6 @@ export function InstaViewer({
               onToggleWatchlist={() => toggleWatchlist(profile)}
             />
 
-            {/* In-Feed Native Ad Slot (Shows only when active profile is loaded) */}
-            <div className="max-w-2xl mx-auto my-3 w-full">
-              <AdSlot id="container-4ff02455261b1454e019ced3534847d2" />
-            </div>
-
             {/* If profile is private, show dedicated private notice and skip tabs */}
             {profile.isPrivate || tabError?.code === 'PRIVATE_ACCOUNT' ? (
               <div className="bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-2xl p-8 sm:p-14 text-center backdrop-blur-sm shadow-xs max-w-xl mx-auto my-6 overflow-hidden">
