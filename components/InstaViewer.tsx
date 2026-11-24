@@ -43,6 +43,7 @@ import {
   Clock,
   X,
   Trash2,
+  Menu,
 } from 'lucide-react';
 
 import { FAQ_ITEMS, type FaqItem } from '@/lib/data/faq';
@@ -131,6 +132,7 @@ export function InstaViewer({
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [watchlist, setWatchlist] = useState<Profile[]>([]);
   const [showWatchlist, setShowWatchlist] = useState(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   // Load Recent Searches & Watchlist on mount
   useEffect(() => {
@@ -365,70 +367,62 @@ export function InstaViewer({
   return (
     <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-slate-50 dark:bg-[#09090b] text-slate-900 dark:text-zinc-100 flex flex-col font-sans transition-colors duration-200">
       {/* Header with Navigation and Dark / Light Switch */}
-      <header className="sticky top-0 z-30 bg-white/85 dark:bg-[#09090b]/85 backdrop-blur-md border-b border-slate-200/80 dark:border-zinc-800/80 px-4 sm:px-8 py-3.5 transition-all">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-6">
+      <header className="sticky top-0 z-30 bg-white/90 dark:bg-[#09090b]/90 backdrop-blur-md border-b border-slate-200/80 dark:border-zinc-800/80 px-3 sm:px-6 py-2.5 sm:py-3 transition-all">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-2">
+          <div className="flex items-center gap-3 sm:gap-6 min-w-0">
             <Link
               href={langPrefix || '/'}
-              className="flex items-center gap-2.5 group cursor-pointer"
+              className="flex items-center gap-2 group cursor-pointer flex-shrink-0"
               onClick={() => {
                 if (profile) {
                   setProfile(null);
                   setSearchedUsername('');
                   setUsernameInput('');
                 }
+                setIsMobileNavOpen(false);
               }}
             >
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-amber-500 via-rose-500 to-fuchsia-600 flex items-center justify-center shadow-md shadow-rose-950/20 group-hover:scale-105 transition-transform">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-amber-500 via-rose-500 to-fuchsia-600 flex items-center justify-center shadow-md shadow-rose-950/20 group-hover:scale-105 transition-transform flex-shrink-0">
                 <EyeOff className="w-4 h-4 text-white" strokeWidth={1.75} />
               </div>
-              <div className="flex flex-col">
-                <span className="font-extrabold text-lg tracking-tight text-slate-900 dark:text-white flex items-center gap-1.5">
-                  Insta<span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500">View</span>
-                </span>
-              </div>
+              <span className="font-extrabold text-base sm:text-lg tracking-tight text-slate-900 dark:text-white truncate">
+                Insta<span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500">View</span>
+              </span>
             </Link>
 
-            {/* Nav Links */}
-            <nav className="hidden lg:flex items-center gap-1 text-xs font-semibold text-slate-600 dark:text-zinc-400">
-              <Link href={`${langPrefix}/stories`} className="px-3 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
+            {/* Desktop Nav Links (Visible on screens >= 1024px) */}
+            <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1 text-xs font-semibold text-slate-600 dark:text-zinc-400">
+              <Link href={`${langPrefix}/stories`} className="px-2.5 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
                 {tNav.stories}
               </Link>
-              <Link href={`${langPrefix}/highlights`} className="px-3 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
+              <Link href={`${langPrefix}/highlights`} className="px-2.5 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
                 {tNav.highlights}
               </Link>
-              <Link href={`${langPrefix}/reels`} className="px-3 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
+              <Link href={`${langPrefix}/reels`} className="px-2.5 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
                 {tNav.reels}
               </Link>
-              <Link href={`${langPrefix}/posts`} className="px-3 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
+              <Link href={`${langPrefix}/posts`} className="px-2.5 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
                 {tNav.posts}
               </Link>
-              <Link href={`${langPrefix}/profile-viewer`} className="px-3 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
+              <Link href={`${langPrefix}/profile-viewer`} className="px-2.5 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
                 {tNav.profile}
               </Link>
-              <Link href="/blog" className="px-3 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
+              <Link href="/blog" className="px-2.5 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
                 {tNav.blog}
               </Link>
-              <Link href="/faq" className="px-3 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
+              <Link href="/faq" className="px-2.5 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
                 {tNav.faq}
               </Link>
             </nav>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
-            <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
-              {tNav.anonymous}
-            </span>
-            <span className="text-xs font-medium text-slate-600 dark:text-zinc-400 px-3 py-1 rounded-full bg-slate-100 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/60 hidden md:inline-flex">
-              {tNav.noLogin}
-            </span>
-
+          {/* Right Header Actions */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0">
             {/* Secret Watchlist Trigger */}
             <button
               type="button"
               onClick={() => setShowWatchlist((prev) => !prev)}
-              className={`text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1.5 transition-colors cursor-pointer border ${
+              className={`text-xs font-semibold px-2 sm:px-3 py-1.5 rounded-full flex items-center gap-1.5 transition-colors cursor-pointer border flex-shrink-0 ${
                 showWatchlist
                   ? 'bg-amber-500/20 text-amber-500 border-amber-500/40'
                   : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-zinc-800/80 dark:text-zinc-300 dark:border-zinc-700/60 hover:bg-slate-200 dark:hover:bg-zinc-700'
@@ -436,7 +430,12 @@ export function InstaViewer({
               title="View your secret private watchlist"
             >
               <Bookmark className={`w-3.5 h-3.5 ${watchlist.length > 0 ? 'fill-amber-500 text-amber-500' : 'text-slate-500 dark:text-zinc-400'}`} />
-              <span>Watchlist {watchlist.length > 0 ? `(${watchlist.length})` : ''}</span>
+              <span className="hidden sm:inline">Watchlist</span>
+              {watchlist.length > 0 && (
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400">
+                  {watchlist.length}
+                </span>
+              )}
             </button>
 
             {/* Language Selector Dropdown */}
@@ -444,8 +443,83 @@ export function InstaViewer({
 
             {/* Dark / Light Mode Switch Option */}
             <ThemeToggle />
+
+            {/* Mobile / Tablet Hamburger Toggle Button (Hidden on >= lg) */}
+            <button
+              type="button"
+              onClick={() => setIsMobileNavOpen((prev) => !prev)}
+              className="lg:hidden p-1.5 sm:p-2 rounded-xl text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800/80 dark:hover:bg-zinc-700 border border-slate-200 dark:border-zinc-700/60 transition-colors cursor-pointer flex-shrink-0"
+              aria-label="Toggle navigation menu"
+              title="Menu"
+            >
+              {isMobileNavOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Navigation Dropdown Drawer */}
+        {isMobileNavOpen && (
+          <div className="lg:hidden mt-2 pt-2 border-t border-slate-200 dark:border-zinc-800 animate-fade-in">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 py-2">
+              <Link
+                href={`${langPrefix}/stories`}
+                onClick={() => setIsMobileNavOpen(false)}
+                className="flex items-center gap-2 p-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800/80 transition-colors"
+              >
+                <PlaySquare className="w-3.5 h-3.5 text-pink-500" />
+                <span>{tNav.stories}</span>
+              </Link>
+              <Link
+                href={`${langPrefix}/highlights`}
+                onClick={() => setIsMobileNavOpen(false)}
+                className="flex items-center gap-2 p-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800/80 transition-colors"
+              >
+                <Bookmark className="w-3.5 h-3.5 text-amber-500" />
+                <span>{tNav.highlights}</span>
+              </Link>
+              <Link
+                href={`${langPrefix}/reels`}
+                onClick={() => setIsMobileNavOpen(false)}
+                className="flex items-center gap-2 p-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800/80 transition-colors"
+              >
+                <Film className="w-3.5 h-3.5 text-rose-500" />
+                <span>{tNav.reels}</span>
+              </Link>
+              <Link
+                href={`${langPrefix}/posts`}
+                onClick={() => setIsMobileNavOpen(false)}
+                className="flex items-center gap-2 p-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800/80 transition-colors"
+              >
+                <Grid className="w-3.5 h-3.5 text-indigo-500" />
+                <span>{tNav.posts}</span>
+              </Link>
+              <Link
+                href={`${langPrefix}/profile-viewer`}
+                onClick={() => setIsMobileNavOpen(false)}
+                className="flex items-center gap-2 p-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800/80 transition-colors"
+              >
+                <EyeOff className="w-3.5 h-3.5 text-emerald-500" />
+                <span>{tNav.profile}</span>
+              </Link>
+              <Link
+                href="/blog"
+                onClick={() => setIsMobileNavOpen(false)}
+                className="flex items-center gap-2 p-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800/80 transition-colors"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-fuchsia-500" />
+                <span>{tNav.blog}</span>
+              </Link>
+              <Link
+                href="/faq"
+                onClick={() => setIsMobileNavOpen(false)}
+                className="flex items-center gap-2 p-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800/80 transition-colors col-span-2 sm:col-span-1"
+              >
+                <HelpCircle className="w-3.5 h-3.5 text-cyan-500" />
+                <span>{tNav.faq}</span>
+              </Link>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Desktop Left Skyscraper Ad (Screens >= 1536px, Auto-Hidden on Mobile/Tablets to preserve 100% mobile UX) */}
