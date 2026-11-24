@@ -561,25 +561,29 @@ export function InstaViewer({
         )}
       </header>
 
-      {/* Desktop Left Skyscraper Ad (Screens >= 1536px, Auto-Hidden on Mobile/Tablets to preserve 100% mobile UX) */}
-      <aside aria-label="Advertisement" className="hidden 2xl:block fixed left-4 top-24 z-20 w-[160px] h-[600px] pointer-events-auto">
-        <div className="w-full h-full rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 bg-white/60 dark:bg-zinc-900/40 backdrop-blur-md p-1.5 flex flex-col items-center justify-center text-center shadow-xs">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 mb-1">
-            Ad
-          </span>
-          <div id="container-desktop-left-ad" className="w-[160px] h-[600px] flex items-center justify-center" />
-        </div>
-      </aside>
+      {/* Desktop Left Skyscraper Ad (Screens >= 1536px, visible only when profile is searched) */}
+      {profile && (
+        <aside aria-label="Advertisement" className="hidden 2xl:block fixed left-4 top-24 z-20 w-[160px] h-[600px] pointer-events-auto">
+          <div className="w-full h-full rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 bg-white/60 dark:bg-zinc-900/40 backdrop-blur-md p-1.5 flex flex-col items-center justify-center text-center shadow-xs">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 mb-1">
+              Ad
+            </span>
+            <div id="container-desktop-left-ad" className="w-[160px] h-[600px] flex items-center justify-center" />
+          </div>
+        </aside>
+      )}
 
-      {/* Desktop Right Skyscraper Ad (Screens >= 1536px, Auto-Hidden on Mobile/Tablets to preserve 100% mobile UX) */}
-      <aside aria-label="Advertisement" className="hidden 2xl:block fixed right-4 top-24 z-20 w-[160px] h-[600px] pointer-events-auto">
-        <div className="w-full h-full rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 bg-white/60 dark:bg-zinc-900/40 backdrop-blur-md p-1.5 flex flex-col items-center justify-center text-center shadow-xs">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 mb-1">
-            Ad
-          </span>
-          <div id="container-desktop-right-ad" className="w-[160px] h-[600px] flex items-center justify-center" />
-        </div>
-      </aside>
+      {/* Desktop Right Skyscraper Ad (Screens >= 1536px, visible only when profile is searched) */}
+      {profile && (
+        <aside aria-label="Advertisement" className="hidden 2xl:block fixed right-4 top-24 z-20 w-[160px] h-[600px] pointer-events-auto">
+          <div className="w-full h-full rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 bg-white/60 dark:bg-zinc-900/40 backdrop-blur-md p-1.5 flex flex-col items-center justify-center text-center shadow-xs">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 mb-1">
+              Ad
+            </span>
+            <div id="container-desktop-right-ad" className="w-[160px] h-[600px] flex items-center justify-center" />
+          </div>
+        </aside>
+      )}
 
       {/* Main Content Area */}
       <main className="max-w-6xl w-full mx-auto px-4 sm:px-6 pt-2 sm:pt-4 pb-12 flex-1 flex flex-col min-w-0 overflow-x-hidden">
@@ -690,31 +694,15 @@ export function InstaViewer({
               </div>
             )}
 
-            {/* Popular / Trending Suggestions */}
-            <div className="mt-2.5 flex items-center justify-center gap-1.5 sm:gap-2 text-xs text-slate-500 dark:text-zinc-500 flex-wrap">
-              <span className="font-medium text-slate-600 dark:text-zinc-400 text-[11px] sm:text-xs">Popular:</span>
-              {POPULAR_SUGGESTIONS.map((user) => (
-                <button
-                  key={user}
-                  type="button"
-                  onClick={() => {
-                    setUsernameInput(user);
-                    handleSearch(user);
-                  }}
-                  className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-white hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 dark:bg-zinc-900/80 dark:hover:bg-zinc-800 dark:text-zinc-300 dark:hover:text-white dark:border-zinc-800/80 transition-colors cursor-pointer text-[11px] sm:text-xs font-medium shadow-2xs"
-                >
-                  @{user}
-                </button>
-              ))}
-            </div>
-
-            {/* Top 50 Most Viewed Accounts Directory */}
-            <TopAccountsDirectory
-              onSelectAccount={(user) => {
-                setUsernameInput(user);
-                handleSearch(user);
-              }}
-            />
+            {/* Top 50 Most Viewed Accounts Directory (Shown only on initial search landing; auto-hidden when profile is loaded) */}
+            {!profile && (
+              <TopAccountsDirectory
+                onSelectAccount={(user) => {
+                  setUsernameInput(user);
+                  handleSearch(user);
+                }}
+              />
+            )}
 
             {/* Secret Watchlist Drawer / Modal */}
             {showWatchlist && (
@@ -802,11 +790,6 @@ export function InstaViewer({
           </div>
         </section>
 
-        {/* Strategic Monetization Ad Slot (Homepage under search; moves into feed when profile loaded) */}
-        {!profile && (
-          <AdSlot id="container-4ff02455261b1454e019ced3534847d2" />
-        )}
-
         {/* Profile Error Banner */}
         {profileError && (
           <div className="max-w-2xl mx-auto w-full p-4 mb-8 bg-rose-50 border border-rose-200 dark:bg-rose-950/40 dark:border-rose-900/60 rounded-2xl text-rose-900 dark:text-rose-200 text-sm flex items-start gap-3 backdrop-blur-sm animate-fade-in shadow-xs overflow-hidden break-words">
@@ -830,6 +813,11 @@ export function InstaViewer({
               isWatchlisted={watchlist.some((w) => w.username.toLowerCase() === profile.username.toLowerCase())}
               onToggleWatchlist={() => toggleWatchlist(profile)}
             />
+
+            {/* In-Feed Native Ad Slot (Shows only when active profile is loaded) */}
+            <div className="max-w-2xl mx-auto my-3 w-full">
+              <AdSlot id="container-4ff02455261b1454e019ced3534847d2" />
+            </div>
 
             {/* If profile is private, show dedicated private notice and skip tabs */}
             {profile.isPrivate || tabError?.code === 'PRIVATE_ACCOUNT' ? (

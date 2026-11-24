@@ -13,24 +13,57 @@ import {
   Volume2,
   VolumeX,
   Loader2,
+  BookmarkPlus,
+  BookmarkCheck,
 } from 'lucide-react';
+import { saveStoryToVault, isStoryInVault, VaultStoryItem } from '@/lib/storage/story-vault';
 
 interface StoriesViewerProps {
   stories: StoryResult[];
   initialIndex?: number;
+  username?: string;
   onClose: () => void;
 }
 
-export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesViewerProps) {
+export function StoriesViewer({ stories, initialIndex = 0, username = 'user', onClose }: StoriesViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
   const [isMediaLoading, setIsMediaLoading] = useState(true);
   const [progress, setProgress] = useState(0);
+  const [isVaulted, setIsVaulted] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const currentStory = stories[currentIndex];
+
+  // Check if active story is already in the offline vault
+  useEffect(() => {
+    async function checkVault() {
+      if (!currentStory) return;
+      const vaultId = `story_${username}_${currentStory.id}`;
+      const saved = await isStoryInVault(vaultId);
+      setIsVaulted(saved);
+    }
+    checkVault();
+  }, [currentStory, username]);
+
+  const handleSaveToVault = async () => {
+    if (!currentStory || isVaulted) return;
+    const isVideo = currentStory.type === 'video';
+    const vaultItem: VaultStoryItem = {
+      id: `story_${username}_${currentStory.id}`,
+      username,
+      mediaUrl: currentStory.url,
+      thumbnailUrl: currentStory.thumbnailUrl,
+      type: isVideo ? 'video' : 'image',
+      takenAt: currentStory.takenAt || Date.now(),
+      savedAt: Date.now(),
+      expiresAt: Date.now() + 24 * 3600 * 1000,
+    };
+    await saveStoryToVault(vaultItem);
+    setIsVaulted(true);
+  };
 
   // Auto-progress timer for images (only ticks when image has finished loading)
   useEffect(() => {
@@ -311,19 +344,42 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
           />
         </div>
 
-        {/* Bottom Floating Download Story Pill (Unobtrusive & Accessible) */}
-        <div className="absolute bottom-4 inset-x-0 z-30 flex items-center justify-center pointer-events-auto px-4">
+        {/* Bottom Floating Action Bar: Save to Vault + Download Story */}
+        <div className="absolute bottom-4 inset-x-0 z-30 flex items-center justify-center gap-2 pointer-events-auto px-4">
+          <button
+            type="button"
+            onClick={handleSaveToVault}
+            className={`flex items-center gap-1.5 py-1.5 px-3.5 rounded-full text-xs font-semibold backdrop-blur-md shadow-xl transition-all cursor-pointer border ${
+              isVaulted
+                ? 'bg-amber-500/30 text-amber-300 border-amber-500/50'
+                : 'bg-black/75 hover:bg-black/95 text-white border-white/20'
+            }`}
+            title="Save to offline vault (100% private to this browser)"
+          >
+            {isVaulted ? (
+              <>
+                <BookmarkCheck className="w-3.5 h-3.5 text-amber-400" />
+                <span>Saved in Vault</span>
+              </>
+            ) : (
+              <>
+                <BookmarkPlus className="w-3.5 h-3.5 text-pink-400" />
+                <span>Save to Vault</span>
+              </>
+            )}
+          </button>
+
           <a
             href={
               currentStory.downloadUrl ||
-              `/api/media?url=${encodeURIComponent(currentStory.url)}&download=true&filename=story_${currentStory.id}.${currentStory.type === 'video' ? 'mp4' : 'jpg'}`
+              `/api/media?url=${encodeURIComponent(currentStory.url)}&download=true&filename=story_${username}_${currentStory.id}.${currentStory.type === 'video' ? 'mp4' : 'jpg'}`
             }
             download
             className="flex items-center gap-1.5 py-1.5 px-3.5 rounded-full bg-black/75 hover:bg-black/95 active:scale-95 text-white text-xs font-semibold border border-white/20 backdrop-blur-md shadow-xl transition-all cursor-pointer"
             title="Download Story"
           >
             <Download className="w-3.5 h-3.5 text-pink-400" />
-            <span>Download Story</span>
+            <span>Download</span>
           </a>
         </div>
 

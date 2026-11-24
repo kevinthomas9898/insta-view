@@ -284,21 +284,27 @@ export function StoriesList({ stories, username }: StoriesListProps) {
                 </span>
 
                 <div className="flex items-center gap-1">
-                  {/* Save to Offline Vault */}
+                  {/* Save to Offline Vault Button */}
                   <button
                     type="button"
                     onClick={(e) => handleToggleVault(story, e)}
-                    className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                    className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold transition-colors cursor-pointer border ${
                       isVaulted
-                        ? 'bg-amber-500/30 text-amber-400 border border-amber-500/40'
-                        : 'hover:bg-white/20 text-white/90'
+                        ? 'bg-amber-500/30 text-amber-300 border-amber-500/40'
+                        : 'bg-black/60 hover:bg-white/20 text-white border-white/10'
                     }`}
-                    title={isVaulted ? 'Saved to Offline Vault' : 'Save to Offline Vault'}
+                    title={isVaulted ? 'Saved in Offline Vault' : 'Save to Offline Vault'}
                   >
                     {isVaulted ? (
-                      <BookmarkCheck className="w-3.5 h-3.5 text-amber-400" />
+                      <>
+                        <BookmarkCheck className="w-3 h-3 text-amber-400" />
+                        <span>Saved</span>
+                      </>
                     ) : (
-                      <BookmarkPlus className="w-3.5 h-3.5" />
+                      <>
+                        <BookmarkPlus className="w-3 h-3 text-pink-400" />
+                        <span>Vault</span>
+                      </>
                     )}
                   </button>
 
@@ -327,6 +333,7 @@ export function StoriesList({ stories, username }: StoriesListProps) {
         <StoriesViewer
           stories={stories}
           initialIndex={selectedStoryIndex}
+          username={username}
           onClose={() => setSelectedStoryIndex(null)}
         />
       )}

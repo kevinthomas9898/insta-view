@@ -118,8 +118,28 @@ export function StoryVaultModal({ isOpen, onClose }: StoryVaultModalProps) {
                 Your Story Vault is empty
               </p>
               <p className="text-xs text-slate-500 dark:text-zinc-400 max-w-sm mx-auto mt-1">
-                Click the <strong>&quot;📌 Save to Vault&quot;</strong> button on any active story to keep it stored permanently on this device for offline re-watching.
+                Stories saved here are stored privately on this device so you can re-watch them forever.
               </p>
+
+              {/* Step-by-Step Visual Guide */}
+              <div className="mt-5 p-3.5 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border border-slate-200/80 dark:border-zinc-700/60 max-w-sm mx-auto text-left space-y-2">
+                <p className="text-[11px] font-bold text-slate-800 dark:text-zinc-200 flex items-center gap-1.5">
+                  <HardDrive className="w-3.5 h-3.5 text-pink-500" />
+                  <span>How to put stories in your Vault:</span>
+                </p>
+                <div className="flex items-center gap-2 text-[11px] text-slate-600 dark:text-zinc-400">
+                  <span className="w-4 h-4 rounded-full bg-pink-500/20 text-pink-600 dark:text-pink-400 flex items-center justify-center font-bold text-[10px] shrink-0">1</span>
+                  <span>Search any account and open the <strong>Stories</strong> tab.</span>
+                </div>
+                <div className="flex items-center gap-2 text-[11px] text-slate-600 dark:text-zinc-400">
+                  <span className="w-4 h-4 rounded-full bg-pink-500/20 text-pink-600 dark:text-pink-400 flex items-center justify-center font-bold text-[10px] shrink-0">2</span>
+                  <span>Click the <strong>&quot;📌 Vault&quot;</strong> button on any story card or in the full-screen player.</span>
+                </div>
+                <div className="flex items-center gap-2 text-[11px] text-slate-600 dark:text-zinc-400">
+                  <span className="w-4 h-4 rounded-full bg-pink-500/20 text-pink-600 dark:text-pink-400 flex items-center justify-center font-bold text-[10px] shrink-0">3</span>
+                  <span>Stories remain saved here permanently—even after 24h expiration!</span>
+                </div>
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5">

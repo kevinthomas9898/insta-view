@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { ReelResult } from '@/lib/instagram/types';
+import { AdBanner } from '@/components/AdBanner';
 import {
   Play,
   Pause,
@@ -216,6 +217,13 @@ export function ReelsGrid({
                   )}
                 </div>
               </div>
+
+              {/* In-Feed Native Banner Ad in Reels Grid */}
+              {showAdAfter && (
+                <div className="col-span-full my-2">
+                  <AdBanner />
+                </div>
+              )}
             </React.Fragment>
           );
         })}
