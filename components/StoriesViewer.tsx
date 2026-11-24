@@ -15,8 +15,44 @@ import {
   Loader2,
   BookmarkPlus,
   BookmarkCheck,
+  Sparkles,
+  ShieldCheck,
 } from 'lucide-react';
 import { saveStoryToVault, isStoryInVault, VaultStoryItem } from '@/lib/storage/story-vault';
+
+const STORY_AD_HTML = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    #container-4ff02455261b1454e019ced3534847d2 {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+  <div id="container-4ff02455261b1454e019ced3534847d2"></div>
+  <script async="async" data-cfasync="false" src="https://bicea.org/21/4ff02455261b1454e019ced3534847d2"></script>
+</body>
+</html>
+`;
 
 interface StoriesViewerProps {
   stories: StoryResult[];
@@ -267,13 +303,38 @@ export function StoriesViewer({ stories, initialIndex = 0, username = 'user', on
           </div>
 
           {/* Ad Content Display Frame */}
-          <div className="relative flex-1 bg-black flex items-center justify-center p-3 pt-16 pb-20 overflow-hidden">
-            <iframe
-              src="https://bicea.org/21/4ff02455261b1454e019ced3534847d2"
-              title="Sponsored Advertisement"
-              className="w-full h-full border-0 rounded-2xl bg-zinc-900"
-              sandbox="allow-scripts allow-same-origin allow-popups"
-            />
+          <div className="relative flex-1 bg-gradient-to-b from-zinc-950 via-zinc-900 to-black flex flex-col items-center justify-center p-4 pt-16 pb-24 overflow-hidden">
+            {/* Native Instagram Sponsored Story Card */}
+            <div className="w-full max-w-xs mx-auto flex flex-col items-center text-center space-y-4 z-0">
+              <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-pink-500 via-rose-500 to-amber-500 p-0.5 shadow-xl animate-pulse">
+                <div className="w-full h-full bg-zinc-950 rounded-[22px] flex items-center justify-center text-pink-400">
+                  <Sparkles className="w-8 h-8 text-pink-500" />
+                </div>
+              </div>
+
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-pink-500 bg-pink-500/10 px-2.5 py-0.5 rounded-full border border-pink-500/20">
+                  Featured Sponsor
+                </span>
+                <h4 className="text-lg font-black text-white mt-1.5 tracking-tight">
+                  InstaView Pro Stealth
+                </h4>
+                <p className="text-xs text-zinc-400 mt-1 leading-relaxed max-w-xs">
+                  Watch stories anonymously, download full HD reels & batch-save 24h stories directly to your private Vault.
+                </p>
+              </div>
+
+              {/* Dynamic Network Ad Placement (via srcDoc HTML container) */}
+              <div className="w-full min-h-[140px] flex items-center justify-center rounded-2xl overflow-hidden bg-black/40 border border-white/5">
+                <iframe
+                  srcDoc={STORY_AD_HTML}
+                  title="Sponsored Advertisement"
+                  className="w-full min-h-[140px] border-0"
+                  scrolling="no"
+                  sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-top-navigation"
+                />
+              </div>
+            </div>
           </div>
 
           {/* Bottom Call-To-Action (Instagram-style Swipe Up) */}
