@@ -71,35 +71,33 @@ export function StoriesViewer({ stories, initialIndex = 0, username = 'user', on
   const [progress, setProgress] = useState(0);
   const [isVaulted, setIsVaulted] = useState(false);
   const [showingAd, setShowingAd] = useState(false);
-  const [adSecondsLeft, setAdSecondsLeft] = useState(3);
+  const [adElapsed, setAdElapsed] = useState(0);
   const [viewsCount, setViewsCount] = useState(0);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const currentStory = stories[currentIndex];
 
-  // Compulsory Ad Countdown timer (3s) + auto-advance
+  // Ad Timer: compulsory countdown for 3s, then show Skip Ad, auto-skip at 6s
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (showingAd) {
-      if (adSecondsLeft > 0) {
+      if (adElapsed < 6) {
         timer = setTimeout(() => {
-          setAdSecondsLeft((s) => s - 1);
+          setAdElapsed((s) => s + 1);
         }, 1000);
       } else {
-        // Once 3..2..1 reaches 0, button stays as "Skip Ad" and automatically advances after 2.5s
-        timer = setTimeout(() => {
-          handleSkipAd();
-        }, 2500);
+        // Automatically skip at 6 seconds total
+        handleSkipAd();
       }
     }
     return () => clearTimeout(timer);
-  }, [showingAd, adSecondsLeft]);
+  }, [showingAd, adElapsed]);
 
   const handleSkipAd = () => {
-    if (adSecondsLeft > 0) return;
+    if (adElapsed < 3) return;
     setShowingAd(false);
-    setAdSecondsLeft(3);
+    setAdElapsed(0);
     setViewsCount(0);
     setIsMediaLoading(true);
     if (currentIndex < stories.length - 1) {
@@ -218,7 +216,7 @@ export function StoriesViewer({ stories, initialIndex = 0, username = 'user', on
       // Show sponsored ad every 3 stories viewed (like Instagram Stories)
       if (viewsCount >= 3 && !showingAd) {
         setShowingAd(true);
-        setAdSecondsLeft(3);
+        setAdElapsed(0);
         setViewsCount(0);
         return;
       }
@@ -263,11 +261,11 @@ export function StoriesViewer({ stories, initialIndex = 0, username = 'user', on
         >
           {/* Top Bar with Sponsored Tag & Compulsory Skip Timer */}
           <div className="absolute top-0 inset-x-0 z-30 p-3 bg-gradient-to-b from-black/90 via-black/50 to-transparent flex flex-col gap-2">
-            {/* Story Progress Bar filling */}
+            {/* Story Progress Bar filling across 6s */}
             <div className="h-1 w-full bg-white/20 rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-pink-500 to-amber-500 transition-all duration-1000 ease-linear"
-                style={{ width: `${((3 - adSecondsLeft) / 3) * 100}%` }}
+                style={{ width: `${Math.min(100, (adElapsed / 6) * 100)}%` }}
               />
             </div>
 
@@ -280,19 +278,19 @@ export function StoriesViewer({ stories, initialIndex = 0, username = 'user', on
               </div>
 
               <div className="flex items-center gap-2">
-                {/* Skip button with mandatory countdown */}
+                {/* Skip button with mandatory 3s countdown, then visible & clickable until 6s auto-skip */}
                 <button
                   type="button"
                   onClick={handleSkipAd}
-                  disabled={adSecondsLeft > 0}
+                  disabled={adElapsed < 3}
                   className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
-                    adSecondsLeft > 0
+                    adElapsed < 3
                       ? 'bg-black/60 text-zinc-400 border border-white/10 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-lg animate-pulse hover:opacity-90'
+                      : 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-lg animate-pulse hover:opacity-90 active:scale-95'
                   }`}
                 >
-                  {adSecondsLeft > 0 ? (
-                    <span>⏳ Skip in {adSecondsLeft}s</span>
+                  {adElapsed < 3 ? (
+                    <span>⏳ Skip in {3 - adElapsed}s</span>
                   ) : (
                     <span>Skip Ad ⏭️</span>
                   )}
@@ -333,7 +331,9 @@ export function StoriesViewer({ stories, initialIndex = 0, username = 'user', on
               <span>Learn More ↗</span>
             </button>
             <span className="text-[10px] text-zinc-400">
-              {adSecondsLeft > 0 ? `Skip available in ${adSecondsLeft}s` : 'Tap Skip Ad or auto-advancing...'}
+              {adElapsed < 3
+                ? `Skip available in ${3 - adElapsed}s`
+                : `Tap Skip Ad or auto-skipping in ${6 - adElapsed}s`}
             </span>
           </div>
         </div>
