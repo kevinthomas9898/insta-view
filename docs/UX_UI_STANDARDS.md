@@ -50,10 +50,11 @@ All interactive modal dialogs (Watchlist, Story Vault, Media Fullscreen Viewers,
 5. **Single-Line Header Rule (No Mobile Wrapping):**
    - Modal titles must be concise (e.g., `Watchlist` rather than `Secret Watchlist`, `Story Vault` rather than `Offline Story Vault`).
    - Header title container must use `min-w-0 flex-1` with `truncate` on the title to guarantee header text never awkwardly wraps across multiple rows on small mobile viewports (≤ 380px).
-6. **Privacy Reassurance & Info Tooltip Pattern (`(i)` Button):**
+6. **Privacy Reassurance & In-Modal Info Banner Pattern (`(i)` Button):**
    - **Never** render multi-line explanatory paragraphs directly in mobile modal headers.
-   - Privacy guarantees (e.g. *"100% Private client storage — re-watch anytime, even after 24h expiration"*) must be encapsulated inside a compact `(i)` info icon button positioned right next to the title badge.
-   - Supports dual interaction: Hover (`onMouseEnter`/`onMouseLeave`) on desktop and tap/click (`onClick`) on mobile, revealing a floating glassmorphic popover card with shield icon and clean text.
+   - **Never** use absolute floating tooltips that can overflow the right edge of small mobile viewports (≤ 380px) or get clipped by modal `overflow-hidden`.
+   - Privacy guarantees (e.g. *"100% Private client storage — re-watch anytime, even after 24h expiration"*) are toggled via a compact `(i)` button in the header.
+   - When tapped, it reveals an **in-flow responsive banner** (`mx-4 sm:mx-6 mt-3.5`) situated neatly between the header and media items, with an explicit `(X)` dismiss button. This guarantees 100% horizontal responsiveness without clipping on any screen width.
 
 ---
 

@@ -104,39 +104,20 @@ export function StoryVaultModal({ isOpen, onClose }: StoryVaultModalProps) {
                   {items.length} {items.length === 1 ? 'Story' : 'Stories'}
                 </span>
 
-                {/* Privacy Info Popover / Tooltip */}
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setShowInfo((prev) => !prev)}
-                    onMouseEnter={() => setShowInfo(true)}
-                    onMouseLeave={() => setShowInfo(false)}
-                    className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300 hover:bg-slate-200/60 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                    aria-label="Privacy Info"
-                    title="100% Private Client Storage"
-                  >
-                    <Info className="w-3.5 h-3.5" />
-                  </button>
-
-                  {showInfo && (
-                    <div
-                      className="absolute left-0 sm:left-auto top-full mt-2 z-40 w-64 sm:w-72 p-3 rounded-2xl bg-zinc-950/95 text-white shadow-2xl border border-zinc-800 backdrop-blur-md animate-fade-in"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="flex items-start gap-2.5">
-                        <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                        <div>
-                          <p className="font-bold text-[11px] text-zinc-100">
-                            100% Private Client Storage
-                          </p>
-                          <p className="text-zinc-400 text-[10px] mt-0.5 leading-normal">
-                            Re-watch anytime, even after 24h expiration. Stored exclusively inside your browser&apos;s local storage with zero server transmission.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                {/* Privacy Info Toggle Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowInfo((prev) => !prev)}
+                  className={`p-1 rounded-full transition-colors cursor-pointer shrink-0 ${
+                    showInfo
+                      ? 'text-pink-500 bg-pink-500/15 ring-1 ring-pink-500/30'
+                      : 'text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300 hover:bg-slate-200/60 dark:hover:bg-zinc-800'
+                  }`}
+                  aria-label="Toggle Storage Privacy Info"
+                  title="100% Private Client Storage Information"
+                >
+                  <Info className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
           </div>
@@ -163,6 +144,31 @@ export function StoryVaultModal({ isOpen, onClose }: StoryVaultModalProps) {
             </button>
           </div>
         </div>
+
+        {/* In-Modal Privacy Info Banner (100% responsive, never clipped) */}
+        {showInfo && (
+          <div className="mx-4 sm:mx-6 mt-3.5 p-3 rounded-2xl bg-slate-50 dark:bg-zinc-850 border border-slate-200 dark:border-zinc-700/80 shadow-sm flex items-start gap-2.5 animate-fade-in text-xs">
+            <div className="p-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5">
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-[11px] text-slate-900 dark:text-zinc-100">
+                100% Private Client Storage
+              </p>
+              <p className="text-[11px] text-slate-600 dark:text-zinc-400 mt-0.5 leading-relaxed">
+                Re-watch anytime, even after 24h expiration on Instagram. Stored exclusively inside your browser&apos;s local IndexedDB with zero server transmission.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowInfo(false)}
+              className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-750 transition-colors cursor-pointer shrink-0"
+              aria-label="Dismiss info"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
 
         {/* Modal Body */}
         <div className="flex-1 overflow-y-auto p-3.5 sm:p-6">
