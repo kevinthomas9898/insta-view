@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     title: 'Instagram to MP4 Converter & Downloader in HD 1080p — InstaView',
     description:
       'Convert and download Instagram Reels, Stories, and Videos to high-bitrate MP4 with audio. 100% free and anonymous.',
-    url: 'https://instagram-free-anonymous-viewer.vercel.app/instagram-to-mp4',
+    url: 'https://ig-storyviewer.vercel.app/instagram-to-mp4',
   },
 };
 

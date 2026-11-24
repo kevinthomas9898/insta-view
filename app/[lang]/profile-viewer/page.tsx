@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     },
     openGraph: {
       title: `Instagram ${tNav.profile} Viewer — InstaView`,
-      url: `https://instagram-free-anonymous-viewer.vercel.app/${lang}/profile-viewer`,
+      url: `https://ig-storyviewer.vercel.app/${lang}/profile-viewer`,
     },
   };
 }

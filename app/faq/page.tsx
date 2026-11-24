@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     title: 'Frequently Asked Questions & Guide — InstaView',
     description:
       'Find answers to all your questions about anonymous Instagram story viewing, media downloads, and privacy.',
-    url: 'https://instagram-free-anonymous-viewer.vercel.app/faq',
+    url: 'https://ig-storyviewer.vercel.app/faq',
   },
 };
 

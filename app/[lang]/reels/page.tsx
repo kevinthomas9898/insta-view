@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     openGraph: {
       title: t.metaTitle,
       description: t.metaDescription,
-      url: `https://instagram-free-anonymous-viewer.vercel.app/${lang}/reels`,
+      url: `https://ig-storyviewer.vercel.app/${lang}/reels`,
     },
   };
 }

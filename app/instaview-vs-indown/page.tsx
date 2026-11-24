@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     title: 'InstaView vs InDown — High-Speed InDown Alternative for Reels & Stories',
     description:
       'InDown not working? Try InstaView, the fastest InDown alternative. Download Reels and Stories in original HD.',
-    url: 'https://instagram-free-anonymous-viewer.vercel.app/instaview-vs-indown',
+    url: 'https://ig-storyviewer.vercel.app/instaview-vs-indown',
   },
 };
 

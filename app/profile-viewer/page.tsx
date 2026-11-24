@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     title: 'Anonymous Instagram Profile Viewer — InstaView',
     description:
       'Inspect any public Instagram profile anonymously. View biography, follower metrics, and full-size HD profile pictures.',
-    url: 'https://instagram-free-anonymous-viewer.vercel.app/profile-viewer',
+    url: 'https://ig-storyviewer.vercel.app/profile-viewer',
   },
 };
 

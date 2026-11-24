@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     title: 'Instagram Posts & Photo Viewer — InstaView',
     description:
       'Browse public Instagram feed posts, multi-slide carousels, and high-resolution photos without an account.',
-    url: 'https://instagram-free-anonymous-viewer.vercel.app/posts',
+    url: 'https://ig-storyviewer.vercel.app/posts',
   },
 };
 

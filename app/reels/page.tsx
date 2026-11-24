@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     title: 'Anonymous Instagram Reels Viewer & Downloader — InstaView',
     description:
       'Watch and download Instagram reels in full audio and HD MP4 quality anonymously. No login required.',
-    url: 'https://instagram-free-anonymous-viewer.vercel.app/reels',
+    url: 'https://ig-storyviewer.vercel.app/reels',
   },
 };
 

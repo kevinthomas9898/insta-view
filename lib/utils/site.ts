@@ -6,5 +6,5 @@ export function getSiteUrl(): string {
   if (process.env.NEXT_PUBLIC_SITE_URL) {
     return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, '');
   }
-  return 'https://instagram-free-anonymous-viewer.vercel.app';
+  return 'https://ig-storyviewer.vercel.app';
 }

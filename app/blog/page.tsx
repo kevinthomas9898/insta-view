@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     title: 'Blog & Instagram Privacy Guides — InstaView',
     description:
       'Guides, tutorials, and security analysis on anonymous Instagram viewing and story privacy.',
-    url: 'https://instagram-free-anonymous-viewer.vercel.app/blog',
+    url: 'https://ig-storyviewer.vercel.app/blog',
   },
 };
 

@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     title: 'Anonymous Instagram Story Viewer — Watch Stories Without An Account',
     description:
       'Watch active 24-hour Instagram stories 100% anonymously. The creator will never see your name in the seen list.',
-    url: 'https://instagram-free-anonymous-viewer.vercel.app/stories',
+    url: 'https://ig-storyviewer.vercel.app/stories',
   },
 };
 

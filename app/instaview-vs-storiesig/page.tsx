@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     title: 'InstaView vs StoriesIG — Fast, Anonymous StoriesIG Alternative',
     description:
       'Looking for StoriesIG? InstaView is the most reliable StoriesIG alternative. Watch stories and reels anonymously.',
-    url: 'https://instagram-free-anonymous-viewer.vercel.app/instaview-vs-storiesig',
+    url: 'https://ig-storyviewer.vercel.app/instaview-vs-storiesig',
   },
 };
 

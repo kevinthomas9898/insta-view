@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     title: 'Story Saver — Free Anonymous Instagram Story Saver & Downloader',
     description:
       'Save and download Instagram stories anonymously. Watch active 24-hour stories and highlights without an account.',
-    url: 'https://instagram-free-anonymous-viewer.vercel.app/story-saver',
+    url: 'https://ig-storyviewer.vercel.app/story-saver',
   },
 };
 

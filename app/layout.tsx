@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL("https://instagram-free-anonymous-viewer.vercel.app"),
+  metadataBase: new URL("https://ig-storyviewer.vercel.app"),
   alternates: {
     canonical: "/",
     languages: {
@@ -70,7 +70,7 @@ export const metadata: Metadata = {
     title: "Anonymous Instagram Story Viewer & Downloader — InstaView",
     description:
       "Watch Instagram stories, highlights, and reels 100% anonymously. No account or login required. Download high-resolution media in original HD quality.",
-    url: "https://instagram-free-anonymous-viewer.vercel.app",
+    url: "https://ig-storyviewer.vercel.app",
     siteName: "InstaView",
     locale: "en_US",
     type: "website",
@@ -113,7 +113,7 @@ export default function RootLayout({
     "@context": "https://schema.org",
     "@type": "WebApplication",
     "name": "InstaView - Anonymous Instagram Viewer",
-    "url": "https://instagram-free-anonymous-viewer.vercel.app",
+    "url": "https://ig-storyviewer.vercel.app",
     "applicationCategory": "MultimediaApplication",
     "operatingSystem": "All",
     "browserRequirements": "Requires JavaScript. Requires HTML5.",
@@ -205,19 +205,19 @@ export default function RootLayout({
         "@type": "HowToStep",
         "name": "Step 1: Enter Username",
         "text": "Type any public Instagram username into the search bar and click 'View Anonymously'.",
-        "url": "https://instagram-free-anonymous-viewer.vercel.app#search",
+        "url": "https://ig-storyviewer.vercel.app#search",
       },
       {
         "@type": "HowToStep",
         "name": "Step 2: Browse Stories & Media",
         "text": "Switch between active 24-Hour Stories, Highlights, Posts, and Reels to watch media in stealth mode.",
-        "url": "https://instagram-free-anonymous-viewer.vercel.app#browse",
+        "url": "https://ig-storyviewer.vercel.app#browse",
       },
       {
         "@type": "HowToStep",
         "name": "Step 3: Download in Full HD",
         "text": "Click the Download icon on any story, image, or reel to save the high-resolution file directly to your device.",
-        "url": "https://instagram-free-anonymous-viewer.vercel.app#download",
+        "url": "https://ig-storyviewer.vercel.app#download",
       },
     ],
   };

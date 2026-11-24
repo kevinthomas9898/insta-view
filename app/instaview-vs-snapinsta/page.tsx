@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     title: 'InstaView vs Snapinsta — The Best Free Snapinsta Alternative',
     description:
       'Snapinsta not working or down? Switch to InstaView, the fastest and 100% anonymous Snapinsta alternative.',
-    url: 'https://instagram-free-anonymous-viewer.vercel.app/instaview-vs-snapinsta',
+    url: 'https://ig-storyviewer.vercel.app/instaview-vs-snapinsta',
   },
 };
 

@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     openGraph: {
       title: post.title,
       description: post.description,
-      url: `https://instagram-free-anonymous-viewer.vercel.app/blog/${post.slug}`,
+      url: `https://ig-storyviewer.vercel.app/blog/${post.slug}`,
       type: 'article',
       publishedTime: post.publishedAt,
       authors: [post.author],
@@ -59,13 +59,13 @@ export default async function BlogPostPage({ params }: PageProps) {
     publisher: {
       '@type': 'Organization',
       name: 'InstaView',
-      url: 'https://instagram-free-anonymous-viewer.vercel.app',
+      url: 'https://ig-storyviewer.vercel.app',
     },
     datePublished: post.publishedAt,
     dateModified: post.publishedAt,
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `https://instagram-free-anonymous-viewer.vercel.app/blog/${post.slug}`,
+      '@id': `https://ig-storyviewer.vercel.app/blog/${post.slug}`,
     },
   };
 

@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     title: 'IGAnony — Anonymous Instagram Story Viewer & Best Alternative',
     description:
       'Fastest and most reliable free IGAnony replacement. Watch Instagram stories and reels anonymously.',
-    url: 'https://instagram-free-anonymous-viewer.vercel.app/iganony',
+    url: 'https://ig-storyviewer.vercel.app/iganony',
   },
 };
 

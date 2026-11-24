@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     title: 'Instagram Highlights Viewer & Downloader — InstaView',
     description:
       'Browse and download public Instagram story highlights without logging in. View archived story collections in high quality.',
-    url: 'https://instagram-free-anonymous-viewer.vercel.app/highlights',
+    url: 'https://ig-storyviewer.vercel.app/highlights',
   },
 };
 
