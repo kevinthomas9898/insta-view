@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "InstaView - Instagram Media & Story Downloader",
-  "version": "1.0.0",
-  "description": "Download Instagram stories, reels, posts, and carousels directly from instagram.com — including followed private accounts.",
+  "version": "1.0.1",
+  "description": "Download Instagram stories, reels, posts, and multi-image carousels directly from instagram.com — including followed private accounts.",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
@@ -29,6 +29,12 @@
     "service_worker": "background.js"
   },
   "content_scripts": [
+    {
+      "matches": ["*://*.instagram.com/*"],
+      "js": ["main_world.js"],
+      "world": "MAIN",
+      "run_at": "document_start"
+    },
     {
       "matches": ["*://*.instagram.com/*"],
       "js": ["content.js"],

@@ -32,15 +32,17 @@ export function ThemeToggle() {
       id="theme-toggle-btn"
       aria-label="Toggle light and dark mode"
       title="Toggle light and dark mode"
-      className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-full transition-all duration-200 cursor-pointer border text-xs font-semibold flex-shrink-0
+      className="flex items-center justify-center gap-1.5 p-1.5 sm:px-3 sm:py-1.5 rounded-full transition-all duration-200 cursor-pointer border text-xs font-semibold flex-shrink-0
         bg-white hover:bg-slate-100 text-slate-800 border-slate-200 shadow-xs
         dark:bg-zinc-900 dark:hover:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700"
     >
       {/* Sun icon visible in dark mode, Moon icon visible in light mode */}
       <Sun className="w-3.5 h-3.5 text-amber-400 hidden dark:inline-block" />
       <Moon className="w-3.5 h-3.5 text-indigo-600 inline-block dark:hidden" />
-      <span className="hidden sm:dark:inline">Light</span>
-      <span className="hidden sm:inline dark:hidden">Dark</span>
+      <span className="hidden sm:inline">
+        <span className="dark:hidden">Dark</span>
+        <span className="hidden dark:inline">Light</span>
+      </span>
     </button>
   );
 }

@@ -438,8 +438,10 @@ export function InstaViewer({
               )}
             </button>
 
-            {/* Language Selector Dropdown */}
-            <LanguageSelector currentLang={lang} />
+            {/* Language Selector Dropdown (Hidden on mobile < sm, available in mobile drawer) */}
+            <div className="hidden sm:block">
+              <LanguageSelector currentLang={lang} />
+            </div>
 
             {/* Dark / Light Mode Switch Option */}
             <ThemeToggle />
@@ -459,8 +461,14 @@ export function InstaViewer({
 
         {/* Mobile Navigation Dropdown Drawer */}
         {isMobileNavOpen && (
-          <div className="lg:hidden mt-2 pt-2 border-t border-slate-200 dark:border-zinc-800 animate-fade-in">
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 py-2">
+          <div className="lg:hidden mt-2 pt-2 border-t border-slate-200 dark:border-zinc-800 animate-fade-in space-y-2">
+            {/* Mobile Language Selector for screens < sm */}
+            <div className="sm:hidden flex items-center justify-between px-2.5 py-1.5 bg-slate-100/70 dark:bg-zinc-900/70 rounded-xl border border-slate-200/60 dark:border-zinc-800">
+              <span className="text-xs font-semibold text-slate-600 dark:text-zinc-400">Language</span>
+              <LanguageSelector currentLang={lang} />
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 py-1">
               <Link
                 href={`${langPrefix}/stories`}
                 onClick={() => setIsMobileNavOpen(false)}
