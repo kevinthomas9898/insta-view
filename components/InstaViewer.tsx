@@ -23,6 +23,7 @@ import { LANGUAGES, SUPPORTED_LANGS, getTranslations } from '@/lib/i18n/translat
 import { AdSlot } from '@/components/AdSlot';
 import { PWAInstallPrompt } from '@/components/PWAInstallPrompt';
 import { StoryVaultModal } from '@/components/StoryVaultModal';
+import { WatchlistModal } from '@/components/WatchlistModal';
 import { TopAccountsDirectory } from '@/components/TopAccountsDirectory';
 import { parseInstagramInput } from '@/lib/utils/instagram-url';
 import {
@@ -50,15 +51,6 @@ import {
 } from 'lucide-react';
 
 import { FAQ_ITEMS, type FaqItem } from '@/lib/data/faq';
-
-const POPULAR_SUGGESTIONS = [
-  'cristiano',
-  'leomessi',
-  'selenagomez',
-  'natgeo',
-  'nasa',
-  'shraddhakapoor',
-];
 
 export interface InstaViewerProps {
   initialTab?: TabKey;
@@ -561,30 +553,6 @@ export function InstaViewer({
         )}
       </header>
 
-      {/* Desktop Left Skyscraper Ad (Screens >= 1536px, visible only when profile is searched) */}
-      {profile && (
-        <aside aria-label="Advertisement" className="hidden 2xl:block fixed left-4 top-24 z-20 w-[160px] h-[600px] pointer-events-auto">
-          <div className="w-full h-full rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 bg-white/60 dark:bg-zinc-900/40 backdrop-blur-md p-1.5 flex flex-col items-center justify-center text-center shadow-xs">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 mb-1">
-              Ad
-            </span>
-            <div id="container-desktop-left-ad" className="w-[160px] h-[600px] flex items-center justify-center" />
-          </div>
-        </aside>
-      )}
-
-      {/* Desktop Right Skyscraper Ad (Screens >= 1536px, visible only when profile is searched) */}
-      {profile && (
-        <aside aria-label="Advertisement" className="hidden 2xl:block fixed right-4 top-24 z-20 w-[160px] h-[600px] pointer-events-auto">
-          <div className="w-full h-full rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 bg-white/60 dark:bg-zinc-900/40 backdrop-blur-md p-1.5 flex flex-col items-center justify-center text-center shadow-xs">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 mb-1">
-              Ad
-            </span>
-            <div id="container-desktop-right-ad" className="w-[160px] h-[600px] flex items-center justify-center" />
-          </div>
-        </aside>
-      )}
-
       {/* Main Content Area */}
       <main className="max-w-6xl w-full mx-auto px-4 sm:px-6 pt-2 sm:pt-4 pb-12 flex-1 flex flex-col min-w-0 overflow-x-hidden">
         {/* Hero & Search Section */}
@@ -693,102 +661,20 @@ export function InstaViewer({
                 </button>
               </div>
             )}
-
-            {/* Top 50 Most Viewed Accounts Directory (Shown only on initial search landing; auto-hidden when profile is loaded) */}
-            {!profile && (
-              <TopAccountsDirectory
-                onSelectAccount={(user) => {
-                  setUsernameInput(user);
-                  handleSearch(user);
-                }}
-              />
-            )}
-
-            {/* Secret Watchlist Drawer / Modal */}
-            {showWatchlist && (
-              <div className="max-w-2xl mx-auto my-4 p-4 rounded-2xl bg-white/95 dark:bg-zinc-900/95 border border-amber-500/30 dark:border-amber-500/20 shadow-2xl backdrop-blur-md animate-fade-in text-left">
-                <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100 dark:border-zinc-800">
-                  <div className="flex items-center gap-2">
-                    <Bookmark className="w-4 h-4 text-amber-500 fill-amber-500" />
-                    <h3 className="font-bold text-sm text-slate-900 dark:text-white">Secret Watchlist</h3>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold border border-emerald-500/20">
-                      100% Private (Local Only)
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowWatchlist(false)}
-                    className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 rounded-lg cursor-pointer"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-
-                {watchlist.length === 0 ? (
-                  <div className="text-center py-6 text-xs text-slate-500 dark:text-zinc-400">
-                    <Bookmark className="w-8 h-8 mx-auto mb-2 text-slate-300 dark:text-zinc-700" />
-                    <p className="font-bold text-slate-800 dark:text-zinc-200 mb-1">Your Watchlist is empty</p>
-                    <p className="text-[11px] text-slate-400 dark:text-zinc-500 max-w-sm mx-auto">
-                      Click &ldquo;Secret Watchlist&rdquo; on any profile to anonymously bookmark them here for 1-click access anytime.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-72 overflow-y-auto pr-1">
-                    {watchlist.map((item) => (
-                      <div
-                        key={item.username}
-                        className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200/80 dark:border-zinc-700/60 hover:border-pink-500/40 transition-all"
-                      >
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowWatchlist(false);
-                            setUsernameInput(item.username);
-                            handleSearch(item.username);
-                          }}
-                          className="flex items-center gap-2.5 min-w-0 flex-1 text-left cursor-pointer"
-                        >
-                          <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-200 dark:bg-zinc-700 flex-shrink-0">
-                            {item.avatarUrl ? (
-                              <img
-                                src={`/api/media?url=${encodeURIComponent(item.avatarUrl)}`}
-                                alt={item.username}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  if (item.avatarUrl && e.currentTarget.src !== item.avatarUrl) {
-                                    e.currentTarget.src = item.avatarUrl;
-                                  }
-                                }}
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center font-bold text-xs text-slate-600 dark:text-zinc-300">
-                                {item.username.charAt(0).toUpperCase()}
-                              </div>
-                            )}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs font-bold text-slate-900 dark:text-white truncate">@{item.username}</p>
-                            {item.fullName && (
-                              <p className="text-[10px] text-slate-500 dark:text-zinc-400 truncate">{item.fullName}</p>
-                            )}
-                          </div>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => toggleWatchlist(item)}
-                          className="p-1.5 text-slate-400 hover:text-rose-500 dark:text-zinc-500 dark:hover:text-rose-400 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
-                          title="Remove from Watchlist"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         </section>
+
+        {/* Top 50 Most Viewed Accounts Directory (Rendered only on home page when no profile is active) */}
+        {!profile && (
+          <section className="w-full max-w-4xl mx-auto my-4 sm:my-6 animate-fade-in">
+            <TopAccountsDirectory
+              onSelectAccount={(user) => {
+                setUsernameInput(user);
+                handleSearch(user);
+              }}
+            />
+          </section>
+        )}
 
         {/* Profile Error Banner */}
         {profileError && (
@@ -1294,6 +1180,26 @@ export function InstaViewer({
       <StoryVaultModal
         isOpen={showStoryVault}
         onClose={() => setShowStoryVault(false)}
+      />
+
+      {/* Secret Watchlist Modal (Centered Viewport Dialog) */}
+      <WatchlistModal
+        isOpen={showWatchlist}
+        onClose={() => setShowWatchlist(false)}
+        watchlist={watchlist}
+        onSelectProfile={(user) => {
+          setUsernameInput(user);
+          handleSearch(user);
+        }}
+        onRemoveProfile={(p) => toggleWatchlist(p)}
+        onClearWatchlist={() => {
+          setWatchlist([]);
+          try {
+            localStorage.removeItem('instaview_watchlist');
+          } catch {
+            // ignore
+          }
+        }}
       />
 
       {/* Installable PWA Prompt */}
