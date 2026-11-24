@@ -1,21 +1,25 @@
 /**
  * InstaView Content Script for instagram.com
- * Accurately extracts high-res post images, carousel slides, reels, and stories.
- * Explicitly ignores profile avatars / header thumbnails.
+ * Multi-layer media extractor for Stories, Feed Posts, Carousels, and Reels.
+ * 
+ * Features:
+ * - Accurately captures high-res images and videos
+ * - Excludes profile pictures / avatar thumbnails
+ * - Handles HTML5 currentSrc, srcset, and MSE video streams via Performance API
+ * - Native action-bar integration next to like/comment buttons
  */
 
 (function () {
   'use strict';
 
-  console.log('[InstaView] Content script active on instagram.com');
+  console.log('[InstaView] Content script initialized on instagram.com');
 
   /**
-   * Helper to trigger download via background script or fallback anchor
+   * Helper to download a URL with proper filename
    */
   function triggerDownload(url, filename) {
     if (!url) return;
 
-    // Direct download via background service worker
     chrome.runtime.sendMessage(
       {
         action: 'download_media',
@@ -23,18 +27,19 @@
         filename: filename || `instagram_${Date.now()}.${url.includes('.mp4') ? 'mp4' : 'jpg'}`,
       },
       (res) => {
-        // Fallback to DOM anchor click if background downloads failed
+        // Fallback to direct anchor click if background download fails
         if (!res || !res.success) {
           try {
             const a = document.createElement('a');
             a.href = url;
             a.download = filename || `instagram_${Date.now()}`;
             a.target = '_blank';
+            a.rel = 'noopener noreferrer';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
           } catch (e) {
-            console.error('[InstaView] Download fallback failed:', e);
+            window.open(url, '_blank');
           }
         }
       }
@@ -42,236 +47,193 @@
   }
 
   /**
-   * Extract highest resolution URL from an <img> srcset
+   * Parse srcset to get the absolute highest resolution URL
    */
-  function getHighestResUrl(img) {
+  function getHighestResFromSrcset(img) {
     if (!img) return null;
 
     if (img.srcset) {
-      const parts = img.srcset.split(',').map((s) => s.trim().split(' '));
-      // Sort descending by width (e.g. 1080w, 750w, 640w)
-      parts.sort((a, b) => {
-        const wA = parseInt(a[1], 10) || 0;
-        const wB = parseInt(b[1], 10) || 0;
-        return wB - wA;
-      });
-      if (parts[0] && parts[0][0]) {
-        return parts[0][0];
-      }
+      try {
+        const parts = img.srcset.split(',').map((s) => s.trim().split(' '));
+        parts.sort((a, b) => {
+          const wA = parseInt(a[1], 10) || 0;
+          const wB = parseInt(b[1], 10) || 0;
+          return wB - wA;
+        });
+        if (parts[0] && parts[0][0]) {
+          return parts[0][0];
+        }
+      } catch {}
     }
 
-    return img.src || null;
+    return img.currentSrc || img.src || null;
   }
 
   /**
-   * Deep search React Fiber / Props to find native CDN media URLs (video_versions or image_versions2)
+   * Extract video stream from browser Performance Resource Timing
    */
-  function searchReactTree(node, depth = 0) {
-    if (!node || depth > 8) return null;
-
-    // Check direct video versions
-    if (Array.isArray(node.video_versions) && node.video_versions.length > 0) {
-      const best = node.video_versions[0];
-      if (best?.url) return { type: 'video', url: best.url };
-    }
-
-    // Check direct image candidates
-    if (node.image_versions2?.candidates && Array.isArray(node.image_versions2.candidates)) {
-      const best = node.image_versions2.candidates[0];
-      if (best?.url) return { type: 'image', url: best.url };
-    }
-
-    // Check carousel items
-    if (Array.isArray(node.carousel_media)) {
-      const first = node.carousel_media[0];
-      if (first?.video_versions?.[0]?.url) return { type: 'video', url: first.video_versions[0].url };
-      if (first?.image_versions2?.candidates?.[0]?.url) return { type: 'image', url: first.image_versions2.candidates[0].url };
-    }
-
-    // Recurse into memoizedProps or stateNode
-    if (node.memoizedProps) {
-      const found = searchReactTree(node.memoizedProps, depth + 1);
-      if (found) return found;
-    }
-    if (node.return) {
-      const found = searchReactTree(node.return, depth + 1);
-      if (found) return found;
-    }
-
-    return null;
-  }
-
-  function getReactMedia(el) {
-    if (!el) return null;
-    let curr = el;
-    for (let i = 0; i < 6 && curr; i++) {
-      const key = Object.keys(curr).find(
-        (k) => k.startsWith('__reactFiber$') || k.startsWith('__reactProps$')
-      );
-      if (key && curr[key]) {
-        const found = searchReactTree(curr[key], 0);
-        if (found) return found;
+  function getRecentVideoFromPerformance() {
+    try {
+      const entries = performance.getEntriesByType('resource');
+      for (let i = entries.length - 1; i >= 0; i--) {
+        const name = entries[i].name;
+        if (
+          (name.includes('.mp4') || name.includes('video_dash') || name.includes('bytestart')) &&
+          (name.includes('cdninstagram.com') || name.includes('fbcdn.net'))
+        ) {
+          return name;
+        }
       }
-      curr = curr.parentElement;
-    }
+    } catch {}
     return null;
   }
 
   /**
-   * Filter and return TRUE post images (strictly excluding profile avatars)
+   * Extract media from a Post container
    */
-  function getPostImages(article) {
-    const allImgs = Array.from(article.querySelectorAll('img'));
+  function extractMediaFromContainer(btn) {
+    // Find closest container: article, dialog (post modal), or parent section
+    const container =
+      btn.closest('article') ||
+      btn.closest('div[role="dialog"]') ||
+      btn.closest('main') ||
+      btn.parentElement?.closest('div[style*="flex"]') ||
+      document;
 
-    return allImgs.filter((img) => {
-      // 1. Exclude anything inside <header> (post author avatar)
+    // --- 1. Check for Video Element ---
+    const videos = Array.from(container.querySelectorAll('video'));
+    for (const v of videos) {
+      const directSrc = v.currentSrc || v.src || v.querySelector('source')?.src;
+      if (directSrc && directSrc.startsWith('http') && !directSrc.startsWith('blob:')) {
+        return { type: 'video', url: directSrc };
+      }
+    }
+
+    // If video element exists but uses blob or MSE, check Performance API
+    if (videos.length > 0) {
+      const perfVideo = getRecentVideoFromPerformance();
+      if (perfVideo) {
+        return { type: 'video', url: perfVideo };
+      }
+    }
+
+    // --- 2. Check for Image Element ---
+    const allImgs = Array.from(container.querySelectorAll('img'));
+    const validImgs = allImgs.filter((img) => {
+      // Ignore avatar in <header>
       if (img.closest('header')) return false;
 
-      // 2. Exclude anything inside a circular avatar wrapper or with profile alt text
+      // Ignore profile picture alt text
       const alt = (img.alt || '').toLowerCase();
       if (alt.includes('profile picture') || alt.includes('profile photo') || alt.includes('avatar')) {
         return false;
       }
 
-      // 3. Exclude small icons/thumbnails (avatars are usually 32px or 44px)
-      const rect = img.getBoundingClientRect();
-      const naturalWidth = img.naturalWidth || 0;
-      if (rect.width < 150 && naturalWidth < 150) {
-        return false;
-      }
+      // Ignore 1x1 tracking gifs or small icons
+      const w = img.naturalWidth || img.clientWidth || img.width || 0;
+      const h = img.naturalHeight || img.clientHeight || img.height || 0;
+      if (w < 120 && h < 120) return false;
 
-      // 4. Must be inside the main media section
+      // Ignore placeholder SVG data URLs
+      const src = img.currentSrc || img.src || '';
+      if (src.startsWith('data:image/svg') || src.startsWith('data:image/gif')) return false;
+
       return true;
     });
-  }
 
-  /**
-   * Find the currently visible slide in a carousel or single post
-   */
-  function getVisiblePostImage(article) {
-    const validImgs = getPostImages(article);
-    if (validImgs.length === 0) return null;
-    if (validImgs.length === 1) return validImgs[0];
+    if (validImgs.length > 0) {
+      // Pick the image closest vertically to the button (handles carousels)
+      let targetImg = validImgs[0];
+      if (validImgs.length > 1) {
+        const btnRect = btn.getBoundingClientRect();
+        let minDistance = Infinity;
 
-    // In a carousel, find the image with the largest visible area inside the article
-    const articleRect = article.getBoundingClientRect();
-    let bestImg = validImgs[0];
-    let maxVisibleWidth = 0;
+        for (const img of validImgs) {
+          const r = img.getBoundingClientRect();
+          if (r.width > 120 && r.height > 120) {
+            const dist = Math.abs(btnRect.top - r.bottom);
+            if (dist < minDistance) {
+              minDistance = dist;
+              targetImg = img;
+            }
+          }
+        }
+      }
 
-    for (const img of validImgs) {
-      const rect = img.getBoundingClientRect();
-      const visibleWidth = Math.min(rect.right, articleRect.right) - Math.max(rect.left, articleRect.left);
-      if (visibleWidth > maxVisibleWidth) {
-        maxVisibleWidth = visibleWidth;
-        bestImg = img;
+      const bestUrl = getHighestResFromSrcset(targetImg);
+      if (bestUrl) {
+        return { type: 'image', url: bestUrl };
       }
     }
 
-    return bestImg;
+    // --- 3. Fallback: Performance Timing for recent photo ---
+    try {
+      const entries = performance.getEntriesByType('resource');
+      for (let i = entries.length - 1; i >= 0; i--) {
+        const name = entries[i].name;
+        if (
+          (name.includes('cdninstagram.com') || name.includes('fbcdn.net')) &&
+          (name.includes('.jpg') || name.includes('dst-jpg') || name.includes('_n.jpg')) &&
+          !name.includes('s150x150') &&
+          !name.includes('s320x320') &&
+          !name.includes('avatar')
+        ) {
+          return { type: 'image', url: name };
+        }
+      }
+    } catch {}
+
+    return null;
   }
 
   /**
-   * Find visible video element in post/reel
+   * Handle Click on Feed/Reel Download Button
    */
-  function getVisiblePostVideo(article) {
-    const videos = Array.from(article.querySelectorAll('video'));
-    if (videos.length === 0) return null;
-
-    // Filter to videos that have valid size (not hidden tracker)
-    const valid = videos.filter((v) => {
-      const rect = v.getBoundingClientRect();
-      return rect.width > 150 || rect.height > 150;
-    });
-
-    return valid[0] || videos[0];
-  }
-
-  /**
-   * Download Handler for Feed Posts & Reels
-   */
-  async function handlePostDownload(article, btn) {
+  async function handleDownloadClick(btn) {
     const originalText = btn.innerHTML;
     btn.innerHTML = '⏳ Finding...';
 
     try {
-      // Step 1: Check for Video in the post
-      const videoEl = getVisiblePostVideo(article);
-      if (videoEl) {
-        // 1a. Direct https video source
-        if (videoEl.src && videoEl.src.startsWith('http') && !videoEl.src.startsWith('blob:')) {
-          triggerDownload(videoEl.src, `instagram_video_${Date.now()}.mp4`);
-          btn.innerHTML = '✓ Saved!';
-          setTimeout(() => (btn.innerHTML = originalText), 2000);
-          return;
-        }
+      const media = extractMediaFromContainer(btn);
 
-        // 1b. Search React Fiber for direct MP4 URL
-        const reactData = getReactMedia(videoEl) || getReactMedia(article);
-        if (reactData && reactData.type === 'video' && reactData.url) {
-          triggerDownload(reactData.url, `instagram_video_${Date.now()}.mp4`);
-          btn.innerHTML = '✓ Saved!';
-          setTimeout(() => (btn.innerHTML = originalText), 2000);
-          return;
-        }
-
-        // 1c. If blob URL, fetch blob in page context and trigger download
-        if (videoEl.src && videoEl.src.startsWith('blob:')) {
-          try {
-            const blobRes = await fetch(videoEl.src);
-            const blob = await blobRes.blob();
-            const blobUrl = URL.createObjectURL(blob);
-            triggerDownload(blobUrl, `instagram_video_${Date.now()}.mp4`);
-            btn.innerHTML = '✓ Saved!';
-            setTimeout(() => (btn.innerHTML = originalText), 2000);
-            return;
-          } catch {}
-        }
-      }
-
-      // Step 2: Check for Image in the post
-      const imgEl = getVisiblePostImage(article);
-      if (imgEl) {
-        const highResUrl = getHighestResUrl(imgEl);
-        if (highResUrl) {
-          triggerDownload(highResUrl, `instagram_photo_${Date.now()}.jpg`);
-          btn.innerHTML = '✓ Saved!';
-          setTimeout(() => (btn.innerHTML = originalText), 2000);
-          return;
-        }
-      }
-
-      // Step 3: Check React Fiber directly on article
-      const reactData = getReactMedia(article);
-      if (reactData && reactData.url) {
-        const ext = reactData.type === 'video' ? 'mp4' : 'jpg';
-        triggerDownload(reactData.url, `instagram_${reactData.type}_${Date.now()}.${ext}`);
+      if (media && media.url) {
+        const ext = media.type === 'video' ? 'mp4' : 'jpg';
+        triggerDownload(media.url, `instagram_${media.type}_${Date.now()}.${ext}`);
         btn.innerHTML = '✓ Saved!';
         setTimeout(() => (btn.innerHTML = originalText), 2000);
         return;
       }
 
-      alert('InstaView: Could not extract media. If this is a video, play it for 1 second and click Download again.');
+      // If still not found, check if video exists and try playing briefly
+      const container = btn.closest('article') || btn.closest('div[role="dialog"]') || document;
+      const v = container.querySelector('video');
+      if (v) {
+        // Try play to populate stream
+        try {
+          await v.play();
+        } catch {}
+        const perfUrl = getRecentVideoFromPerformance();
+        if (perfUrl) {
+          triggerDownload(perfUrl, `instagram_video_${Date.now()}.mp4`);
+          btn.innerHTML = '✓ Saved!';
+          setTimeout(() => (btn.innerHTML = originalText), 2000);
+          return;
+        }
+      }
+
+      alert('InstaView: Could not locate media URL. Please ensure the post is visible on screen.');
       btn.innerHTML = originalText;
     } catch (err) {
-      console.error('[InstaView] Error during download:', err);
+      console.error('[InstaView] Download error:', err);
       btn.innerHTML = originalText;
     }
   }
 
   /**
-   * Process and inject button into feed post
+   * Inject button into Post action bar
    */
-  function processArticle(article) {
-    if (article.querySelector('.instaview-dl-btn')) return;
-
-    // Locate the post action bar (where like, comment, share buttons reside)
-    const actionBar =
-      article.querySelector('section._aamu') ||
-      article.querySelector('section._ae5m') ||
-      article.querySelector('section') ||
-      article.querySelector('div[role="presentation"]');
-
-    if (!actionBar) return;
+  function injectPostButton(actionContainer) {
+    if (actionContainer.querySelector('.instaview-dl-btn')) return;
 
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -282,21 +244,25 @@
     btn.onclick = (e) => {
       e.stopPropagation();
       e.preventDefault();
-      handlePostDownload(article, btn);
+      handleDownloadClick(btn);
     };
 
-    actionBar.appendChild(btn);
+    actionContainer.appendChild(btn);
   }
 
   /**
-   * Process Story Viewer
+   * Story Downloader
    */
-  function injectStoryDownloadButton() {
+  function injectStoryButton() {
     if (document.querySelector('.instaview-story-btn')) return;
 
-    // Check if we are inside story viewer
-    const storySection = document.querySelector('section._ac0a') || document.querySelector('div._ac0b') || document.querySelector('section');
-    if (!storySection) return;
+    const storyContainer =
+      document.querySelector('section._ac0a') ||
+      document.querySelector('div._ac0b') ||
+      document.querySelector('section[role="region"]') ||
+      document.querySelector('section');
+
+    if (!storyContainer) return;
 
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -304,74 +270,89 @@
     btn.innerHTML = '⬇ Download Story';
     btn.title = 'Download current active story';
 
-    btn.onclick = async (e) => {
+    btn.onclick = (e) => {
       e.stopPropagation();
       e.preventDefault();
       const originalText = btn.innerHTML;
       btn.innerHTML = '⏳ Saving...';
 
-      // 1. Look for active story video
-      const storyVideo = document.querySelector('video[src], video');
-      if (storyVideo) {
-        if (storyVideo.src && storyVideo.src.startsWith('http') && !storyVideo.src.startsWith('blob:')) {
-          triggerDownload(storyVideo.src, `story_${Date.now()}.mp4`);
+      // 1. Check for active story video
+      const v = document.querySelector('video');
+      if (v) {
+        const directSrc = v.currentSrc || v.src;
+        if (directSrc && directSrc.startsWith('http') && !directSrc.startsWith('blob:')) {
+          triggerDownload(directSrc, `story_${Date.now()}.mp4`);
           btn.innerHTML = '✓ Saved!';
           setTimeout(() => (btn.innerHTML = originalText), 2000);
           return;
         }
-
-        const reactData = getReactMedia(storyVideo);
-        if (reactData?.url) {
-          triggerDownload(reactData.url, `story_${Date.now()}.mp4`);
+        const perf = getRecentVideoFromPerformance();
+        if (perf) {
+          triggerDownload(perf, `story_${Date.now()}.mp4`);
           btn.innerHTML = '✓ Saved!';
           setTimeout(() => (btn.innerHTML = originalText), 2000);
           return;
         }
       }
 
-      // 2. Look for active story image (strictly excluding profile avatars)
-      const allImgs = Array.from(document.querySelectorAll('img')).filter((img) => {
+      // 2. Check for active story image
+      const imgs = Array.from(document.querySelectorAll('img')).filter((img) => {
         if (img.closest('header')) return false;
         const alt = (img.alt || '').toLowerCase();
         if (alt.includes('profile picture') || alt.includes('profile photo')) return false;
-        const rect = img.getBoundingClientRect();
-        return rect.width > 200 || rect.height > 200;
+        const w = img.clientWidth || img.naturalWidth || 0;
+        const h = img.clientHeight || img.naturalHeight || 0;
+        return w > 200 || h > 200;
       });
 
-      if (allImgs.length > 0) {
-        // Largest image is the full-screen story image
-        const storyImg = allImgs[0];
-        const highResUrl = getHighestResUrl(storyImg);
-        if (highResUrl) {
-          triggerDownload(highResUrl, `story_${Date.now()}.jpg`);
+      if (imgs.length > 0) {
+        const highRes = getHighestResFromSrcset(imgs[0]);
+        if (highRes) {
+          triggerDownload(highRes, `story_${Date.now()}.jpg`);
           btn.innerHTML = '✓ Saved!';
           setTimeout(() => (btn.innerHTML = originalText), 2000);
           return;
         }
       }
 
-      btn.innerHTML = originalText;
       alert('InstaView: Could not capture active story frame. Please try again.');
+      btn.innerHTML = originalText;
     };
 
     document.body.appendChild(btn);
   }
 
   /**
-   * Continuous DOM Observer
+   * DOM Observer to scan for Posts, Reels, and Stories
    */
   const observer = new MutationObserver(() => {
-    // Check Stories
+    // 1. Stories check
     if (window.location.pathname.startsWith('/stories/')) {
-      injectStoryDownloadButton();
+      injectStoryButton();
     } else {
-      const existingBtn = document.querySelector('.instaview-story-btn');
-      if (existingBtn) existingBtn.remove();
+      const existing = document.querySelector('.instaview-story-btn');
+      if (existing) existing.remove();
     }
 
-    // Check Feed & Reels
+    // 2. Feed Posts and Reels check
+    // Look for native action bars containing SVG icons (like, comment, share)
+    const svgs = document.querySelectorAll('svg[aria-label="Like"], svg[aria-label="Comment"], svg[aria-label="Share"], svg[aria-label="Save"]');
+    svgs.forEach((svg) => {
+      // Traverse to the button's parent section/div
+      const section = svg.closest('section') || svg.closest('div[role="presentation"]');
+      if (section && !section.querySelector('.instaview-dl-btn')) {
+        injectPostButton(section);
+      }
+    });
+
+    // Also scan articles as fallback
     const articles = document.querySelectorAll('article');
-    articles.forEach(processArticle);
+    articles.forEach((art) => {
+      const sec = art.querySelector('section');
+      if (sec && !sec.querySelector('.instaview-dl-btn')) {
+        injectPostButton(sec);
+      }
+    });
   });
 
   observer.observe(document.body, { childList: true, subtree: true });
