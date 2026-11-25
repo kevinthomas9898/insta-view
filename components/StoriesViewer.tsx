@@ -17,55 +17,14 @@ import {
   BookmarkCheck,
   Sparkles,
   ShieldCheck,
+  Lock,
   Eye,
   EyeOff,
+  CheckCircle2,
+  ExternalLink,
 } from 'lucide-react';
 import { saveStoryToVault, isStoryInVault, VaultStoryItem } from '@/lib/storage/story-vault';
-import { NativeAffiliateCard } from '@/components/NativeAffiliateCard';
-
-const STORY_AD_HTML = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
-      width: 100%;
-      height: 100%;
-      background: #09090b;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
-    html::-webkit-scrollbar, body::-webkit-scrollbar {
-      display: none;
-      width: 0;
-      height: 0;
-    }
-    #container-4ff02455261b1454e019ced3534847d2 {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
-    }
-  </style>
-</head>
-<body>
-  <div id="container-4ff02455261b1454e019ced3534847d2"></div>
-  <script async="async" data-cfasync="false" src="https://bicea.org/21/4ff02455261b1454e019ced3534847d2"></script>
-</body>
-</html>
-`;
+import { getRandomPartner, AffiliatePartner } from '@/lib/affiliate/partners';
 
 interface StoriesViewerProps {
   stories: StoryResult[];
@@ -82,6 +41,7 @@ export function StoriesViewer({ stories, initialIndex = 0, username = 'user', on
   const [progress, setProgress] = useState(0);
   const [isVaulted, setIsVaulted] = useState(false);
   const [showingAd, setShowingAd] = useState(false);
+  const [adPartner, setAdPartner] = useState<AffiliatePartner>(() => getRandomPartner());
   const [adElapsed, setAdElapsed] = useState(0);
   const [viewsCount, setViewsCount] = useState(0);
   const [isControlsVisible, setIsControlsVisible] = useState(true);
@@ -227,6 +187,7 @@ export function StoriesViewer({ stories, initialIndex = 0, username = 'user', on
     if (currentIndex < stories.length - 1) {
       // Show sponsored ad every 3 stories viewed (like Instagram Stories)
       if (viewsCount >= 3 && !showingAd) {
+        setAdPartner(getRandomPartner());
         setShowingAd(true);
         setAdElapsed(0);
         setViewsCount(0);
@@ -260,6 +221,36 @@ export function StoriesViewer({ stories, initialIndex = 0, username = 'user', on
 
   // Native Instagram-Style Sponsored Interstitial Story Ad
   if (showingAd) {
+    const renderAdIcon = (id: string) => {
+      switch (id) {
+        case 'nordvpn':
+          return <ShieldCheck className="w-4 h-4 text-blue-400" />;
+        case 'surfshark':
+          return <Lock className="w-4 h-4 text-emerald-400" />;
+        case 'glassagram':
+          return <Eye className="w-4 h-4 text-purple-400" />;
+        case 'inflact':
+          return <Download className="w-4 h-4 text-amber-400" />;
+        default:
+          return <Sparkles className="w-4 h-4 text-pink-400" />;
+      }
+    };
+
+    const renderBigAdIcon = (id: string) => {
+      switch (id) {
+        case 'nordvpn':
+          return <ShieldCheck className="w-10 h-10 text-blue-400 stroke-[1.5]" />;
+        case 'surfshark':
+          return <Lock className="w-10 h-10 text-emerald-400 stroke-[1.5]" />;
+        case 'glassagram':
+          return <Eye className="w-10 h-10 text-purple-400 stroke-[1.5]" />;
+        case 'inflact':
+          return <Download className="w-10 h-10 text-amber-400 stroke-[1.5]" />;
+        default:
+          return <Sparkles className="w-10 h-10 text-pink-400 stroke-[1.5]" />;
+      }
+    };
+
     return (
       <div
         ref={containerRef}
@@ -271,8 +262,14 @@ export function StoriesViewer({ stories, initialIndex = 0, username = 'user', on
           className="relative w-full max-w-sm sm:max-w-md h-full sm:h-[88vh] bg-zinc-950 sm:rounded-2xl overflow-hidden flex flex-col justify-between shadow-2xl z-10 border border-zinc-800"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Top Bar with Sponsored Tag & Compulsory Skip Timer */}
-          <div className="absolute top-0 inset-x-0 z-30 p-3 bg-gradient-to-b from-black/90 via-black/50 to-transparent flex flex-col gap-2">
+          {/* Ambient Lighting Glow Background */}
+          <div className="absolute inset-0 bg-gradient-to-b from-zinc-900 via-zinc-950 to-black select-none pointer-events-none">
+            <div className={`absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-80 rounded-full bg-gradient-to-b ${adPartner.gradient} opacity-20 blur-3xl`} />
+            <div className={`absolute -bottom-24 left-1/2 -translate-x-1/2 w-80 h-80 rounded-full bg-gradient-to-t ${adPartner.gradient} opacity-15 blur-3xl`} />
+          </div>
+
+          {/* Top Bar: Progress Bar + Instagram Account Header */}
+          <div className="relative z-30 p-3.5 bg-gradient-to-b from-black/90 via-black/40 to-transparent flex flex-col gap-2.5">
             {/* Story Progress Bar filling across 6s */}
             <div className="h-1 w-full bg-white/20 rounded-full overflow-hidden">
               <div
@@ -281,16 +278,27 @@ export function StoriesViewer({ stories, initialIndex = 0, username = 'user', on
               />
             </div>
 
-            <div className="flex items-center justify-between text-white text-xs mt-1">
-              <div className="flex items-center gap-1.5">
-                <span className="font-bold tracking-tight text-white drop-shadow">Sponsored</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded bg-pink-500/20 text-pink-400 font-bold border border-pink-500/30">
-                  Ad
-                </span>
+            <div className="flex items-center justify-between text-white">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className={`w-9 h-9 rounded-full bg-gradient-to-tr ${adPartner.gradient} p-0.5 shadow-md shrink-0`}>
+                  <div className="w-full h-full rounded-full bg-zinc-950 flex items-center justify-center">
+                    {renderAdIcon(adPartner.id)}
+                  </div>
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-xs sm:text-sm text-white truncate">
+                      @{adPartner.id}
+                    </span>
+                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-400 fill-blue-400/20 shrink-0" />
+                  </div>
+                  <p className="text-[10px] text-zinc-400 font-medium leading-none mt-0.5">
+                    Sponsored
+                  </p>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                {/* Skip button with mandatory 3s countdown, then visible & clickable until 6s auto-skip */}
+              <div className="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={handleSkipAd}
@@ -298,13 +306,13 @@ export function StoriesViewer({ stories, initialIndex = 0, username = 'user', on
                   className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
                     adElapsed < 3
                       ? 'bg-black/60 text-zinc-400 border border-white/10 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-lg animate-pulse hover:opacity-90 active:scale-95'
+                      : 'bg-white/20 hover:bg-white/30 text-white backdrop-blur-md border border-white/20 active:scale-95'
                   }`}
                 >
                   {adElapsed < 3 ? (
-                    <span>⏳ Skip in {3 - adElapsed}s</span>
+                    <span>Skip in {3 - adElapsed}s</span>
                   ) : (
-                    <span>Skip Ad ⏭️</span>
+                    <span>Skip ⏭️</span>
                   )}
                 </button>
 
@@ -320,9 +328,46 @@ export function StoriesViewer({ stories, initialIndex = 0, username = 'user', on
             </div>
           </div>
 
-          {/* Ad Content Display Frame (100% AdBlock-Proof Native Sponsor Story) */}
-          <div className="relative flex-1 bg-gradient-to-b from-zinc-950 via-zinc-900 to-black flex flex-col items-center justify-center p-3 pt-14 pb-4 overflow-hidden w-full h-full">
-            <NativeAffiliateCard variant="story" className="w-full h-full" />
+          {/* Center Story Canvas: Beautiful, Minimal, Instagram-Native Content */}
+          <div className="relative z-20 flex-1 flex flex-col items-center justify-center px-6 text-center select-none">
+            {/* Glowing 3D Glass Hero Badge */}
+            <div className={`w-20 h-20 rounded-3xl bg-gradient-to-tr ${adPartner.gradient} p-0.5 shadow-2xl mb-5 flex items-center justify-center`}>
+              <div className="w-full h-full rounded-[22px] bg-zinc-950/80 backdrop-blur-md flex items-center justify-center shadow-inner">
+                {renderBigAdIcon(adPartner.id)}
+              </div>
+            </div>
+
+            {/* Promo Offer Pill */}
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-pink-300 text-xs font-bold mb-3.5 backdrop-blur-md shadow-xs">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>{adPartner.badge}</span>
+            </div>
+
+            {/* Headline */}
+            <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-snug mb-2.5 max-w-xs">
+              {adPartner.headline}
+            </h2>
+
+            {/* Subtitle */}
+            <p className="text-xs text-zinc-300 leading-relaxed max-w-xs">
+              {adPartner.description}
+            </p>
+          </div>
+
+          {/* Bottom Action: Instagram Native "Learn More" Swipe-Up Pill Button */}
+          <div className="relative z-30 p-4 pt-2 bg-gradient-to-t from-black via-black/80 to-transparent flex flex-col items-center gap-2">
+            <a
+              href={`/api/go/${adPartner.id}`}
+              target="_blank"
+              rel="noopener noreferrer sponsored"
+              className={`w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r ${adPartner.gradient} hover:opacity-95 active:scale-[0.98] text-white font-extrabold text-sm shadow-2xl flex items-center justify-center gap-2 transition-all cursor-pointer`}
+            >
+              <span>{adPartner.ctaText}</span>
+              <ExternalLink className="w-4 h-4" />
+            </a>
+            <span className="text-[10px] text-zinc-400 font-medium">
+              Official Partner • 30-Day Money-Back Guarantee
+            </span>
           </div>
         </div>
       </div>

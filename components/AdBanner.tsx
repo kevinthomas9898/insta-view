@@ -173,7 +173,7 @@ export function AdBanner({
 
       {/* 100% AdBlock-Proof Native Affiliate Sponsor Card when network ads are blocked or empty */}
       {isBlocked && showFallbackOnBlock && (
-        <NativeAffiliateCard variant="banner" className="animate-fade-in" />
+        <NativeAffiliateCard className="animate-fade-in" />
       )}
     </div>
   );
