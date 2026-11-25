@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, Bookmark, ShieldCheck, Share2, Check } from 'lucide-react';
+import { NativeAffiliateCard } from '@/components/NativeAffiliateCard';
 
 interface AdBannerProps {
   containerId?: string;
@@ -170,44 +171,9 @@ export function AdBanner({
         />
       </div>
 
-      {/* Fallback Sleek Stealth Tip Card when Ad is Blocked or Empty (No Ugly Blank Hole!) */}
+      {/* 100% AdBlock-Proof Native Affiliate Sponsor Card when network ads are blocked or empty */}
       {isBlocked && showFallbackOnBlock && (
-        <div className="w-full max-w-2xl mx-auto p-4 rounded-xl bg-slate-100/90 dark:bg-zinc-900/90 border border-slate-200 dark:border-zinc-800/80 backdrop-blur-sm shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3 text-xs animate-fade-in">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-lg bg-pink-500/10 text-pink-500 flex-shrink-0">
-              <Sparkles className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="font-semibold text-slate-900 dark:text-zinc-100 flex items-center gap-1.5">
-                <span>InstaView Stealth Tip</span>
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3" /> 100% Private
-                </span>
-              </div>
-              <p className="text-slate-500 dark:text-zinc-400 text-[11px] mt-0.5 leading-relaxed">
-                Bookmark this page (Ctrl+D) to watch Instagram Stories, Reels & Highlights anonymously anytime.
-              </p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleCopyLink}
-            className="w-full sm:w-auto px-3 py-1.5 rounded-lg bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-700 transition-colors font-medium text-[11px] flex items-center justify-center gap-1.5 flex-shrink-0 cursor-pointer shadow-2xs"
-          >
-            {copied ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="text-emerald-600 dark:text-emerald-400">Link Copied!</span>
-              </>
-            ) : (
-              <>
-                <Share2 className="w-3.5 h-3.5 text-slate-400" />
-                <span>Share InstaView</span>
-              </>
-            )}
-          </button>
-        </div>
+        <NativeAffiliateCard variant="banner" className="animate-fade-in" />
       )}
     </div>
   );

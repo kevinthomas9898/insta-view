@@ -21,6 +21,7 @@ import {
   EyeOff,
 } from 'lucide-react';
 import { saveStoryToVault, isStoryInVault, VaultStoryItem } from '@/lib/storage/story-vault';
+import { NativeAffiliateCard } from '@/components/NativeAffiliateCard';
 
 const STORY_AD_HTML = `
 <!DOCTYPE html>
@@ -319,33 +320,9 @@ export function StoriesViewer({ stories, initialIndex = 0, username = 'user', on
             </div>
           </div>
 
-          {/* Ad Content Display Frame (Full Height for Complete Ad Visibility) */}
-          <div className="relative flex-1 bg-gradient-to-b from-zinc-950 via-zinc-900 to-black flex flex-col items-center justify-center p-3 pt-14 pb-20 overflow-hidden w-full h-full">
-            <div className="w-full h-full max-w-sm mx-auto flex items-center justify-center">
-              <iframe
-                srcDoc={STORY_AD_HTML}
-                title="Sponsored Advertisement"
-                className="w-full h-full min-h-[350px] max-h-[500px] border-0 rounded-2xl bg-zinc-950 shadow-2xl overflow-hidden"
-                scrolling="no"
-                sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-              />
-            </div>
-          </div>
-
-          {/* Bottom Call-To-Action (Instagram-style Swipe Up) */}
-          <div className="absolute bottom-4 inset-x-0 z-30 p-3 bg-gradient-to-t from-black via-black/80 to-transparent flex flex-col items-center gap-1.5 pointer-events-auto">
-            <button
-              type="button"
-              onClick={handleSkipAd}
-              className="w-full py-2.5 bg-gradient-to-r from-pink-600 via-rose-600 to-amber-600 text-white text-xs font-bold rounded-xl shadow-lg transition-transform active:scale-98 flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <span>Learn More ↗</span>
-            </button>
-            <span className="text-[10px] text-zinc-400">
-              {adElapsed < 3
-                ? `Skip available in ${3 - adElapsed}s`
-                : `Tap Skip Ad or auto-skipping in ${6 - adElapsed}s`}
-            </span>
+          {/* Ad Content Display Frame (100% AdBlock-Proof Native Sponsor Story) */}
+          <div className="relative flex-1 bg-gradient-to-b from-zinc-950 via-zinc-900 to-black flex flex-col items-center justify-center p-3 pt-14 pb-4 overflow-hidden w-full h-full">
+            <NativeAffiliateCard variant="story" className="w-full h-full" />
           </div>
         </div>
       </div>
