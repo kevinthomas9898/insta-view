@@ -265,7 +265,7 @@ export function ReelsGrid({
         return (
           <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 select-none">
             <div className="relative w-full max-w-sm sm:max-w-md h-[88vh] bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden flex flex-col justify-between shadow-2xl">
-              {/* Top Close, Speed, Mute & Download Bar */}
+              {/* Top Close, Speed, Mute & Clean View Bar */}
               <div className="absolute top-0 inset-x-0 z-40 p-3.5 bg-gradient-to-b from-black/85 via-black/50 to-transparent flex items-center justify-between text-white">
                 <span className="text-xs font-bold tracking-tight drop-shadow">@{username} Reel</span>
                 <div className="flex items-center gap-1.5">
@@ -292,19 +292,6 @@ export function ReelsGrid({
                       {isVideoMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4 text-white" />}
                     </button>
                   )}
-
-                  {/* Download */}
-                  <a
-                    href={
-                      selectedReel.downloadUrl ||
-                      `/api/media?url=${encodeURIComponent(selectedReel.url)}&download=true&filename=reel_${username}_${selectedReel.id}.${isPlayableVideo ? 'mp4' : 'jpg'}`
-                    }
-                    download
-                    className="p-2 hover:bg-white/20 active:scale-90 rounded-full text-white transition-all cursor-pointer"
-                    title={isPlayableVideo ? 'Download Reel' : 'Download Cover'}
-                  >
-                    <Download className="w-4 h-4" />
-                  </a>
 
                   {/* Clean View Toggle */}
                   <button
@@ -422,142 +409,124 @@ export function ReelsGrid({
 
                 {/* Instagram-Style Transparent Overlay for Reel */}
                 {isOverlayVisible ? (
-                  <div
-                    className="absolute bottom-0 inset-x-0 p-3.5 bg-gradient-to-t from-black/95 via-black/60 to-transparent text-white z-30 flex flex-col gap-2 pointer-events-auto"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {selectedReel.audioTitle && (
-                      <p className="flex items-center gap-1.5 text-white/80 text-xs font-medium drop-shadow">
-                        <Music className="w-3.5 h-3.5 text-pink-400" />
-                        <span className="truncate">{selectedReel.audioTitle}</span>
-                      </p>
-                    )}
-
-                    {selectedReel.caption && !selectedReel.caption.startsWith('http') && (
-                      <div className="text-xs text-white/95 leading-relaxed drop-shadow-sm max-h-[25vh] overflow-y-auto">
-                        <p className={isCaptionExpanded ? 'whitespace-pre-line' : 'line-clamp-2'}>
-                          {selectedReel.caption}
-                        </p>
-                        {selectedReel.caption.length > 70 && (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setIsCaptionExpanded(!isCaptionExpanded);
-                            }}
-                            className="text-[11px] font-bold text-pink-400 hover:text-pink-300 mt-0.5 cursor-pointer underline underline-offset-2"
-                          >
-                            {isCaptionExpanded ? 'Show less' : '... more'}
-                          </button>
+                  <>
+                    {/* Bottom-Left Information Overlay */}
+                    <div
+                      className="absolute bottom-3 left-3 right-16 z-30 flex flex-col gap-1.5 pointer-events-auto"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {/* Creator & Audio Title */}
+                      <div className="flex items-center gap-2 flex-wrap text-white">
+                        <span className="text-xs font-bold drop-shadow">@{username}</span>
+                        {selectedReel.audioTitle && (
+                          <div className="flex items-center gap-1 text-[11px] text-white/85 font-medium drop-shadow bg-black/40 backdrop-blur-xs px-2 py-0.5 rounded-full border border-white/10 max-w-[200px]">
+                            <Music className="w-3 h-3 text-pink-400 shrink-0" />
+                            <span className="truncate">{selectedReel.audioTitle}</span>
+                          </div>
                         )}
                       </div>
-                    )}
 
-                    {/* Caption & Hashtag Quick Copiers */}
-                    {selectedReel.caption && !selectedReel.caption.startsWith('http') && (
-                      <div className="flex items-center gap-2 pt-0.5">
-                        <button
-                          type="button"
-                          onClick={() => copyCaption(selectedReel.caption || '')}
-                          className="text-[10px] px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white font-medium flex items-center gap-1 transition-colors cursor-pointer"
-                        >
-                          {copyState === 'caption' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                          <span>{copyState === 'caption' ? 'Copied Caption!' : 'Copy Caption'}</span>
-                        </button>
-                        {selectedReel.caption.includes('#') && (
-                          <button
-                            type="button"
-                            onClick={() => copyHashtags(selectedReel.caption || '')}
-                            className="text-[10px] px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-pink-300 font-medium flex items-center gap-1 transition-colors cursor-pointer"
-                          >
-                            {copyState === 'tags' ? <Check className="w-3 h-3 text-emerald-400" /> : <Hash className="w-3 h-3" />}
-                            <span>{copyState === 'tags' ? 'Copied Tags!' : 'Copy Tags'}</span>
-                          </button>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Timeline Progress Bar & Time (only if playable video) */}
-                    {isPlayableVideo && (
-                      <div className="flex flex-col gap-1 pt-1">
-                        <div
-                          className="w-full h-1.5 bg-white/25 hover:h-2.5 rounded-full overflow-hidden transition-all cursor-pointer relative"
-                          onClick={handleVideoSeek}
-                          title="Seek"
-                        >
-                          <div
-                            className="h-full bg-gradient-to-r from-pink-500 to-rose-500 rounded-full"
-                            style={{ width: `${videoProgress}%` }}
-                          />
+                      {/* Collapsible Caption */}
+                      {selectedReel.caption && !selectedReel.caption.startsWith('http') && (
+                        <div className="text-xs text-white/95 leading-relaxed drop-shadow-sm max-h-[16vh] overflow-y-auto pr-1">
+                          <p className={isCaptionExpanded ? 'whitespace-pre-line' : 'line-clamp-2'}>
+                            {selectedReel.caption}
+                          </p>
+                          {selectedReel.caption.length > 70 && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setIsCaptionExpanded(!isCaptionExpanded);
+                              }}
+                              className="text-[11px] font-bold text-pink-400 hover:text-pink-300 mt-0.5 cursor-pointer underline underline-offset-2"
+                            >
+                              {isCaptionExpanded ? 'Show less' : '... more'}
+                            </button>
+                          )}
                         </div>
-                        <div className="flex items-center justify-between text-[10px] text-white/70 font-medium px-0.5">
-                          <span>{formatTime(currentTime)}</span>
-                          <span>{formatTime(duration)}</span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Quick Action Control Bar */}
-                    <div className="flex items-center gap-2 pt-0.5">
-                      {isPlayableVideo && (
-                        <button
-                          type="button"
-                          onClick={toggleVideoPlay}
-                          className="p-2 rounded-xl bg-black/60 hover:bg-black/80 active:scale-90 text-white border border-white/20 transition-all cursor-pointer shadow-md"
-                          title={isVideoPlaying ? 'Pause reel' : 'Play reel'}
-                          aria-label={isVideoPlaying ? 'Pause' : 'Play'}
-                        >
-                          {isVideoPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-current text-white" />}
-                        </button>
                       )}
 
+                      {/* Elapsed Time & Duration */}
                       {isPlayableVideo && (
-                        <button
-                          type="button"
-                          onClick={toggleVideoMute}
-                          className="p-2 rounded-xl bg-black/60 hover:bg-black/80 active:scale-90 text-white border border-white/20 transition-all cursor-pointer shadow-md"
-                          title={isVideoMuted ? 'Unmute audio' : 'Mute audio'}
-                          aria-label={isVideoMuted ? 'Unmute' : 'Mute'}
-                        >
-                          {isVideoMuted ? <VolumeX className="w-3.5 h-3.5 text-rose-400" /> : <Volume2 className="w-3.5 h-3.5 text-white" />}
-                        </button>
+                        <div className="text-[10px] text-white/70 font-mono tracking-wider drop-shadow-sm">
+                          {formatTime(currentTime)} / {formatTime(duration)}
+                        </div>
                       )}
+                    </div>
 
+                    {/* Instagram-Style Vertical Action Column on Right Edge */}
+                    <div
+                      className="absolute right-3 bottom-6 z-35 flex flex-col items-center gap-3 pointer-events-auto"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {/* Download Video Action */}
                       <a
                         href={
                           selectedReel.downloadUrl ||
                           `/api/media?url=${encodeURIComponent(selectedReel.url)}&download=true&filename=reel_${username}_${selectedReel.id}.${isPlayableVideo ? 'mp4' : 'jpg'}`
                         }
                         download
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-gradient-to-r from-pink-600 via-rose-600 to-amber-600 hover:opacity-95 text-white text-xs font-semibold rounded-xl shadow-md cursor-pointer"
+                        className="group flex flex-col items-center gap-0.5 active:scale-90 transition-transform cursor-pointer"
+                        title={isPlayableVideo ? 'Download Reel Video' : 'Download Cover'}
                       >
-                        <Download className="w-3.5 h-3.5" />
-                        {isPlayableVideo ? 'Download Reel' : 'Download Cover'}
+                        <div className="p-2.5 rounded-full bg-black/60 hover:bg-black/90 active:bg-pink-600 backdrop-blur-md text-white border border-white/20 shadow-xl group-hover:border-pink-500/50 transition-colors">
+                          <Download className="w-4 h-4 text-white group-hover:text-pink-300 transition-colors" />
+                        </div>
+                        <span className="text-[10px] font-semibold text-white drop-shadow-md">Video</span>
                       </a>
 
+                      {/* Download Audio Action */}
                       {isPlayableVideo && (
                         <a
                           href={`/api/media?url=${encodeURIComponent(selectedReel.url)}&download=true&audioOnly=true&filename=audio_${username}_${selectedReel.id}.m4a`}
                           download
-                          className="flex items-center justify-center gap-1.5 py-2 px-3 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-xl border border-white/20 shadow-md cursor-pointer transition-colors"
+                          className="group flex flex-col items-center gap-0.5 active:scale-90 transition-transform cursor-pointer"
                           title="Extract and download reel audio track (M4A)"
                         >
-                          <Music className="w-3.5 h-3.5 text-pink-400" />
-                          <span>Audio (M4A)</span>
+                          <div className="p-2.5 rounded-full bg-black/60 hover:bg-black/90 active:bg-pink-600 backdrop-blur-md text-white border border-white/20 shadow-xl group-hover:border-pink-500/50 transition-colors">
+                            <Music className="w-4 h-4 text-white group-hover:text-pink-300 transition-colors" />
+                          </div>
+                          <span className="text-[10px] font-semibold text-white drop-shadow-md">Audio</span>
                         </a>
                       )}
 
+                      {/* Copy Caption Action */}
+                      {selectedReel.caption && !selectedReel.caption.startsWith('http') && (
+                        <button
+                          type="button"
+                          onClick={() => copyCaption(selectedReel.caption || '')}
+                          className="group flex flex-col items-center gap-0.5 active:scale-90 transition-transform cursor-pointer"
+                          title="Copy Caption"
+                        >
+                          <div className="p-2.5 rounded-full bg-black/60 hover:bg-black/90 active:bg-pink-600 backdrop-blur-md text-white border border-white/20 shadow-xl group-hover:border-pink-500/50 transition-colors">
+                            {copyState === 'caption' ? (
+                              <Check className="w-4 h-4 text-emerald-400" />
+                            ) : (
+                              <Copy className="w-4 h-4 text-white group-hover:text-pink-300 transition-colors" />
+                            )}
+                          </div>
+                          <span className="text-[10px] font-semibold text-white drop-shadow-md">
+                            {copyState === 'caption' ? 'Copied' : 'Caption'}
+                          </span>
+                        </button>
+                      )}
+
+                      {/* Direct Source Link */}
                       <a
                         href={selectedReel.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-2 bg-black/60 hover:bg-black/80 text-white rounded-xl border border-white/20 transition-colors cursor-pointer"
+                        className="group flex flex-col items-center gap-0.5 active:scale-90 transition-transform cursor-pointer"
                         title="Direct Source URL"
                       >
-                        <Maximize2 className="w-3.5 h-3.5" />
+                        <div className="p-2.5 rounded-full bg-black/60 hover:bg-black/90 active:bg-pink-600 backdrop-blur-md text-white border border-white/20 shadow-xl group-hover:border-pink-500/50 transition-colors">
+                          <Maximize2 className="w-4 h-4 text-white group-hover:text-pink-300 transition-colors" />
+                        </div>
+                        <span className="text-[10px] font-semibold text-white drop-shadow-md">Direct</span>
                       </a>
                     </div>
-                  </div>
+                  </>
                 ) : (
                   <button
                     type="button"
@@ -565,11 +534,27 @@ export function ReelsGrid({
                       e.stopPropagation();
                       setIsOverlayVisible(true);
                     }}
-                    className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 px-3.5 py-1.5 rounded-full bg-black/80 hover:bg-black backdrop-blur-md border border-white/20 text-white text-xs font-medium flex items-center gap-1.5 shadow-xl transition-all cursor-pointer active:scale-95"
+                    className="absolute bottom-4 left-1/2 -translate-x-1/2 z-35 px-3.5 py-1.5 rounded-full bg-black/80 hover:bg-black backdrop-blur-md border border-white/20 text-white text-xs font-medium flex items-center gap-1.5 shadow-xl transition-all cursor-pointer active:scale-95"
                   >
                     <Eye className="w-3.5 h-3.5 text-pink-400" />
                     <span>Show Details</span>
                   </button>
+                )}
+
+                {/* Instagram-Style Bottom-Edge Timeline Scrub Bar (Always at bottom-0, never in the middle) */}
+                {isPlayableVideo && (
+                  <div
+                    className="absolute bottom-0 inset-x-0 z-40 h-1 sm:h-1.5 bg-white/20 hover:h-2.5 transition-all cursor-pointer group"
+                    onClick={handleVideoSeek}
+                    title="Seek"
+                  >
+                    <div
+                      className="h-full bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 relative transition-all"
+                      style={{ width: `${videoProgress}%` }}
+                    >
+                      <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-2.5 h-2.5 rounded-full bg-white shadow-md opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                  </div>
                 )}
               </div>
             </div>

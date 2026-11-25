@@ -152,8 +152,11 @@ In media viewers, placing large action buttons (such as Download, Download All Z
      - The bottom details panel / overlay is hidden.
      - Media scales to 100% of the modal viewport height.
      - A discreet floating pill (`[👁️ Show Details]`) appears at the bottom with 1-tap restoration.
-3. **Reels Vertical Clearance (`ReelsGrid.tsx`):**
-   - 9:16 vertical reels feature a Clean View toggle in the top bar to instantly hide the gradient caption, music title, copy buttons, and download buttons so subtitles and the lower third of the video are 100% unobstructed.
+3. **Reels Vertical Clearance & Instagram Parity (`ReelsGrid.tsx`):**
+   - **Bottom-Edge Progress Bar:** The timeline scrub bar sits at the absolute bottom edge (`bottom-0 inset-x-0 h-1 sm:h-1.5`), flush with the container boundary. It must NEVER float in the middle of the video.
+   - **Right-Side Action Rail:** Action buttons (`Video` download, `Audio` download, `Copy` caption, `Direct` link) are stacked vertically along the right edge (`right-3 bottom-6`), mirroring Instagram's native Reels layout. No horizontal shelves of buttons are permitted across the video bottom.
+   - **Unobtrusive Bottom-Left Information:** Creator handle, audio ticker, and 1-line expandable caption sit at the bottom-left with `max-w-[75%]`, leaving the video center 100% visible and unblocked.
+   - 9:16 vertical reels also feature the Clean View toggle (`Eye` icon in top bar) to hide all overlays on demand.
 4. **Stories Viewer Consistency (`StoriesViewer.tsx`):**
    - Top header includes the Clean View toggle, allowing full unobstructed story viewing without the bottom action pills.
 
