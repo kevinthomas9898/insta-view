@@ -327,7 +327,7 @@ export function StoriesViewer({ stories, initialIndex = 0, username = 'user', on
                 title="Sponsored Advertisement"
                 className="w-full h-full min-h-[350px] max-h-[500px] border-0 rounded-2xl bg-zinc-950 shadow-2xl overflow-hidden"
                 scrolling="no"
-                sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-top-navigation"
+                sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
               />
             </div>
           </div>

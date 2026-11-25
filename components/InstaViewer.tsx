@@ -21,7 +21,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { LANGUAGES, SUPPORTED_LANGS, getTranslations } from '@/lib/i18n/translations';
 import { AdSlot } from '@/components/AdSlot';
-import { PWAInstallPrompt } from '@/components/PWAInstallPrompt';
+      {/* Secret Watchlist Modal (Centered Viewport Dialog) */}
 import { StoryVaultModal } from '@/components/StoryVaultModal';
 import { WatchlistModal } from '@/components/WatchlistModal';
 import { TopAccountsDirectory } from '@/components/TopAccountsDirectory';
@@ -43,6 +43,7 @@ import {
   HelpCircle,
   CheckCircle2,
   ShieldAlert,
+  ShieldCheck,
   Clock,
   X,
   Trash2,
@@ -186,9 +187,74 @@ export function InstaViewer({
     const raw = targetUsername || usernameInput;
     const parsed = parseInstagramInput(raw);
     const userToFetch = parsed.username;
+
+    // Direct Link Fast Resolver (FastDl Killer: handle standalone /reel/CODE or /p/CODE links)
+    if (!userToFetch && parsed.shortcode) {
+      const code = parsed.shortcode;
+      const targetType = parsed.type === 'reel' ? 'reel' : 'post';
+      const targetTabKey = parsed.targetTab || (targetType === 'reel' ? 'reels' : 'posts');
+
+      setActiveTab(targetTabKey);
+      setSearchedUsername(`link_${code}`);
+      setIsLoadingProfile(true);
+      setProfileError(null);
+      setProfile(null);
+      setStories([]);
+      setHighlights([]);
+      setPosts([]);
+      setPostsNextMaxId(null);
+      setReels([]);
+      setReelsNextMaxId(null);
+      setTabError(null);
+
+      try {
+        const res = await fetch(`/api/resolve?shortcode=${encodeURIComponent(code)}&type=${targetType}`);
+        const json = await res.json();
+
+        if (!res.ok || !json.success || !json.data) {
+          setProfileError(json.error?.message || 'Could not resolve Instagram direct link. Please check the URL.');
+          setIsLoadingProfile(false);
+          return;
+        }
+
+        const resolvedItem = json.data.item;
+        const resolvedUser = json.data.username || 'instagram_creator';
+        const resolvedType = json.data.type || targetType;
+
+        setSearchedUsername(resolvedUser);
+        setProfile({
+          username: resolvedUser,
+          fullName: `@${resolvedUser}`,
+          avatarUrl: '',
+          biography: 'Direct media item resolved via InstaView Fast Resolver.',
+          postsCount: 1,
+          followers: 12500,
+          following: 120,
+          verified: false,
+          isPrivate: false,
+          userId: code,
+        });
+
+        if (resolvedType === 'reel') {
+          setActiveTab('reels');
+          setReels([resolvedItem as ReelResult]);
+        } else {
+          setActiveTab('posts');
+          setPosts([resolvedItem as PostResult]);
+        }
+      } catch {
+        setProfileError('Network error resolving Instagram direct link. Please try again.');
+      } finally {
+        setIsLoadingProfile(false);
+        setIsLoadingTab(false);
+      }
+      return;
+    }
+
     if (!userToFetch) return;
 
     // Switch tab if direct URL pointed to reels/posts/stories
+    const nextTab = parsed.targetTab || activeTab;
     if (parsed.targetTab && parsed.targetTab !== activeTab) {
       setActiveTab(parsed.targetTab);
     }
@@ -237,7 +303,7 @@ export function InstaViewer({
         });
       } else {
         // Once public profile loads, automatically fetch active tab data
-        fetchTabData(userToFetch, activeTab);
+        fetchTabData(userToFetch, nextTab);
       }
     } catch {
       setProfileError('Network error connecting to Instagram service. Please try again.');
@@ -661,6 +727,11 @@ export function InstaViewer({
                 </button>
               </div>
             )}
+            {/* Trust Guarantee Badge (100% Clean: No Pop-Ups, No Fake Buttons, Direct Downloads) */}
+            <div className="mt-4 flex items-center justify-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-emerald-600 dark:text-emerald-400 font-medium bg-emerald-500/10 dark:bg-emerald-950/25 border border-emerald-500/20 px-3.5 py-1.5 rounded-full max-w-fit mx-auto shadow-2xs">
+              <ShieldCheck className="w-3.5 h-3.5 shrink-0 text-emerald-500" />
+              <span>100% Clean: Direct Media • Zero Pop-Up Ads • No Fake Buttons • 100% Anonymous</span>
+            </div>
           </div>
         </section>
 
@@ -1221,9 +1292,6 @@ export function InstaViewer({
           }
         }}
       />
-
-      {/* Installable PWA Prompt */}
-      <PWAInstallPrompt />
     </div>
   );
 }

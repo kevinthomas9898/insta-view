@@ -32,16 +32,6 @@ export function WatchlistModal({
 }: WatchlistModalProps) {
   const [showInfo, setShowInfo] = useState(false);
 
-  // Show banner once on initial discovery if not previously dismissed
-  useEffect(() => {
-    if (isOpen) {
-      try {
-        const seen = localStorage.getItem('instaview_watchlist_info_seen');
-        if (!seen) setShowInfo(true);
-      } catch {}
-    }
-  }, [isOpen]);
-
   // Close on Escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

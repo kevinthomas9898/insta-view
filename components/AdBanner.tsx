@@ -145,7 +145,7 @@ export function AdBanner({
           title="Advertisement"
           className="w-full min-h-[190px] h-[200px] sm:h-[210px] md:h-[220px] border-0 overflow-hidden"
           scrolling="no"
-          sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-top-navigation"
+          sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
           onLoad={() => {
             // Check immediately after load and auto-fit height
             setTimeout(() => {

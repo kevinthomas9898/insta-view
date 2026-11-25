@@ -10,6 +10,7 @@ export interface ParsedInstagramInput {
   type: 'profile' | 'story' | 'reel' | 'post';
   targetTab: 'stories' | 'highlights' | 'posts' | 'reels';
   shortcode?: string;
+  storyId?: string;
 }
 
 export function parseInstagramInput(input: string): ParsedInstagramInput {
@@ -23,7 +24,7 @@ export function parseInstagramInput(input: string): ParsedInstagramInput {
     const urlCandidate =
       trimmed.startsWith('http://') || trimmed.startsWith('https://')
         ? trimmed
-        : trimmed.toLowerCase().includes('instagram.com')
+        : trimmed.toLowerCase().includes('instagram.com') || trimmed.toLowerCase().includes('instagr.am')
         ? `https://${trimmed.replace(/^\/+/, '')}`
         : null;
 
@@ -37,13 +38,14 @@ export function parseInstagramInput(input: string): ParsedInstagramInput {
         return {
           raw: trimmed,
           username: segments[1].replace(/^@/, ''),
+          storyId: segments[2],
           type: 'story',
           targetTab: 'stories',
         };
       }
 
-      // Pattern 2: /reel/:shortcode or /reels/:shortcode
-      if ((segments[0] === 'reel' || segments[0] === 'reels') && segments[1]) {
+      // Pattern 2: /reel/:shortcode or /reels/:shortcode or /tv/:shortcode
+      if ((segments[0] === 'reel' || segments[0] === 'reels' || segments[0] === 'tv') && segments[1]) {
         return {
           raw: trimmed,
           shortcode: segments[1],
@@ -62,12 +64,44 @@ export function parseInstagramInput(input: string): ParsedInstagramInput {
         };
       }
 
-      // Pattern 4: /:username (Direct profile link)
-      const reservedPaths = ['explore', 'direct', 'accounts', 'about', 'developer', 'reels', 'p', 'stories'];
-      if (segments[0] && !reservedPaths.includes(segments[0].toLowerCase())) {
+      // Pattern 4: /share/reel/:shortcode or /share/p/:shortcode
+      if (segments[0] === 'share' && segments[1] && segments[2]) {
+        const isReel = segments[1] === 'reel' || segments[1] === 'reels';
         return {
           raw: trimmed,
-          username: segments[0].replace(/^@/, ''),
+          shortcode: segments[2],
+          type: isReel ? 'reel' : 'post',
+          targetTab: isReel ? 'reels' : 'posts',
+        };
+      }
+
+      // Pattern 5: /:username/reel/:shortcode or /:username/p/:shortcode
+      const reservedPaths = ['explore', 'direct', 'accounts', 'about', 'developer', 'reels', 'p', 'stories', 'share', 'tv'];
+      if (segments[0] && !reservedPaths.includes(segments[0].toLowerCase())) {
+        const user = segments[0].replace(/^@/, '');
+        if (segments[1] && (segments[1] === 'reel' || segments[1] === 'reels')) {
+          return {
+            raw: trimmed,
+            username: user,
+            shortcode: segments[2],
+            type: 'reel',
+            targetTab: 'reels',
+          };
+        }
+        if (segments[1] && segments[1] === 'p') {
+          return {
+            raw: trimmed,
+            username: user,
+            shortcode: segments[2],
+            type: 'post',
+            targetTab: 'posts',
+          };
+        }
+
+        // Standard profile: /:username
+        return {
+          raw: trimmed,
+          username: user,
           type: 'profile',
           targetTab: 'stories',
         };

@@ -42,10 +42,6 @@ export function StoryVaultModal({ isOpen, onClose }: StoryVaultModalProps) {
   useEffect(() => {
     if (isOpen) {
       loadItems();
-      try {
-        const seen = localStorage.getItem('instaview_vault_info_seen');
-        if (!seen) setShowInfo(true);
-      } catch {}
     }
   }, [isOpen]);
 
