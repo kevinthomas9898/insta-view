@@ -17,6 +17,8 @@ import {
   BookmarkCheck,
   Sparkles,
   ShieldCheck,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { saveStoryToVault, isStoryInVault, VaultStoryItem } from '@/lib/storage/story-vault';
 
@@ -81,6 +83,7 @@ export function StoriesViewer({ stories, initialIndex = 0, username = 'user', on
   const [showingAd, setShowingAd] = useState(false);
   const [adElapsed, setAdElapsed] = useState(0);
   const [viewsCount, setViewsCount] = useState(0);
+  const [isControlsVisible, setIsControlsVisible] = useState(true);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -421,6 +424,18 @@ export function StoriesViewer({ stories, initialIndex = 0, username = 'user', on
 
               <button
                 type="button"
+                onClick={() => setIsControlsVisible((v) => !v)}
+                className={`p-1.5 hover:bg-white/20 active:scale-90 rounded-full transition-all cursor-pointer ${
+                  !isControlsVisible ? 'text-pink-400 bg-pink-500/20' : 'text-white'
+                }`}
+                title={isControlsVisible ? 'Clean View (hide controls)' : 'Show controls'}
+                aria-label={isControlsVisible ? 'Clean View' : 'Show controls'}
+              >
+                {isControlsVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+
+              <button
+                type="button"
                 onClick={toggleFullscreen}
                 className="p-1.5 hover:bg-white/20 active:scale-90 rounded-full transition-all cursor-pointer hidden sm:inline-flex"
                 title="Toggle Fullscreen"
@@ -527,43 +542,57 @@ export function StoriesViewer({ stories, initialIndex = 0, username = 'user', on
         </div>
 
         {/* Bottom Floating Action Bar: Save to Vault + Download Story */}
-        <div className="absolute bottom-4 inset-x-0 z-30 flex items-center justify-center gap-2 pointer-events-auto px-4">
+        {isControlsVisible ? (
+          <div className="absolute bottom-4 inset-x-0 z-30 flex items-center justify-center gap-2 pointer-events-auto px-4 transition-opacity duration-200">
+            <button
+              type="button"
+              onClick={handleSaveToVault}
+              className={`flex items-center gap-1.5 py-1.5 px-3.5 rounded-full text-xs font-semibold backdrop-blur-md shadow-xl transition-all cursor-pointer border ${
+                isVaulted
+                  ? 'bg-amber-500/30 text-amber-300 border-amber-500/50'
+                  : 'bg-black/75 hover:bg-black/95 text-white border-white/20'
+              }`}
+              title="Save to offline vault (100% private to this browser)"
+            >
+              {isVaulted ? (
+                <>
+                  <BookmarkCheck className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Saved in Vault</span>
+                </>
+              ) : (
+                <>
+                  <BookmarkPlus className="w-3.5 h-3.5 text-pink-400" />
+                  <span>Save to Vault</span>
+                </>
+              )}
+            </button>
+
+            <a
+              href={
+                currentStory.downloadUrl ||
+                `/api/media?url=${encodeURIComponent(currentStory.url)}&download=true&filename=story_${username}_${currentStory.id}.${currentStory.type === 'video' ? 'mp4' : 'jpg'}`
+              }
+              download
+              className="flex items-center gap-1.5 py-1.5 px-3.5 rounded-full bg-black/75 hover:bg-black/95 active:scale-95 text-white text-xs font-semibold border border-white/20 backdrop-blur-md shadow-xl transition-all cursor-pointer"
+              title="Download Story"
+            >
+              <Download className="w-3.5 h-3.5 text-pink-400" />
+              <span>Download</span>
+            </a>
+          </div>
+        ) : (
           <button
             type="button"
-            onClick={handleSaveToVault}
-            className={`flex items-center gap-1.5 py-1.5 px-3.5 rounded-full text-xs font-semibold backdrop-blur-md shadow-xl transition-all cursor-pointer border ${
-              isVaulted
-                ? 'bg-amber-500/30 text-amber-300 border-amber-500/50'
-                : 'bg-black/75 hover:bg-black/95 text-white border-white/20'
-            }`}
-            title="Save to offline vault (100% private to this browser)"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsControlsVisible(true);
+            }}
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 px-3.5 py-1.5 rounded-full bg-black/80 hover:bg-black backdrop-blur-md border border-white/20 text-white text-xs font-medium flex items-center gap-1.5 shadow-xl transition-all cursor-pointer active:scale-95"
           >
-            {isVaulted ? (
-              <>
-                <BookmarkCheck className="w-3.5 h-3.5 text-amber-400" />
-                <span>Saved in Vault</span>
-              </>
-            ) : (
-              <>
-                <BookmarkPlus className="w-3.5 h-3.5 text-pink-400" />
-                <span>Save to Vault</span>
-              </>
-            )}
+            <Eye className="w-3.5 h-3.5 text-pink-400" />
+            <span>Show Details</span>
           </button>
-
-          <a
-            href={
-              currentStory.downloadUrl ||
-              `/api/media?url=${encodeURIComponent(currentStory.url)}&download=true&filename=story_${username}_${currentStory.id}.${currentStory.type === 'video' ? 'mp4' : 'jpg'}`
-            }
-            download
-            className="flex items-center gap-1.5 py-1.5 px-3.5 rounded-full bg-black/75 hover:bg-black/95 active:scale-95 text-white text-xs font-semibold border border-white/20 backdrop-blur-md shadow-xl transition-all cursor-pointer"
-            title="Download Story"
-          >
-            <Download className="w-3.5 h-3.5 text-pink-400" />
-            <span>Download</span>
-          </a>
-        </div>
+        )}
 
         {/* Desktop Side Chevron Arrows */}
         {currentIndex > 0 && (

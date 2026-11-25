@@ -25,6 +25,8 @@ import {
   Hash,
   Check,
   Archive,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 
 interface PostsGridProps {
@@ -54,6 +56,7 @@ export function PostsGrid({
   const [copyState, setCopyState] = useState<'idle' | 'caption' | 'tags'>('idle');
   const [isZipping, setIsZipping] = useState(false);
   const [zipProgress, setZipProgress] = useState('');
+  const [isControlsVisible, setIsControlsVisible] = useState(true);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const lastTimeUpdateRef = useRef<number>(0);
 
@@ -217,6 +220,7 @@ export function PostsGrid({
     setIsCaptionExpanded(false);
     setIsVideoPlaying(true);
     setVideoProgress(0);
+    setIsControlsVisible(true);
   };
 
   const closePostModal = () => {
@@ -224,6 +228,7 @@ export function PostsGrid({
     setCarouselIndex(0);
     setIsMediaLoading(false);
     setIsCaptionExpanded(false);
+    setIsControlsVisible(true);
   };
 
   const handleNextSlide = () => {
@@ -388,18 +393,85 @@ export function PostsGrid({
       {/* Post Detail & Media Viewer Modal */}
       {selectedPost && activeItem && (
         <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex items-center justify-center p-2 sm:p-5">
-          <div className="relative w-full max-w-4xl max-h-[94vh] bg-black md:bg-white md:dark:bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl">
-            {/* Close Button */}
+          <div className="relative w-full max-w-4xl h-[92vh] sm:h-[94vh] md:h-auto md:max-h-[94vh] bg-black md:bg-white md:dark:bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl">
+            {/* Desktop Modal Close Button */}
             <button
               onClick={closePostModal}
-              className="absolute top-3 right-3 z-40 p-2 bg-black/75 hover:bg-black text-white rounded-full border border-white/20 transition-all duration-150 active:scale-90 shadow-lg cursor-pointer"
+              className="hidden md:flex absolute top-3.5 right-3.5 z-40 p-2 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded-full border border-slate-200 dark:border-zinc-700 transition-all duration-150 active:scale-90 shadow-lg cursor-pointer"
               title="Close (Esc)"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
 
             {/* Media Player / Image Area */}
-            <div className="relative flex-1 bg-black flex items-center justify-center min-h-[50vh] md:min-h-[520px] max-h-[85vh] md:max-h-[92vh] overflow-hidden select-none">
+            <div
+              className="relative flex-1 min-h-0 bg-black flex items-center justify-center overflow-hidden select-none"
+              onClick={() => {
+                // Clicking image toggles controls on/off for distraction-free viewing
+                if (activeItem.type !== 'video') {
+                  setIsControlsVisible((v) => !v);
+                }
+              }}
+            >
+              {/* Media Top Navigation & Control Bar */}
+              <div className="absolute top-0 inset-x-0 z-40 p-3 bg-gradient-to-b from-black/85 via-black/40 to-transparent flex items-center justify-between pointer-events-none">
+                {/* Carousel Counter or Type Badge */}
+                {selectedPost.type === 'carousel' && selectedPost.carouselMedia && selectedPost.carouselMedia.length > 1 ? (
+                  <div className="px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md text-white text-xs font-semibold border border-white/15 shadow-md pointer-events-auto">
+                    {carouselIndex + 1} / {selectedPost.carouselMedia.length}
+                  </div>
+                ) : (
+                  <div className="px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md text-white/90 text-[11px] font-medium border border-white/15 shadow-md pointer-events-auto capitalize">
+                    {activeItem.type === 'video' ? 'Video' : 'Photo'}
+                  </div>
+                )}
+
+                {/* Top Action Icons */}
+                <div className="flex items-center gap-1.5 pointer-events-auto">
+                  {/* Clean View Toggle */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsControlsVisible((v) => !v);
+                    }}
+                    className={`p-2 rounded-full border transition-all cursor-pointer shadow-md active:scale-90 ${
+                      !isControlsVisible
+                        ? 'bg-pink-600/90 text-white border-pink-400'
+                        : 'bg-black/75 hover:bg-black text-white border-white/20'
+                    }`}
+                    title={isControlsVisible ? 'Clean View (hide controls)' : 'Show details & controls'}
+                    aria-label={isControlsVisible ? 'Clean View' : 'Show Details'}
+                  >
+                    {isControlsVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+
+                  {/* Sound Toggle (if video) */}
+                  {activeItem.type === 'video' && (
+                    <button
+                      type="button"
+                      onClick={toggleVideoMute}
+                      className="p-2 rounded-full bg-black/75 hover:bg-black active:scale-90 text-white border border-white/20 shadow-md transition-all cursor-pointer"
+                      title={isVideoMuted ? 'Unmute sound' : 'Mute sound'}
+                      aria-label={isVideoMuted ? 'Unmute sound' : 'Mute sound'}
+                    >
+                      {isVideoMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4 text-white" />}
+                    </button>
+                  )}
+
+                  {/* Mobile Close Button */}
+                  <button
+                    type="button"
+                    onClick={closePostModal}
+                    className="md:hidden p-2 rounded-full bg-black/75 hover:bg-black active:scale-90 text-white border border-white/20 shadow-md transition-all cursor-pointer"
+                    title="Close (Esc)"
+                    aria-label="Close"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
               {/* Instant Loading Spinner Overlay */}
               {isMediaLoading && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-xs z-15 transition-opacity duration-150 animate-fade-in pointer-events-none">
@@ -450,7 +522,7 @@ export function PostsGrid({
                         }
                       }
                     }}
-                    className={`w-full max-h-[80vh] md:max-h-[85vh] object-contain transition-opacity duration-200 ${
+                    className={`w-full h-full max-h-full object-contain transition-opacity duration-200 ${
                       isMediaLoading ? 'opacity-70' : 'opacity-100'
                     }`}
                     src={`/api/media?url=${encodeURIComponent(activeItem.url)}`}
@@ -461,17 +533,6 @@ export function PostsGrid({
                       }
                     }}
                   />
-
-                  {/* Top-Right Floating Mute / Unmute Button (beside Close button) */}
-                  <button
-                    type="button"
-                    onClick={toggleVideoMute}
-                    className="absolute top-3.5 right-14 z-40 p-2.5 rounded-full bg-black/75 hover:bg-black active:scale-85 text-white border border-white/20 shadow-xl transition-all cursor-pointer"
-                    title={isVideoMuted ? 'Unmute sound' : 'Mute sound'}
-                    aria-label={isVideoMuted ? 'Unmute sound' : 'Mute sound'}
-                  >
-                    {isVideoMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4 text-white" />}
-                  </button>
 
                   {/* Center Play Icon When Paused */}
                   {!isVideoPlaying && !isMediaLoading && (
@@ -495,7 +556,7 @@ export function PostsGrid({
                       e.currentTarget.src = activeItem.url;
                     }
                   }}
-                  className={`w-full max-h-[80vh] md:max-h-[85vh] object-contain transition-opacity duration-200 ${
+                  className={`w-full h-full max-h-full object-contain transition-opacity duration-200 ${
                     isMediaLoading ? 'opacity-30' : 'opacity-100'
                   }`}
                 />
@@ -528,36 +589,46 @@ export function PostsGrid({
                         <ChevronRight className="w-5 h-5" />
                       </button>
                     )}
-
-                    {/* Carousel Counter */}
-                    <div className="absolute top-3 left-3 z-30">
-                      <div className="px-3 py-1 rounded-full bg-black/80 backdrop-blur-md text-white text-xs font-semibold border border-white/10 shadow-lg">
-                        {carouselIndex + 1} / {selectedPost.carouselMedia.length}
-                      </div>
-                    </div>
                   </>
                 )}
 
-              {/* Mobile Instagram-Style Transparent Overlay */}
-              <div className="md:hidden absolute bottom-0 inset-x-0 p-3.5 bg-gradient-to-t from-black/95 via-black/60 to-transparent text-white z-30 flex flex-col gap-2">
+              {/* Floating Bottom Pill to restore controls if hidden on mobile */}
+              {!isControlsVisible && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsControlsVisible(true);
+                  }}
+                  className="md:hidden absolute bottom-3 left-1/2 -translate-x-1/2 z-40 px-3.5 py-1.5 rounded-full bg-black/80 hover:bg-black backdrop-blur-md border border-white/20 text-white text-xs font-medium flex items-center gap-1.5 shadow-xl transition-all cursor-pointer active:scale-95"
+                >
+                  <Eye className="w-3.5 h-3.5 text-pink-400" />
+                  <span>Show Details</span>
+                </button>
+              )}
+            </div>
+
+            {/* Mobile Dedicated Details & Actions Panel (Positioned BELOW media, NEVER obscuring image/video) */}
+            {isControlsVisible && (
+              <div className="shrink-0 md:hidden bg-zinc-950 border-t border-zinc-800/80 px-3.5 py-2.5 flex flex-col gap-2 max-h-[38vh] overflow-y-auto">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-bold text-white text-xs drop-shadow">@{username}</span>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="font-bold text-white text-xs truncate">@{username}</span>
                     {selectedPost.timestamp && (
-                      <span className="text-[10px] text-white/60">
+                      <span className="text-[10px] text-zinc-400 shrink-0">
                         • {new Date(selectedPost.timestamp).toLocaleDateString()}
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-white/90">
+                  <div className="flex items-center gap-3 text-xs text-zinc-300 shrink-0">
                     {selectedPost.likeCount !== undefined && (
-                      <span className="flex items-center gap-1 drop-shadow">
+                      <span className="flex items-center gap-1 font-medium">
                         <Heart className="w-3.5 h-3.5 fill-rose-500 text-rose-500" />
                         {selectedPost.likeCount.toLocaleString()}
                       </span>
                     )}
                     {selectedPost.commentCount !== undefined && (
-                      <span className="flex items-center gap-1 drop-shadow">
+                      <span className="flex items-center gap-1 font-medium">
                         <MessageCircle className="w-3.5 h-3.5 fill-white" />
                         {selectedPost.commentCount.toLocaleString()}
                       </span>
@@ -567,7 +638,7 @@ export function PostsGrid({
 
                 {/* Collapsible Caption */}
                 {selectedPost.caption && (
-                  <div className="text-xs text-white/95 leading-relaxed drop-shadow-sm max-h-[30vh] overflow-y-auto">
+                  <div className="text-xs text-zinc-300 leading-relaxed max-h-[20vh] overflow-y-auto pr-1">
                     <p className={isCaptionExpanded ? 'whitespace-pre-line' : 'line-clamp-2'}>
                       {selectedPost.caption}
                     </p>
@@ -588,9 +659,9 @@ export function PostsGrid({
 
                 {/* Video Timeline Scrub Bar */}
                 {activeItem.type === 'video' && (
-                  <div className="flex flex-col gap-1 pt-1">
+                  <div className="flex flex-col gap-1 pt-0.5">
                     <div
-                      className="w-full h-1.5 bg-white/25 hover:h-2.5 rounded-full overflow-hidden transition-all cursor-pointer relative z-35"
+                      className="w-full h-1.5 bg-zinc-800 hover:h-2.5 rounded-full overflow-hidden transition-all cursor-pointer relative"
                       onClick={handleVideoSeek}
                       title="Seek"
                     >
@@ -599,7 +670,7 @@ export function PostsGrid({
                         style={{ width: `${videoProgress}%` }}
                       />
                     </div>
-                    <div className="flex items-center justify-between text-[10px] text-white/70 font-medium px-0.5">
+                    <div className="flex items-center justify-between text-[10px] text-zinc-400 font-medium px-0.5">
                       <span>{formatTime(videoCurrentTime)}</span>
                       <span>{formatTime(videoDuration)}</span>
                     </div>
@@ -607,12 +678,12 @@ export function PostsGrid({
                 )}
 
                 {/* Mobile Quick Action Buttons */}
-                <div className="flex items-center gap-2 pt-1">
+                <div className="flex items-center gap-2 pt-0.5">
                   {activeItem.type === 'video' && (
                     <button
                       type="button"
                       onClick={toggleVideoPlay}
-                      className="p-2 rounded-xl bg-black/60 hover:bg-black/80 active:scale-90 text-white border border-white/20 transition-all cursor-pointer shadow-md"
+                      className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 active:scale-90 text-white border border-zinc-700/80 transition-all cursor-pointer shadow-sm shrink-0"
                       title={isVideoPlaying ? 'Pause video' : 'Play video'}
                       aria-label={isVideoPlaying ? 'Pause' : 'Play'}
                     >
@@ -623,7 +694,7 @@ export function PostsGrid({
                     <button
                       type="button"
                       onClick={toggleVideoMute}
-                      className="p-2 rounded-xl bg-black/60 hover:bg-black/80 active:scale-90 text-white border border-white/20 transition-all cursor-pointer shadow-md"
+                      className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 active:scale-90 text-white border border-zinc-700/80 transition-all cursor-pointer shadow-sm shrink-0"
                       title={isVideoMuted ? 'Unmute audio' : 'Mute audio'}
                       aria-label={isVideoMuted ? 'Unmute' : 'Mute'}
                     >
@@ -636,11 +707,13 @@ export function PostsGrid({
                       `/api/media?url=${encodeURIComponent(activeItem.url)}&download=true&filename=instagram_${username}_${activeItem.id}.${activeItem.type === 'video' && activeItem.url && activeItem.url.includes('.mp4') ? 'mp4' : 'jpg'}`
                     }
                     download
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-gradient-to-r from-pink-600 via-rose-600 to-amber-600 hover:opacity-95 text-white text-xs font-semibold rounded-xl shadow-md cursor-pointer"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-gradient-to-r from-pink-600 via-rose-600 to-amber-600 hover:opacity-95 active:scale-[0.98] text-white text-xs font-semibold rounded-xl shadow-md cursor-pointer transition-transform"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    Download {activeItem.type === 'video' && activeItem.url && activeItem.url.includes('.mp4') ? 'Video' : 'Image'}
-                    {selectedPost.type === 'carousel' && ` (${carouselIndex + 1}/${selectedPost.carouselMedia?.length})`}
+                    <span className="truncate">
+                      Download {activeItem.type === 'video' && activeItem.url && activeItem.url.includes('.mp4') ? 'Video' : 'Image'}
+                      {selectedPost.type === 'carousel' && ` (${carouselIndex + 1}/${selectedPost.carouselMedia?.length})`}
+                    </span>
                   </a>
 
                   {selectedPost.type === 'carousel' && (selectedPost.carouselMedia?.length || 0) > 1 && (
@@ -648,25 +721,25 @@ export function PostsGrid({
                       type="button"
                       onClick={() => downloadAllZip(selectedPost)}
                       disabled={isZipping}
-                      className="flex items-center justify-center gap-1.5 py-2 px-3 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-xl border border-white/20 shadow-md cursor-pointer transition-colors disabled:opacity-50"
+                      className="flex items-center justify-center gap-1.5 py-2 px-3 bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold rounded-xl border border-zinc-700/80 shadow-sm cursor-pointer transition-colors disabled:opacity-50 shrink-0"
                       title="Download all carousel media as a single ZIP file"
                     >
                       {isZipping ? <Loader2 className="w-3.5 h-3.5 animate-spin text-pink-400" /> : <Archive className="w-3.5 h-3.5 text-pink-400" />}
-                      <span>{isZipping ? `Zipping ${zipProgress}...` : 'Download All (ZIP)'}</span>
+                      <span>{isZipping ? `${zipProgress}` : 'ZIP All'}</span>
                     </button>
                   )}
                   <a
                     href={activeItem.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-2 bg-black/60 hover:bg-black/80 text-white rounded-xl border border-white/20 transition-colors"
+                    className="p-2 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl border border-zinc-700/80 transition-colors shrink-0"
                     title="Direct Source URL"
                   >
                     <Maximize2 className="w-3.5 h-3.5" />
                   </a>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Desktop Sidebar Details & Actions */}
             <div className="hidden md:flex w-80 p-5 flex-col justify-between border-l border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">

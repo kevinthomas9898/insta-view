@@ -132,3 +132,28 @@ All interactive modal dialogs (Watchlist, Story Vault, Media Fullscreen Viewers,
    - Tabs and directory categories must use `overflow-x-auto scrollbar-none` with smooth horizontal touch momentum.
    - Media cards must respect `aspect-[9/16]` for stories/reels and `aspect-square` for photo posts.
 3. **Safe-Area Insets:** Ensure all fixed navigation bars and bottom players account for mobile browser navigation chrome and notches (`pb-safe`).
+
+---
+
+## 6. Non-Obstructing Media Viewer Standard
+
+### Problem Statement
+In media viewers, placing large action buttons (such as Download, Download All ZIP, direct link buttons) and multiline captions directly on top of the media (`absolute bottom-0 inset-x-0`) covers up to 40% of the image or video on mobile displays, hiding clothing, jewelry, faces, subtitles, and video content.
+
+### Mandatory Viewer Standards
+1. **Separation of Media and Controls on Mobile (`PostsGrid.tsx`):**
+   - Media stage is contained in `flex-1 min-h-0 bg-black flex items-center justify-center overflow-hidden`.
+   - The mobile details panel (`md:hidden`) is situated **below** the media stage in the modal's vertical flex layout (`shrink-0 bg-zinc-950 border-t border-zinc-800/80 px-3.5 py-2.5`).
+   - The media scales with `object-contain` within the upper stage with **zero visual overlap** from buttons, captions, or icons.
+2. **Clean View (Distraction-Free Fullscreen Mode):**
+   - Every viewer (`PostsGrid.tsx`, `ReelsGrid.tsx`, `StoriesViewer.tsx`) must provide a Clean View toggle (`Eye` / `EyeOff` icon in the top header).
+   - In Posts viewer, tapping on the photo directly toggles Clean View on/off.
+   - When Clean View is active:
+     - The bottom details panel / overlay is hidden.
+     - Media scales to 100% of the modal viewport height.
+     - A discreet floating pill (`[👁️ Show Details]`) appears at the bottom with 1-tap restoration.
+3. **Reels Vertical Clearance (`ReelsGrid.tsx`):**
+   - 9:16 vertical reels feature a Clean View toggle in the top bar to instantly hide the gradient caption, music title, copy buttons, and download buttons so subtitles and the lower third of the video are 100% unobstructed.
+4. **Stories Viewer Consistency (`StoriesViewer.tsx`):**
+   - Top header includes the Clean View toggle, allowing full unobstructed story viewing without the bottom action pills.
+
