@@ -14,8 +14,28 @@ import {
 import { InstagramError } from '../errors';
 import { globalCache, CACHE_TTL } from '../../cache';
 import { log } from '../../utils/logger';
+import { isProfileOptedOut } from '../../storage/opt-out';
 
 export class InstagramService {
+  private static async checkOptOut<T>(username: string): Promise<ApiResponse<T> | null> {
+    if (await isProfileOptedOut(username)) {
+      return {
+        success: false,
+        error: {
+          code: 'PROFILE_OPTED_OUT',
+          message: `@${username} has been opted out of public indexing upon owner request under DMCA & privacy compliance.`,
+        },
+        metadata: {
+          provider: 'OptOutRegistry',
+          executionTimeMs: 0,
+          isDemo: false,
+          timestamp: new Date().toISOString(),
+        },
+      };
+    }
+    return null;
+  }
+
   private static addMediaProxyUrls(item: MediaItem, username: string): MediaItem {
     const isVideo = item.type === 'video' && Boolean(item.url && item.url.includes('.mp4'));
     const ext = isVideo ? 'mp4' : 'jpg';
@@ -46,103 +66,82 @@ export class InstagramService {
     username: string,
     forceDemo: boolean = false
   ): Promise<ApiResponse<Profile>> {
+    const optOut = await this.checkOptOut<Profile>(username);
+    if (optOut) return optOut;
+
     const cacheKey = `profile:${username}:${forceDemo ? 'demo' : 'live'}`;
     const cached = globalCache.get<Profile>(cacheKey);
 
-    const provider = ProviderFactory.getProvider({ forceDemo });
+    const chain = ProviderFactory.getFallbackChain({ forceDemo });
     const startTime = Date.now();
 
     if (cached) {
       log('info', {
         action: 'getProfile',
         username,
-        provider: provider.name,
+        provider: chain[0].name,
         fromCache: true,
       });
       return {
         success: true,
         data: cached,
         metadata: {
-          provider: provider.name,
+          provider: chain[0].name,
           executionTimeMs: 0,
-          isDemo: provider.isDemo,
+          isDemo: chain[0].isDemo,
           timestamp: new Date().toISOString(),
           notice: 'Served from high-speed cache',
         },
       };
     }
 
-    try {
-      const result = await provider.getProfile(username);
-      const durationMs = Date.now() - startTime;
+    let lastErr: unknown;
+    for (let i = 0; i < chain.length; i++) {
+      const provider = chain[i];
+      try {
+        const result = await provider.getProfile(username);
+        const durationMs = Date.now() - startTime;
 
-      globalCache.set(cacheKey, result.data, CACHE_TTL.PROFILE);
+        globalCache.set(cacheKey, result.data, CACHE_TTL.PROFILE);
 
-      log('info', {
-        action: 'getProfile',
-        username,
-        provider: provider.name,
-        durationMs,
-        status: 'success',
-      });
-
-      return {
-        success: true,
-        data: result.data,
-        metadata: {
+        log('info', {
+          action: i === 0 ? 'getProfile' : 'getProfile_failover',
+          username,
           provider: provider.name,
-          executionTimeMs: durationMs,
-          isDemo: provider.isDemo,
-          timestamp: new Date().toISOString(),
-          notice: result.notice,
-        },
-      };
-    } catch (err: unknown) {
-      // Auto-fallback: If configured external provider failed and we're in live mode, fall back to DirectCrawler
-      if (!forceDemo && !(provider instanceof DirectCrawlerProvider)) {
-        try {
-          const directCrawler = new DirectCrawlerProvider();
-          const fallbackResult = await directCrawler.getProfile(username);
-          const durationMs = Date.now() - startTime;
+          durationMs,
+          status: 'success',
+        });
 
-          globalCache.set(cacheKey, fallbackResult.data, CACHE_TTL.PROFILE);
-
-          log('info', {
-            action: 'getProfile_fallback',
-            username,
-            provider: directCrawler.name,
-            durationMs,
-            status: 'success',
-          });
-
-          return {
-            success: true,
-            data: fallbackResult.data,
-            metadata: {
-              provider: directCrawler.name,
-              executionTimeMs: durationMs,
-              isDemo: false,
-              timestamp: new Date().toISOString(),
-              notice: `Fetched via built-in Direct Crawler (${provider.name} fallback)`,
-            },
-          };
-        } catch {
-          // If fallback also fails, proceed to error handler
-        }
+        return {
+          success: true,
+          data: result.data,
+          metadata: {
+            provider: provider.name,
+            executionTimeMs: durationMs,
+            isDemo: provider.isDemo,
+            timestamp: new Date().toISOString(),
+            notice: i > 0 ? `Fetched via ${provider.name} (${chain[0].name} failover)` : result.notice,
+          },
+        };
+      } catch (err: unknown) {
+        lastErr = err;
       }
-
-      return this.handleServiceError(err, 'getProfile', username, provider, startTime);
     }
+
+    return this.handleServiceError(lastErr, 'getProfile', username, chain[0], startTime);
   }
 
   public static async getStories(
     username: string,
     forceDemo: boolean = false
   ): Promise<ApiResponse<StoryResult[]>> {
+    const optOut = await this.checkOptOut<StoryResult[]>(username);
+    if (optOut) return optOut;
+
     const cacheKey = `stories:${username}:${forceDemo ? 'demo' : 'live'}`;
     const cached = globalCache.get<StoryResult[]>(cacheKey);
 
-    const provider = ProviderFactory.getProvider({ forceDemo });
+    const chain = ProviderFactory.getFallbackChain({ forceDemo });
     const startTime = Date.now();
 
     if (cached) {
@@ -150,59 +149,68 @@ export class InstagramService {
         success: true,
         data: cached,
         metadata: {
-          provider: provider.name,
+          provider: chain[0].name,
           executionTimeMs: 0,
-          isDemo: provider.isDemo,
+          isDemo: chain[0].isDemo,
           timestamp: new Date().toISOString(),
           notice: 'Served from short-lived story cache',
         },
       };
     }
 
-    try {
-      const result = await provider.getStories(username);
-      const durationMs = Date.now() - startTime;
+    let lastErr: unknown;
+    for (let i = 0; i < chain.length; i++) {
+      const provider = chain[i];
+      try {
+        const result = await provider.getStories(username);
+        const durationMs = Date.now() - startTime;
 
-      const processedStories = result.data.map((s) => ({
-        ...this.addMediaProxyUrls(s, username),
-        storyId: s.storyId,
-        expiresAt: s.expiresAt,
-      }));
+        const processedStories = result.data.map((s) => ({
+          ...this.addMediaProxyUrls(s, username),
+          storyId: s.storyId,
+          expiresAt: s.expiresAt,
+        }));
 
-      globalCache.set(cacheKey, processedStories, CACHE_TTL.STORIES);
+        globalCache.set(cacheKey, processedStories, CACHE_TTL.STORIES);
 
-      log('info', {
-        action: 'getStories',
-        username,
-        provider: provider.name,
-        durationMs,
-        status: 'success',
-      });
-
-      return {
-        success: true,
-        data: processedStories,
-        metadata: {
+        log('info', {
+          action: i === 0 ? 'getStories' : 'getStories_failover',
+          username,
           provider: provider.name,
-          executionTimeMs: durationMs,
-          isDemo: provider.isDemo,
-          timestamp: new Date().toISOString(),
-          notice: result.notice,
-        },
-      };
-    } catch (err: unknown) {
-      return this.handleServiceError(err, 'getStories', username, provider, startTime);
+          durationMs,
+          status: 'success',
+        });
+
+        return {
+          success: true,
+          data: processedStories,
+          metadata: {
+            provider: provider.name,
+            executionTimeMs: durationMs,
+            isDemo: provider.isDemo,
+            timestamp: new Date().toISOString(),
+            notice: i > 0 ? `Fetched via ${provider.name} (${chain[0].name} failover)` : result.notice,
+          },
+        };
+      } catch (err: unknown) {
+        lastErr = err;
+      }
     }
+
+    return this.handleServiceError(lastErr, 'getStories', username, chain[0], startTime);
   }
 
   public static async getHighlights(
     username: string,
     forceDemo: boolean = false
   ): Promise<ApiResponse<HighlightResult[]>> {
+    const optOut = await this.checkOptOut<HighlightResult[]>(username);
+    if (optOut) return optOut;
+
     const cacheKey = `highlights:${username}:${forceDemo ? 'demo' : 'live'}`;
     const cached = globalCache.get<HighlightResult[]>(cacheKey);
 
-    const provider = ProviderFactory.getProvider({ forceDemo });
+    const chain = ProviderFactory.getFallbackChain({ forceDemo });
     const startTime = Date.now();
 
     if (cached) {
@@ -210,38 +218,45 @@ export class InstagramService {
         success: true,
         data: cached,
         metadata: {
-          provider: provider.name,
+          provider: chain[0].name,
           executionTimeMs: 0,
-          isDemo: provider.isDemo,
+          isDemo: chain[0].isDemo,
           timestamp: new Date().toISOString(),
         },
       };
     }
 
-    try {
-      const result = await provider.getHighlights(username);
-      const durationMs = Date.now() - startTime;
+    let lastErr: unknown;
+    for (let i = 0; i < chain.length; i++) {
+      const provider = chain[i];
+      try {
+        const result = await provider.getHighlights(username);
+        const durationMs = Date.now() - startTime;
 
-      const processed = result.map((hl) => ({
-        ...hl,
-        items: hl.items.map((it) => this.addMediaProxyUrls(it, username)),
-      }));
+        const processed = result.map((hl) => ({
+          ...hl,
+          items: hl.items.map((it) => this.addMediaProxyUrls(it, username)),
+        }));
 
-      globalCache.set(cacheKey, processed, CACHE_TTL.HIGHLIGHTS);
+        globalCache.set(cacheKey, processed, CACHE_TTL.HIGHLIGHTS);
 
-      return {
-        success: true,
-        data: processed,
-        metadata: {
-          provider: provider.name,
-          executionTimeMs: durationMs,
-          isDemo: provider.isDemo,
-          timestamp: new Date().toISOString(),
-        },
-      };
-    } catch (err: unknown) {
-      return this.handleServiceError(err, 'getHighlights', username, provider, startTime);
+        return {
+          success: true,
+          data: processed,
+          metadata: {
+            provider: provider.name,
+            executionTimeMs: durationMs,
+            isDemo: provider.isDemo,
+            timestamp: new Date().toISOString(),
+            notice: i > 0 ? `Fetched via ${provider.name} (${chain[0].name} failover)` : undefined,
+          },
+        };
+      } catch (err: unknown) {
+        lastErr = err;
+      }
     }
+
+    return this.handleServiceError(lastErr, 'getHighlights', username, chain[0], startTime);
   }
 
   public static async getHighlightStories(
@@ -249,6 +264,9 @@ export class InstagramService {
     username: string,
     forceDemo: boolean = false
   ): Promise<ApiResponse<MediaItem[]>> {
+    const optOut = await this.checkOptOut<MediaItem[]>(username);
+    if (optOut) return optOut;
+
     const cacheKey = `highlight_stories:${highlightId}:${forceDemo ? 'demo' : 'live'}`;
     const cached = globalCache.get<MediaItem[]>(cacheKey);
 
@@ -315,6 +333,9 @@ export class InstagramService {
     forceDemo: boolean = false,
     maxId?: string
   ): Promise<ApiResponse<PostResult[]>> {
+    const optOut = await this.checkOptOut<PostResult[]>(username);
+    if (optOut) return optOut;
+
     const cacheKey = `posts:${username}:${forceDemo ? 'demo' : 'live'}:${maxId || 'initial'}`;
     interface CachedPostsPayload {
       posts: PostResult[];
@@ -324,7 +345,7 @@ export class InstagramService {
     }
     const cached = globalCache.get<CachedPostsPayload>(cacheKey);
 
-    const provider = ProviderFactory.getProvider({ forceDemo });
+    const chain = ProviderFactory.getFallbackChain({ forceDemo });
     const startTime = Date.now();
 
     if (cached) {
@@ -332,9 +353,9 @@ export class InstagramService {
         success: true,
         data: cached.posts,
         metadata: {
-          provider: provider.name,
+          provider: chain[0].name,
           executionTimeMs: 0,
-          isDemo: provider.isDemo,
+          isDemo: chain[0].isDemo,
           timestamp: new Date().toISOString(),
           notice: cached.notice || 'Served from cache',
           nextMaxId: cached.nextMaxId,
@@ -343,43 +364,49 @@ export class InstagramService {
       };
     }
 
-    try {
-      const result = await provider.getPosts(username, maxId);
-      const durationMs = Date.now() - startTime;
+    let lastErr: unknown;
+    for (let i = 0; i < chain.length; i++) {
+      const provider = chain[i];
+      try {
+        const result = await provider.getPosts(username, maxId);
+        const durationMs = Date.now() - startTime;
 
-      const processed = result.data.map((p) => ({
-        ...this.addMediaProxyUrls(p, username),
-        likeCount: p.likeCount,
-        commentCount: p.commentCount,
-      }));
+        const processed = result.data.map((p) => ({
+          ...this.addMediaProxyUrls(p, username),
+          likeCount: p.likeCount,
+          commentCount: p.commentCount,
+        }));
 
-      globalCache.set(
-        cacheKey,
-        {
-          posts: processed,
-          nextMaxId: result.nextMaxId,
-          hasNextPage: result.hasNextPage,
-          notice: result.notice,
-        },
-        CACHE_TTL.POSTS
-      );
+        globalCache.set(
+          cacheKey,
+          {
+            posts: processed,
+            nextMaxId: result.nextMaxId,
+            hasNextPage: result.hasNextPage,
+            notice: result.notice,
+          },
+          CACHE_TTL.POSTS
+        );
 
-      return {
-        success: true,
-        data: processed,
-        metadata: {
-          provider: provider.name,
-          executionTimeMs: durationMs,
-          isDemo: provider.isDemo,
-          timestamp: new Date().toISOString(),
-          notice: result.notice,
-          nextMaxId: result.nextMaxId,
-          hasNextPage: result.hasNextPage,
-        },
-      };
-    } catch (err: unknown) {
-      return this.handleServiceError(err, 'getPosts', username, provider, startTime);
+        return {
+          success: true,
+          data: processed,
+          metadata: {
+            provider: provider.name,
+            executionTimeMs: durationMs,
+            isDemo: provider.isDemo,
+            timestamp: new Date().toISOString(),
+            notice: i > 0 ? `Fetched via ${provider.name} (${chain[0].name} failover)` : result.notice,
+            nextMaxId: result.nextMaxId,
+            hasNextPage: result.hasNextPage,
+          },
+        };
+      } catch (err: unknown) {
+        lastErr = err;
+      }
     }
+
+    return this.handleServiceError(lastErr, 'getPosts', username, chain[0], startTime);
   }
 
   public static async getReels(
@@ -387,6 +414,9 @@ export class InstagramService {
     forceDemo: boolean = false,
     maxId?: string
   ): Promise<ApiResponse<ReelResult[]>> {
+    const optOut = await this.checkOptOut<ReelResult[]>(username);
+    if (optOut) return optOut;
+
     const cacheKey = `reels:${username}:${forceDemo ? 'demo' : 'live'}:${maxId || 'initial'}`;
     const cached = globalCache.get<{
       reels: ReelResult[];
@@ -395,7 +425,7 @@ export class InstagramService {
       notice?: string;
     } | ReelResult[]>(cacheKey);
 
-    const provider = ProviderFactory.getProvider({ forceDemo });
+    const chain = ProviderFactory.getFallbackChain({ forceDemo });
     const startTime = Date.now();
 
     if (cached) {
@@ -418,9 +448,9 @@ export class InstagramService {
           success: true,
           data: cachedReels,
           metadata: {
-            provider: provider.name,
+            provider: chain[0].name,
             executionTimeMs: 0,
-            isDemo: provider.isDemo,
+            isDemo: chain[0].isDemo,
             timestamp: new Date().toISOString(),
             notice: Array.isArray(cached) ? undefined : cached.notice,
             nextMaxId: Array.isArray(cached) ? undefined : cached.nextMaxId,
@@ -430,58 +460,64 @@ export class InstagramService {
       }
     }
 
-    try {
-      const result = await provider.getReels(username, maxId);
-      const durationMs = Date.now() - startTime;
+    let lastErr: unknown;
+    for (let i = 0; i < chain.length; i++) {
+      const provider = chain[i];
+      try {
+        const result = await provider.getReels(username, maxId);
+        const durationMs = Date.now() - startTime;
 
-      // Cross-enrich reels with video URLs from pooled posts if available
-      const poolObj = globalCache.get<Record<string, { url: string; caption?: string }>>(`posts_pool:${username}`) || {};
+        // Cross-enrich reels with video URLs from pooled posts if available
+        const poolObj = globalCache.get<Record<string, { url: string; caption?: string }>>(`posts_pool:${username}`) || {};
 
-      const processed = result.data.map((r) => {
-        let reelItem = { ...r };
-        const poolEntry = poolObj[reelItem.id] || (reelItem.shortcode ? poolObj[reelItem.shortcode] : undefined);
-        if ((!reelItem.url || !reelItem.url.includes('.mp4')) && poolEntry?.url?.includes('.mp4')) {
-          reelItem.url = poolEntry.url;
-        }
-        if (!reelItem.caption && poolEntry?.caption) {
-          reelItem.caption = poolEntry.caption;
-        }
+        const processed = result.data.map((r) => {
+          let reelItem = { ...r };
+          const poolEntry = poolObj[reelItem.id] || (reelItem.shortcode ? poolObj[reelItem.shortcode] : undefined);
+          if ((!reelItem.url || !reelItem.url.includes('.mp4')) && poolEntry?.url?.includes('.mp4')) {
+            reelItem.url = poolEntry.url;
+          }
+          if (!reelItem.caption && poolEntry?.caption) {
+            reelItem.caption = poolEntry.caption;
+          }
+          return {
+            ...this.addMediaProxyUrls(reelItem, username),
+            viewCount: r.viewCount,
+            playCount: r.playCount,
+            audioTitle: r.audioTitle,
+            audioArtist: r.audioArtist,
+          };
+        });
+
+        globalCache.set(
+          cacheKey,
+          {
+            reels: processed,
+            nextMaxId: result.nextMaxId,
+            hasNextPage: result.hasNextPage,
+            notice: result.notice,
+          },
+          CACHE_TTL.REELS
+        );
+
         return {
-          ...this.addMediaProxyUrls(reelItem, username),
-          viewCount: r.viewCount,
-          playCount: r.playCount,
-          audioTitle: r.audioTitle,
-          audioArtist: r.audioArtist,
+          success: true,
+          data: processed,
+          metadata: {
+            provider: provider.name,
+            executionTimeMs: durationMs,
+            isDemo: provider.isDemo,
+            timestamp: new Date().toISOString(),
+            notice: i > 0 ? `Fetched via ${provider.name} (${chain[0].name} failover)` : result.notice,
+            nextMaxId: result.nextMaxId,
+            hasNextPage: result.hasNextPage,
+          },
         };
-      });
-
-      globalCache.set(
-        cacheKey,
-        {
-          reels: processed,
-          nextMaxId: result.nextMaxId,
-          hasNextPage: result.hasNextPage,
-          notice: result.notice,
-        },
-        CACHE_TTL.REELS
-      );
-
-      return {
-        success: true,
-        data: processed,
-        metadata: {
-          provider: provider.name,
-          executionTimeMs: durationMs,
-          isDemo: provider.isDemo,
-          timestamp: new Date().toISOString(),
-          notice: result.notice,
-          nextMaxId: result.nextMaxId,
-          hasNextPage: result.hasNextPage,
-        },
-      };
-    } catch (err: unknown) {
-      return this.handleServiceError(err, 'getReels', username, provider, startTime);
+      } catch (err: unknown) {
+        lastErr = err;
+      }
     }
+
+    return this.handleServiceError(lastErr, 'getReels', username, chain[0], startTime);
   }
 
   private static handleServiceError<T>(

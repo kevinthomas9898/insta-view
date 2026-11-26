@@ -49,6 +49,8 @@ import {
   Trash2,
   Menu,
   HardDrive,
+  Clipboard,
+  ClipboardCheck,
 } from 'lucide-react';
 
 import { FAQ_ITEMS, type FaqItem } from '@/lib/data/faq';
@@ -130,6 +132,26 @@ export function InstaViewer({
   const [showWatchlist, setShowWatchlist] = useState(false);
   const [showStoryVault, setShowStoryVault] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [hasPasted, setHasPasted] = useState(false);
+
+  const handlePasteClipboard = async () => {
+    try {
+      if (!navigator.clipboard?.readText) return;
+      const text = await navigator.clipboard.readText();
+      if (!text || !text.trim()) return;
+      const clean = text.trim();
+      setUsernameInput(clean);
+      setHasPasted(true);
+      setTimeout(() => setHasPasted(false), 2000);
+
+      // Auto-trigger search if it's an Instagram link
+      if (clean.includes('instagram.com') || clean.includes('instagr.am')) {
+        handleSearch(clean);
+      }
+    } catch {
+      // Permission denied or not supported by browser
+    }
+  };
 
   // Load Recent Searches & Watchlist on mount
   useEffect(() => {
@@ -660,8 +682,41 @@ export function InstaViewer({
                   autoCapitalize="none"
                   autoCorrect="off"
                   spellCheck="false"
-                  className="w-full pl-9 pr-4 py-2.5 sm:py-3 bg-transparent text-sm sm:text-base text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none"
+                  className="w-full pl-9 pr-20 py-2.5 sm:py-3 bg-transparent text-sm sm:text-base text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none"
                 />
+
+                {/* Paste / Clear Actions */}
+                <div className="absolute right-2.5 flex items-center gap-1">
+                  {usernameInput ? (
+                    <button
+                      type="button"
+                      onClick={() => setUsernameInput('')}
+                      className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 transition-colors cursor-pointer"
+                      title="Clear input"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handlePasteClipboard}
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 transition-colors cursor-pointer"
+                      title="Paste link or username from clipboard"
+                    >
+                      {hasPasted ? (
+                        <>
+                          <ClipboardCheck className="w-3.5 h-3.5 text-emerald-500" />
+                          <span className="text-emerald-500 font-bold text-[11px]">Pasted!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Clipboard className="w-3.5 h-3.5 text-pink-500" />
+                          <span className="text-[11px]">Paste</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
               </div>
 
               <button
@@ -682,6 +737,20 @@ export function InstaViewer({
                 )}
               </button>
             </form>
+
+            {/* Quick Mobile Paste Action */}
+            {!usernameInput && (
+              <div className="mt-2 text-center sm:hidden animate-fade-in">
+                <button
+                  type="button"
+                  onClick={handlePasteClipboard}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium bg-white/80 dark:bg-zinc-900/80 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-800 hover:border-pink-500/40 active:scale-95 transition-all shadow-2xs cursor-pointer"
+                >
+                  <Clipboard className="w-3 h-3 text-pink-500" />
+                  <span>Paste Instagram link from clipboard</span>
+                </button>
+              </div>
+            )}
 
             {/* Recent Searches */}
             {recentSearches.length > 0 && (

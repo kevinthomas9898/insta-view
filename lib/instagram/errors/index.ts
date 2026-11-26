@@ -3,6 +3,7 @@ export type ErrorCode =
   | 'INVALID_URL'
   | 'PROFILE_NOT_FOUND'
   | 'PRIVATE_ACCOUNT'
+  | 'PROFILE_OPTED_OUT'
   | 'EMPTY_CONTENT'
   | 'RATE_LIMITED'
   | 'PROVIDER_ERROR'

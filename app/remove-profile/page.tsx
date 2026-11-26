@@ -13,16 +13,38 @@ export default function RemoveProfilePage() {
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username.trim() || !email.trim()) return;
 
     setIsSubmitting(true);
-    // Simulate instantaneous client-side confirmation
-    setTimeout(() => {
-      setIsSubmitting(false);
+    setErrorMsg(null);
+
+    try {
+      const res = await fetch('/api/remove-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: username.trim(),
+          email: email.trim(),
+          reason,
+          notes: notes.trim() || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error?.message || 'Failed to submit opt-out request');
+      }
+
       setSubmitted(true);
-    }, 700);
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : 'Network error submitting request. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -149,6 +171,12 @@ export default function RemoveProfilePage() {
                 className="w-full px-4 py-2.5 bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/80 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-pink-500/30 resize-none"
               />
             </div>
+
+            {errorMsg && (
+              <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-700 dark:text-rose-400 text-xs font-medium">
+                {errorMsg}
+              </div>
+            )}
 
             <div className="pt-2">
               <button
