@@ -95,13 +95,6 @@ export const metadata: Metadata = {
   },
   verification: {
     google: "googlee32dff6fdd44e534",
-    other: {
-      "google-site-verification": [
-        "googlee32dff6fdd44e534.html",
-        "googlee32dff6fdd44e534",
-        "e32dff6fdd44e534",
-      ],
-    },
   },
 };
 
