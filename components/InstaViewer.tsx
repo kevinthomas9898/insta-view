@@ -787,6 +787,22 @@ export function InstaViewer({
                   <ShieldAlert className="w-4 h-4 text-amber-500 shrink-0" />
                   <span>InstaView only displays content from public Instagram accounts.</span>
                 </div>
+
+                {profile.avatarUrl && (
+                  <div className="mt-6 pt-5 border-t border-slate-100 dark:border-zinc-800/80 flex flex-col items-center">
+                    <p className="text-xs text-slate-500 dark:text-zinc-400 mb-3">
+                      Even on private profiles, the full-size profile picture (DP) can be viewed and saved in HD.
+                    </p>
+                    <a
+                      href={`/api/media?url=${encodeURIComponent(profile.avatarUrl)}&download=true&filename=${profile.username}_profile_picture_hd.jpg`}
+                      download={`${profile.username}_profile_picture_hd.jpg`}
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-pink-500/15 via-rose-500/15 to-amber-500/15 text-pink-600 dark:text-pink-400 border border-pink-500/30 hover:bg-pink-500/25 text-xs font-semibold transition-all shadow-xs cursor-pointer"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span>Download @{profile.username}&apos;s HD DP</span>
+                    </a>
+                  </div>
+                )}
               </div>
             ) : (
               <>
