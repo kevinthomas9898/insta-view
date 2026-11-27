@@ -26,7 +26,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
   const t = getTranslations(lang).instagramToMp4;
   return {
-    title: t.metaTitle,
+    title: {
+      absolute: t.metaTitle,
+    },
     description: t.metaDescription,
     alternates: {
       canonical: `/${lang}/instagram-to-mp4`,

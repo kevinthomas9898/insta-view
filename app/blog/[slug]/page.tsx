@@ -22,14 +22,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const post = BLOG_POSTS.find((p) => p.slug === slug);
   if (!post) return {};
 
+  const shortTitle = post.title.length > 42 ? `${post.title.slice(0, 39)}...` : post.title;
+
   return {
-    title: `${post.title} — InstaView`,
+    title: {
+      absolute: `${shortTitle} | InstaView`,
+    },
     description: post.description,
     alternates: {
       canonical: `/blog/${post.slug}`,
     },
     openGraph: {
-      title: post.title,
+      title: `${shortTitle} | InstaView`,
       description: post.description,
       url: `https://ig-storyviewer.vercel.app/blog/${post.slug}`,
       type: 'article',

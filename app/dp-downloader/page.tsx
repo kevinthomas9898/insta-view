@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { InstaViewer } from '@/components/InstaViewer';
 
 export const metadata: Metadata = {
-  title: 'Instagram DP Downloader — Full HD Profile Picture Viewer & Saver',
+  title: 'Instagram DP Downloader (Full HD)',
   description:
     'Download Instagram profile pictures (DP) in full original HD resolution without compression. View profile pictures of public and private accounts anonymously with InstaView.',
   keywords: [
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     canonical: '/dp-downloader',
   },
   openGraph: {
-    title: 'Instagram DP Downloader — Full HD Profile Picture Viewer & Saver',
+    title: 'Instagram DP Downloader (Full HD) | InstaView',
     description:
       'View and download full-size Instagram profile pictures (DP) in uncompressed HD resolution. Works for public and private accounts.',
     url: 'https://ig-storyviewer.vercel.app/dp-downloader',

@@ -5,14 +5,14 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { BLOG_POSTS } from '@/lib/data/blog';
 
 export const metadata: Metadata = {
-  title: 'Blog & Instagram Privacy Guides — InstaView',
+  title: 'Instagram Privacy & Safety Blog',
   description:
     'Guides, tutorials, and security analysis on anonymous Instagram viewing, story privacy, and media downloads.',
   alternates: {
     canonical: '/blog',
   },
   openGraph: {
-    title: 'Blog & Instagram Privacy Guides — InstaView',
+    title: 'Instagram Privacy & Safety Blog | InstaView',
     description:
       'Guides, tutorials, and security analysis on anonymous Instagram viewing and story privacy.',
     url: 'https://ig-storyviewer.vercel.app/blog',

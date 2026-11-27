@@ -11,7 +11,7 @@
     "noLogin": "No Login Required"
   },
   "home": {
-    "metaTitle": "Anonymous Instagram Story Viewer & Downloader — InstaView",
+    "metaTitle": "Anonymous Instagram Story Viewer — InstaView",
     "metaDescription": "Watch Instagram stories, highlights, reels, and posts anonymously without an account or login. Download HD media securely with 100% privacy and zero trace.",
     "heroBadge": "100% Anonymous & Secure — No Login Required",
     "heroTitle": "Watch Instagram Stories ",
@@ -20,7 +20,7 @@
     "searchPlaceholder": "Enter username or instagram.com/profile..."
   },
   "stories": {
-    "metaTitle": "Anonymous Instagram Story Viewer — Watch Stories Without Login",
+    "metaTitle": "Anonymous Instagram Story Viewer — InstaView",
     "metaDescription": "Watch public Instagram stories 100% anonymously. View active 24-hour stories, photo updates, and video slides without being seen or leaving a trace.",
     "heroBadge": "Stealth Story Viewer & Archiver",
     "heroTitle": "Watch Instagram Stories ",
@@ -29,7 +29,7 @@
     "searchPlaceholder": "Enter username to view active stories..."
   },
   "reels": {
-    "metaTitle": "Anonymous Instagram Reels Viewer & Downloader — InstaView",
+    "metaTitle": "Anonymous Instagram Reels Viewer — InstaView",
     "metaDescription": "Watch and download Instagram reels in full audio and HD MP4 quality anonymously. No login or app installation required.",
     "heroBadge": "High-Bitrate MP4 Video Downloader",
     "heroTitle": "Watch & Download ",
@@ -38,7 +38,7 @@
     "searchPlaceholder": "Enter username or reel link to view and download..."
   },
   "storySaver": {
-    "metaTitle": "Story Saver — Free Anonymous Instagram Story Saver & Downloader",
+    "metaTitle": "Free Instagram Story Saver — InstaView",
     "metaDescription": "Save and download Instagram stories anonymously with Story Saver by InstaView. Watch active 24-hour stories and permanent highlights without an account.",
     "heroBadge": "The #1 Free Instagram Story Saver",
     "heroTitle": "Story Saver — Save Instagram Stories ",
@@ -47,7 +47,7 @@
     "searchPlaceholder": "Enter username to save stories anonymously..."
   },
   "instagramToMp4": {
-    "metaTitle": "Instagram to MP4 Converter & Downloader in HD 1080p — InstaView",
+    "metaTitle": "Instagram to MP4 Converter in HD — InstaView",
     "metaDescription": "Convert and download Instagram Reels, Stories, and Videos to original high-bitrate MP4 with crystal-clear audio. 100% free and anonymous.",
     "heroBadge": "Direct 1080p / 4K MP4 Video Converter",
     "heroTitle": "Convert Instagram to ",

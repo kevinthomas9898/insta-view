@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { InstaViewer } from '@/components/InstaViewer';
 
 export const metadata: Metadata = {
-  title: 'Story Saver — Free Anonymous Instagram Story Saver & Downloader',
+  title: 'Instagram Story Saver (Free & HD)',
   description:
     'Save and download Instagram stories anonymously with Story Saver by InstaView. Watch active 24-hour stories and permanent highlights without an account or login.',
   keywords: [
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     canonical: '/story-saver',
   },
   openGraph: {
-    title: 'Story Saver — Free Anonymous Instagram Story Saver & Downloader',
+    title: 'Instagram Story Saver (Free & HD) | InstaView',
     description:
       'Save and download Instagram stories anonymously. Watch active 24-hour stories and highlights without an account.',
     url: 'https://ig-storyviewer.vercel.app/story-saver',

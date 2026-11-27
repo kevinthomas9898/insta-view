@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { InstaViewer } from '@/components/InstaViewer';
 
 export const metadata: Metadata = {
-  title: 'InstaView vs InDown — High-Speed InDown Alternative for Reels & Stories',
+  title: 'InstaView vs InDown Alternative',
   description:
     'InDown not working? Try InstaView, the fastest and most secure InDown alternative. Download Instagram Reels, Stories, Photos, and Highlights in original 1080p MP4 and JPEG quality.',
   keywords: [
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     canonical: '/instaview-vs-indown',
   },
   openGraph: {
-    title: 'InstaView vs InDown — High-Speed InDown Alternative for Reels & Stories',
+    title: 'InstaView vs InDown Alternative | InstaView',
     description:
       'InDown not working? Try InstaView, the fastest InDown alternative. Download Reels and Stories in original HD.',
     url: 'https://ig-storyviewer.vercel.app/instaview-vs-indown',

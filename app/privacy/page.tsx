@@ -4,7 +4,7 @@ import { EyeOff, ArrowLeft, Shield } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy — InstaView',
+  title: 'Privacy Policy',
   description:
     'Our commitment to user privacy, zero log retention, anonymous proxy streaming, and GDPR compliance.',
   alternates: {

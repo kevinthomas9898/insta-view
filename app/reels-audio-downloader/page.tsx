@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { InstaViewer } from '@/components/InstaViewer';
 
 export const metadata: Metadata = {
-  title: 'Instagram Reels Audio Downloader — Extract & Save MP3 / M4A Soundtracks',
+  title: 'Instagram Reels Audio Downloader',
   description:
     'Extract and download high-quality audio tracks, original music, and voiceovers from any Instagram Reel or Video in clean M4A/MP3 format with zero quality loss.',
   keywords: [
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     canonical: '/reels-audio-downloader',
   },
   openGraph: {
-    title: 'Instagram Reels Audio Downloader — Extract & Save MP3 / M4A Soundtracks',
+    title: 'Instagram Reels Audio Downloader | InstaView',
     description:
       'Extract and download high-quality audio tracks, original music, and voiceovers from any Instagram Reel in clean M4A format.',
     url: 'https://ig-storyviewer.vercel.app/reels-audio-downloader',

@@ -2,14 +2,14 @@ import type { Metadata } from 'next';
 import { InstaViewer } from '@/components/InstaViewer';
 
 export const metadata: Metadata = {
-  title: 'Anonymous Instagram Story Viewer — Watch Stories Without An Account',
+  title: 'Anonymous Instagram Story Viewer',
   description:
     'Watch active 24-hour Instagram stories 100% anonymously. The creator will never see your name in the seen list. No account or login required. Download high-res stories in HD.',
   alternates: {
     canonical: '/stories',
   },
   openGraph: {
-    title: 'Anonymous Instagram Story Viewer — Watch Stories Without An Account',
+    title: 'Anonymous Instagram Story Viewer | InstaView',
     description:
       'Watch active 24-hour Instagram stories 100% anonymously. The creator will never see your name in the seen list.',
     url: 'https://ig-storyviewer.vercel.app/stories',

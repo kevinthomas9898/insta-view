@@ -26,13 +26,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
   const tNav = getTranslations(lang).nav;
   return {
-    title: `Instagram ${tNav.posts} & Photos Viewer — InstaView`,
+    title: {
+      absolute: `Instagram ${tNav.posts} Viewer | InstaView`,
+    },
     description: `Browse public Instagram feed posts, multi-slide carousels, and high-resolution photos without an account. Download original quality images freely.`,
     alternates: {
       canonical: `/${lang}/posts`,
     },
     openGraph: {
-      title: `Instagram ${tNav.posts} & Photos Viewer — InstaView`,
+      title: `Instagram ${tNav.posts} Viewer | InstaView`,
       url: `https://ig-storyviewer.vercel.app/${lang}/posts`,
     },
   };

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { InstaViewer } from '@/components/InstaViewer';
 
 export const metadata: Metadata = {
-  title: 'IGAnony — Anonymous Instagram Story Viewer & Best IGAnony Alternative',
+  title: 'IGAnony Story Viewer Alternative',
   description:
     'Looking for IGAnony? Use InstaView, the fastest and most reliable free IGAnony replacement. Watch public Instagram stories, highlights, and reels 100% anonymously with zero login.',
   keywords: [
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     canonical: '/iganony',
   },
   openGraph: {
-    title: 'IGAnony — Anonymous Instagram Story Viewer & Best Alternative',
+    title: 'IGAnony Story Viewer Alternative | InstaView',
     description:
       'Fastest and most reliable free IGAnony replacement. Watch Instagram stories and reels anonymously.',
     url: 'https://ig-storyviewer.vercel.app/iganony',

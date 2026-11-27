@@ -2,14 +2,14 @@ import type { Metadata } from 'next';
 import { InstaViewer } from '@/components/InstaViewer';
 
 export const metadata: Metadata = {
-  title: 'Anonymous Instagram Profile Viewer — InstaView',
+  title: 'Anonymous Profile Viewer',
   description:
     'Inspect any public Instagram profile anonymously. View biography, follower metrics, post counts, and download full-size HD profile pictures without an account.',
   alternates: {
     canonical: '/profile-viewer',
   },
   openGraph: {
-    title: 'Anonymous Instagram Profile Viewer — InstaView',
+    title: 'Anonymous Profile Viewer | InstaView',
     description:
       'Inspect any public Instagram profile anonymously. View biography, follower metrics, and full-size HD profile pictures.',
     url: 'https://ig-storyviewer.vercel.app/profile-viewer',

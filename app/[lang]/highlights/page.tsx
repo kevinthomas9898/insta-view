@@ -26,13 +26,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
   const tNav = getTranslations(lang).nav;
   return {
-    title: `Instagram ${tNav.highlights} Viewer & Downloader — InstaView`,
+    title: {
+      absolute: `Instagram ${tNav.highlights} Viewer | InstaView`,
+    },
     description: `Browse and download public Instagram story highlights without logging in. View archived story collections in high quality.`,
     alternates: {
       canonical: `/${lang}/highlights`,
     },
     openGraph: {
-      title: `Instagram ${tNav.highlights} Viewer & Downloader — InstaView`,
+      title: `Instagram ${tNav.highlights} Viewer | InstaView`,
       url: `https://ig-storyviewer.vercel.app/${lang}/highlights`,
     },
   };

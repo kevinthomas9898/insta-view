@@ -2,14 +2,14 @@ import type { Metadata } from 'next';
 import { InstaViewer } from '@/components/InstaViewer';
 
 export const metadata: Metadata = {
-  title: 'Anonymous Instagram Reels Viewer & Downloader — InstaView',
+  title: 'Anonymous Instagram Reels Viewer',
   description:
     'Watch and download Instagram reels in full audio and HD MP4 quality anonymously. No login or app installation required. Save reels directly to phone or PC.',
   alternates: {
     canonical: '/reels',
   },
   openGraph: {
-    title: 'Anonymous Instagram Reels Viewer & Downloader — InstaView',
+    title: 'Anonymous Instagram Reels Viewer | InstaView',
     description:
       'Watch and download Instagram reels in full audio and HD MP4 quality anonymously. No login required.',
     url: 'https://ig-storyviewer.vercel.app/reels',

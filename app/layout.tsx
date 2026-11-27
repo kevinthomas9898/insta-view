@@ -11,7 +11,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "Anonymous Instagram Story Viewer & Downloader — InstaView",
+    default: "Anonymous Instagram Story Viewer | InstaView",
     template: "%s | InstaView",
   },
   description:
@@ -68,7 +68,7 @@ export const metadata: Metadata = {
     shortcut: "/icon.svg",
   },
   openGraph: {
-    title: "Anonymous Instagram Story Viewer & Downloader — InstaView",
+    title: "Anonymous Instagram Story Viewer | InstaView",
     description:
       "Watch Instagram stories, highlights, and reels 100% anonymously. No account or login required. Download high-resolution media in original HD quality.",
     url: "https://ig-storyviewer.vercel.app",
@@ -78,7 +78,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Anonymous Instagram Story Viewer & Downloader — InstaView",
+    title: "Anonymous Instagram Story Viewer | InstaView",
     description:
       "Watch Instagram stories, highlights, and reels 100% anonymously. No login needed. Download HD media freely.",
   },

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { InstaViewer } from '@/components/InstaViewer';
 
 export const metadata: Metadata = {
-  title: 'Instagram Carousel Downloader — Save Multi-Photo & Video Slides in 1-Click',
+  title: 'Instagram Carousel Downloader',
   description:
     'Download entire Instagram carousel albums with multiple photos and videos in original HD quality or as a single ZIP archive. Fast, free, and no login required.',
   keywords: [
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     canonical: '/carousel-downloader',
   },
   openGraph: {
-    title: 'Instagram Carousel Downloader — Save Multi-Photo & Video Slides in 1-Click',
+    title: 'Instagram Carousel Downloader | InstaView',
     description:
       'Download all photos and video slides from any Instagram carousel post in 1-click or as a ZIP archive.',
     url: 'https://ig-storyviewer.vercel.app/carousel-downloader',

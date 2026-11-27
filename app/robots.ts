@@ -11,6 +11,12 @@ export default function robots(): MetadataRoute.Robots {
         allow: '/',
         disallow: ['/api/media'], // Prevent bot bandwidth exhaustion on proxy streaming
       },
+      // Explicitly allow Bingbot & MSNBot
+      {
+        userAgent: ['bingbot', 'msnbot'],
+        allow: '/',
+        disallow: ['/api/media'],
+      },
       // Explicitly allow AI Answer Engines & Generative Search Bots (AEO & GEO)
       {
         userAgent: [

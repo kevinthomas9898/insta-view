@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { InstaViewer } from '@/components/InstaViewer';
 
 export const metadata: Metadata = {
-  title: 'InstaView vs Snapinsta — The Best Free Snapinsta Alternative',
+  title: 'InstaView vs Snapinsta Alternative',
   description:
     'Snapinsta not working or down? Switch to InstaView, the fastest, ad-clean, and 100% anonymous Snapinsta alternative for viewing and downloading Instagram Stories, Reels, and Posts in HD.',
   keywords: [
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     canonical: '/instaview-vs-snapinsta',
   },
   openGraph: {
-    title: 'InstaView vs Snapinsta — The Best Free Snapinsta Alternative',
+    title: 'InstaView vs Snapinsta Alternative | InstaView',
     description:
       'Snapinsta not working or down? Switch to InstaView, the fastest and 100% anonymous Snapinsta alternative.',
     url: 'https://ig-storyviewer.vercel.app/instaview-vs-snapinsta',

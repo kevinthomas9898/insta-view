@@ -2,14 +2,14 @@ import type { Metadata } from 'next';
 import { InstaViewer } from '@/components/InstaViewer';
 
 export const metadata: Metadata = {
-  title: 'Instagram Highlights Viewer & Downloader — InstaView',
+  title: 'Instagram Highlights Viewer',
   description:
     'Browse and download public Instagram story highlights without logging in. View archived story collections, album covers, and full slides in high quality.',
   alternates: {
     canonical: '/highlights',
   },
   openGraph: {
-    title: 'Instagram Highlights Viewer & Downloader — InstaView',
+    title: 'Instagram Highlights Viewer | InstaView',
     description:
       'Browse and download public Instagram story highlights without logging in. View archived story collections in high quality.',
     url: 'https://ig-storyviewer.vercel.app/highlights',

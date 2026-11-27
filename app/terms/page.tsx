@@ -4,7 +4,7 @@ import { EyeOff, ArrowLeft, Lock } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service — InstaView',
+  title: 'Terms of Service',
   description:
     'Terms of service, fair use guidelines, disclaimer, and copyright DMCA procedures for InstaView.',
   alternates: {

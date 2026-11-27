@@ -5,14 +5,14 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { FAQ_ITEMS } from '@/lib/data/faq';
 
 export const metadata: Metadata = {
-  title: 'Frequently Asked Questions & Guide — InstaView',
+  title: 'Frequently Asked Questions',
   description:
     'Find answers to all your questions about anonymous Instagram story viewing, media downloads, privacy guarantees, and how InstaView protects your anonymity.',
   alternates: {
     canonical: '/faq',
   },
   openGraph: {
-    title: 'Frequently Asked Questions & Guide — InstaView',
+    title: 'Frequently Asked Questions | InstaView',
     description:
       'Find answers to all your questions about anonymous Instagram story viewing, media downloads, and privacy.',
     url: 'https://ig-storyviewer.vercel.app/faq',

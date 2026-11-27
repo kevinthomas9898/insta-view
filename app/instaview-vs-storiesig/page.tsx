@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { InstaViewer } from '@/components/InstaViewer';
 
 export const metadata: Metadata = {
-  title: 'InstaView vs StoriesIG — Fast, Anonymous StoriesIG Alternative',
+  title: 'InstaView vs StoriesIG Alternative',
   description:
     'Looking for StoriesIG? InstaView is the most reliable, ad-clean StoriesIG alternative. Watch active Instagram stories, highlights, and reels in full HD with 100% privacy and zero trace.',
   keywords: [
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     canonical: '/instaview-vs-storiesig',
   },
   openGraph: {
-    title: 'InstaView vs StoriesIG — Fast, Anonymous StoriesIG Alternative',
+    title: 'InstaView vs StoriesIG Alternative | InstaView',
     description:
       'Looking for StoriesIG? InstaView is the most reliable StoriesIG alternative. Watch stories and reels anonymously.',
     url: 'https://ig-storyviewer.vercel.app/instaview-vs-storiesig',

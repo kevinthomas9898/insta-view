@@ -26,13 +26,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
   const tNav = getTranslations(lang).nav;
   return {
-    title: `Instagram ${tNav.profile} Viewer — InstaView`,
+    title: {
+      absolute: `Instagram ${tNav.profile} Viewer | InstaView`,
+    },
     description: `Inspect any public Instagram profile anonymously. View biography, follower metrics, post counts, and download full-size HD profile pictures without an account.`,
     alternates: {
       canonical: `/${lang}/profile-viewer`,
     },
     openGraph: {
-      title: `Instagram ${tNav.profile} Viewer — InstaView`,
+      title: `Instagram ${tNav.profile} Viewer | InstaView`,
       url: `https://ig-storyviewer.vercel.app/${lang}/profile-viewer`,
     },
   };

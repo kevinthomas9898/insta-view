@@ -2,14 +2,14 @@ import type { Metadata } from 'next';
 import { InstaViewer } from '@/components/InstaViewer';
 
 export const metadata: Metadata = {
-  title: 'Instagram Posts & Photo Viewer — InstaView',
+  title: 'Instagram Posts & Photos Viewer',
   description:
     'Browse public Instagram feed posts, multi-slide carousels, and high-resolution photos without an account. Download original quality images and videos freely.',
   alternates: {
     canonical: '/posts',
   },
   openGraph: {
-    title: 'Instagram Posts & Photo Viewer — InstaView',
+    title: 'Instagram Posts & Photos Viewer | InstaView',
     description:
       'Browse public Instagram feed posts, multi-slide carousels, and high-resolution photos without an account.',
     url: 'https://ig-storyviewer.vercel.app/posts',
