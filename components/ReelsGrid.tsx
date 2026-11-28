@@ -120,13 +120,29 @@ export function ReelsGrid({
 
   // Auto-scroll transcript seamlessly as the video plays
   useEffect(() => {
-    if (!isAutoScrollEnabled || !isTranscriptPaneOpen) return;
-    if (!activeItemRef.current) return;
+    if (!isAutoScrollEnabled || !isTranscriptPaneOpen || !transcriptScrollRef.current) return;
 
-    activeItemRef.current.scrollIntoView({
-      behavior: 'smooth',
-      block: 'center',
-    });
+    const container = transcriptScrollRef.current;
+    // Find active highlighted segment first, or active paragraph container
+    const activeTarget = (container.querySelector('[data-active-highlight="true"]') ||
+      container.querySelector('[data-active-para="true"]')) as HTMLElement | null;
+
+    if (activeTarget) {
+      const containerRect = container.getBoundingClientRect();
+      const targetRect = activeTarget.getBoundingClientRect();
+      const currentScrollTop = container.scrollTop;
+
+      // Calculate target scroll position to center the active text in the viewport
+      const relativeOffset = targetRect.top - containerRect.top;
+      const targetScroll = currentScrollTop + relativeOffset - (containerRect.height / 2) + (targetRect.height / 2);
+
+      if (Math.abs(container.scrollTop - targetScroll) > 20) {
+        container.scrollTo({
+          top: Math.max(0, targetScroll),
+          behavior: 'smooth',
+        });
+      }
+    }
   }, [activeParagraphIndex, activeSegmentIndex, isAutoScrollEnabled, isTranscriptPaneOpen, transcriptTab]);
 
   const seekTo = (seconds: number) => {
@@ -172,6 +188,12 @@ export function ReelsGrid({
     setIsAdModalOpen(true);
     setIsTranscribing(true);
 
+    // Explicitly pause reel video so it never plays behind the ad
+    if (videoRef.current) {
+      videoRef.current.pause();
+      setIsVideoPlaying(false);
+    }
+
     try {
       const res = await fetch('/api/transcribe', {
         method: 'POST',
@@ -199,6 +221,19 @@ export function ReelsGrid({
   const handleAdCompleted = () => {
     setIsAdModalOpen(false);
     setIsTranscriptPaneOpen(true);
+    // Start reel video only once the ad is skipped or completed
+    if (videoRef.current) {
+      videoRef.current.play().then(() => {
+        setIsVideoPlaying(true);
+      }).catch(() => {
+        if (videoRef.current) {
+          videoRef.current.muted = true;
+          setIsVideoMuted(true);
+          videoRef.current.play().catch(() => {});
+          setIsVideoPlaying(true);
+        }
+      });
+    }
   };
 
   const hasAutoStartedRef = useRef(false);
@@ -231,6 +266,15 @@ export function ReelsGrid({
 
   // Seamless Autoplay with fallback to muted autoplay if browser policy restricts unmuted audio
   useEffect(() => {
+    // DO NOT play video while the ad modal is open
+    if (isAdModalOpen) {
+      if (videoRef.current) {
+        videoRef.current.pause();
+      }
+      setIsVideoPlaying(false);
+      return;
+    }
+
     if (selectedReel && videoRef.current) {
       const hasMp4 = Boolean(selectedReel.url && selectedReel.url.includes('.mp4'));
       if (!hasMp4) {
@@ -265,7 +309,7 @@ export function ReelsGrid({
           });
       }
     }
-  }, [selectedReel]);
+  }, [selectedReel, isAdModalOpen]);
 
   const toggleVideoPlay = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -573,7 +617,7 @@ export function ReelsGrid({
                     <video
                       key={selectedReel.id || selectedReel.url}
                       ref={videoRef}
-                      autoPlay
+                      autoPlay={!isAdModalOpen}
                       playsInline
                       loop
                       muted={isVideoMuted}
@@ -983,6 +1027,7 @@ export function ReelsGrid({
                               <div
                                 key={para.id}
                                 ref={isParaActive ? activeItemRef : null}
+                                data-active-para={isParaActive ? 'true' : undefined}
                                 onClick={() => seekTo(para.start)}
                                 className={`group p-3.5 rounded-2xl transition-all duration-200 cursor-pointer border ${
                                   isParaActive
@@ -1025,6 +1070,7 @@ export function ReelsGrid({
                                       return (
                                         <span
                                           key={sIdx}
+                                          data-active-highlight={isSegActive ? 'true' : undefined}
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             seekTo(seg.start);
@@ -1064,6 +1110,8 @@ export function ReelsGrid({
                               <div
                                 key={idx}
                                 ref={isSegActive ? activeItemRef : null}
+                                data-active-highlight={isSegActive ? 'true' : undefined}
+                                data-active-para={isSegActive ? 'true' : undefined}
                                 onClick={() => seekTo(seg.start)}
                                 className={`group p-2.5 rounded-xl transition-all duration-150 cursor-pointer border flex items-start gap-3 ${
                                   isSegActive
@@ -1162,7 +1210,13 @@ export function ReelsGrid({
       {/* Rewarded Ad Locker Modal (15-second sponsor watch requirement) */}
       <RewardedAdModal
         isOpen={isAdModalOpen}
-        onClose={() => setIsAdModalOpen(false)}
+        onClose={() => {
+          setIsAdModalOpen(false);
+          if (videoRef.current) {
+            videoRef.current.play().catch(() => {});
+            setIsVideoPlaying(true);
+          }
+        }}
         onUnlocked={handleAdCompleted}
         requiredSeconds={15}
       />
