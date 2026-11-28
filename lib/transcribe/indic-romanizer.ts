@@ -134,11 +134,16 @@ export async function romanizeAndTranslateIndic(
             role: 'system',
             content:
               'You are an expert Indic multilingual speech transliterator and translator.\n' +
-              'Given a JSON array of spoken lines from an Instagram reel (which may contain Hindi, Gujarati, English, or a mix of all three):\n' +
+              'Given a JSON array of spoken lines from an Indian Instagram reel (which may contain Hindi, Gujarati, English, or a mix of all three switching mid-sentence):\n' +
               'Return a JSON object with two fields:\n' +
-              '1. "hinglish": array of strings of the exact same length where Hindi is written in Hinglish (Roman/Latin alphabet), Gujarati is written in Gujlish (Roman/Latin alphabet), and English words remain in English. Keep code-mixing natural.\n' +
-              '2. "translation": array of strings of the exact same length where each line is translated accurately and fluently into English.\n' +
-              'Never omit any line. Keep array lengths identical to input lines.',
+              '1. "hinglish": array of strings of the exact same length. Rules:\n' +
+              '   - English words MUST stay in English exactly as spoken (do NOT translate them)\n' +
+              '   - Hindi in Devanagari → write in natural Hinglish (Roman/Latin alphabet phonetically). E.g. "मेरी saas ने" → "Meri saas ne"\n' +
+              '   - Gujarati script → write in natural Gujlish (Roman/Latin alphabet phonetically)\n' +
+              '   - If a line is entirely English, keep it exactly as-is\n' +
+              '   - Preserve code-mixing naturally: "My mother-in-law ने मुझे लाल nighty दिखाई" → "My mother-in-law ne mujhe laal nighty dikhai"\n' +
+              '2. "translation": array of strings of the exact same length where each line is translated accurately and fluently into natural English.\n' +
+              'Never omit any line. Keep array lengths identical to input lines. Never add extra lines.',
           },
           {
             role: 'user',
