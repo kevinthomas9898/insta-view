@@ -3,6 +3,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ReelResult } from '@/lib/instagram/types';
 import { AdBanner } from '@/components/AdBanner';
+import { RewardedAdModal } from '@/components/RewardedAdModal';
+import { ReelTranscriptModal } from '@/components/ReelTranscriptModal';
+import { TranscriptResult } from '@/lib/transcribe/whisper';
 import {
   Play,
   Pause,
@@ -20,6 +23,8 @@ import {
   Check,
   Eye,
   EyeOff,
+  FileText,
+  Sparkles,
 } from 'lucide-react';
 
 interface ReelsGridProps {
@@ -48,8 +53,45 @@ export function ReelsGrid({
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [copyState, setCopyState] = useState<'idle' | 'caption' | 'tags'>('idle');
   const [isOverlayVisible, setIsOverlayVisible] = useState(true);
+  const [isAdModalOpen, setIsAdModalOpen] = useState(false);
+  const [isTranscriptModalOpen, setIsTranscriptModalOpen] = useState(false);
+  const [activeTranscript, setActiveTranscript] = useState<(TranscriptResult & { srt?: string }) | null>(null);
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const lastTimeUpdateRef = useRef<number>(0);
+
+  const handleStartTranscription = async (reel: ReelResult) => {
+    setIsAdModalOpen(true);
+    setIsTranscribing(true);
+
+    try {
+      const res = await fetch('/api/transcribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mediaUrl: reel.url,
+          shortcode: reel.id,
+          caption: reel.caption,
+        }),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data) {
+          setActiveTranscript(json.data);
+        }
+      }
+    } catch (err) {
+      console.error('[Transcription Error]:', err);
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
+
+  const handleAdCompleted = () => {
+    setIsAdModalOpen(false);
+    setIsTranscriptModalOpen(true);
+  };
 
   const copyCaption = (text: string) => {
     if (!text) return;
@@ -491,6 +533,28 @@ export function ReelsGrid({
                         </a>
                       )}
 
+                      {/* Transcribe Reel Action */}
+                      {isPlayableVideo && (
+                        <button
+                          type="button"
+                          onClick={() => handleStartTranscription(selectedReel)}
+                          className="group flex flex-col items-center gap-0.5 active:scale-90 transition-transform cursor-pointer"
+                          title="Transcribe spoken words & lyrics with AI"
+                        >
+                          <div className="p-2.5 rounded-full bg-gradient-to-tr from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white border border-pink-400/30 shadow-xl shadow-pink-500/20 group-hover:scale-105 transition-all">
+                            {isTranscribing ? (
+                              <Loader2 className="w-4 h-4 text-white animate-spin" />
+                            ) : (
+                              <FileText className="w-4 h-4 text-white" />
+                            )}
+                          </div>
+                          <span className="text-[10px] font-semibold text-white drop-shadow-md flex items-center gap-0.5">
+                            <span>Text</span>
+                            <Sparkles className="w-2.5 h-2.5 text-amber-300" />
+                          </span>
+                        </button>
+                      )}
+
                       {/* Copy Caption Action */}
                       {selectedReel.caption && !selectedReel.caption.startsWith('http') && (
                         <button
@@ -561,6 +625,23 @@ export function ReelsGrid({
           </div>
         );
       })()}
+
+      {/* Rewarded Ad Locker Modal (15-second sponsor watch requirement) */}
+      <RewardedAdModal
+        isOpen={isAdModalOpen}
+        onClose={() => setIsAdModalOpen(false)}
+        onUnlocked={handleAdCompleted}
+        requiredSeconds={15}
+      />
+
+      {/* Full Reel Audio Transcript Viewer */}
+      <ReelTranscriptModal
+        isOpen={isTranscriptModalOpen}
+        onClose={() => setIsTranscriptModalOpen(false)}
+        transcript={activeTranscript}
+        reelUsername={username}
+        reelShortcode={selectedReel?.id}
+      />
     </>
   );
 }

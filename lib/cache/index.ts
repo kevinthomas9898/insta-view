@@ -122,4 +122,5 @@ export const CACHE_TTL = {
   REELS: parseInt(process.env.CACHE_TTL_REELS || '900', 10),     // 15 minutes
   STORIES: parseInt(process.env.CACHE_TTL_STORIES || '180', 10), // 3 minutes (short-lived)
   HIGHLIGHTS: parseInt(process.env.CACHE_TTL_HIGHLIGHTS || '900', 10), // 15 minutes
+  TRANSCRIPT: parseInt(process.env.CACHE_TTL_TRANSCRIPT || '86400', 10), // 24 hours
 };
