@@ -8,7 +8,6 @@ import {
   Download,
   FileText,
   Clock,
-  Globe,
   Sparkles,
   AlignLeft,
   ListOrdered,
@@ -119,10 +118,6 @@ export function ReelTranscriptModal({
             <span className="flex items-center gap-1 bg-slate-100 dark:bg-zinc-800 px-2.5 py-1 rounded-lg">
               <Clock className="w-3.5 h-3.5 text-pink-500" />
               <span>{transcript.duration ? `${Math.round(transcript.duration)}s` : 'Full Reel'}</span>
-            </span>
-            <span className="flex items-center gap-1 bg-slate-100 dark:bg-zinc-800 px-2.5 py-1 rounded-lg">
-              <Globe className="w-3.5 h-3.5 text-blue-500" />
-              <span className="uppercase">{transcript.language || 'en'}</span>
             </span>
             <span className="flex items-center gap-1 bg-slate-100 dark:bg-zinc-800 px-2.5 py-1 rounded-lg">
               <span>{wordCount} words</span>

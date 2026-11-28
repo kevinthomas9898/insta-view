@@ -4,7 +4,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ReelResult } from '@/lib/instagram/types';
 import { AdBanner } from '@/components/AdBanner';
 import { RewardedAdModal } from '@/components/RewardedAdModal';
-import { ReelTranscriptModal } from '@/components/ReelTranscriptModal';
 import { TranscriptResult } from '@/lib/transcribe/whisper';
 import { parseTranscriptParagraphs, FormattedParagraph } from '@/lib/transcribe/formatter';
 import {
@@ -68,7 +67,8 @@ export function ReelsGrid({
   const [isTranscriptPaneOpen, setIsTranscriptPaneOpen] = useState(false);
   const [transcriptTab, setTranscriptTab] = useState<'paragraphs' | 'timestamps'>('paragraphs');
   const [copiedTranscript, setCopiedTranscript] = useState(false);
-  const [activeTranscript, setActiveTranscript] = useState<(TranscriptResult & { srt?: string }) | null>(null);
+  const [activeTranscript, setActiveTranscript] = useState<(TranscriptResult & { srt?: string; translationSrt?: string }) | null>(null);
+  const [transcriptMode, setTranscriptMode] = useState<'spoken' | 'translation'>('spoken');
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isAutoScrollEnabled, setIsAutoScrollEnabled] = useState(true);
   const [showOnVideoCaptions, setShowOnVideoCaptions] = useState(false);
@@ -80,8 +80,18 @@ export function ReelsGrid({
   // Parse transcript into interactive paragraphs with timecode anchors & child segments
   const formattedParagraphs: FormattedParagraph[] = React.useMemo(() => {
     if (!activeTranscript) return [];
+    if (transcriptMode === 'translation' && activeTranscript.hasTranslation) {
+      const transSegments = activeTranscript.segments.map((s) => ({
+        ...s,
+        text: s.translatedText || s.text,
+      }));
+      return parseTranscriptParagraphs(
+        transSegments,
+        activeTranscript.translatedText || activeTranscript.text
+      );
+    }
     return parseTranscriptParagraphs(activeTranscript.segments, activeTranscript.text);
-  }, [activeTranscript]);
+  }, [activeTranscript, transcriptMode]);
 
   // Synchronized active segment and paragraph calculation
   const activeSegmentIndex = React.useMemo(() => {
@@ -154,30 +164,45 @@ export function ReelsGrid({
   };
 
   const handleCopyTranscript = () => {
-    if (!activeTranscript?.text) return;
-    navigator.clipboard.writeText(activeTranscript.text);
+    if (!activeTranscript) return;
+    const textToCopy =
+      transcriptMode === 'translation' && activeTranscript.translatedText
+        ? activeTranscript.translatedText
+        : activeTranscript.text;
+    if (!textToCopy) return;
+    navigator.clipboard.writeText(textToCopy);
     setCopiedTranscript(true);
     setTimeout(() => setCopiedTranscript(false), 2000);
   };
 
   const handleDownloadTxt = () => {
-    if (!activeTranscript?.text) return;
-    const blob = new Blob([activeTranscript.text], { type: 'text/plain;charset=utf-8' });
+    if (!activeTranscript) return;
+    const textToDownload =
+      transcriptMode === 'translation' && activeTranscript.translatedText
+        ? activeTranscript.translatedText
+        : activeTranscript.text;
+    if (!textToDownload) return;
+    const blob = new Blob([textToDownload], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `transcript_${username}_${selectedReel?.id || 'reel'}.txt`;
+    a.download = `transcript_${username}_${selectedReel?.id || 'reel'}_${transcriptMode}.txt`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
   const handleDownloadSrt = () => {
-    if (!activeTranscript?.srt) return;
-    const blob = new Blob([activeTranscript.srt], { type: 'text/plain;charset=utf-8' });
+    if (!activeTranscript) return;
+    const srtToDownload =
+      transcriptMode === 'translation' && activeTranscript.translationSrt
+        ? activeTranscript.translationSrt
+        : activeTranscript.srt;
+    if (!srtToDownload) return;
+    const blob = new Blob([srtToDownload], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `subtitles_${username}_${selectedReel?.id || 'reel'}.srt`;
+    a.download = `subtitles_${username}_${selectedReel?.id || 'reel'}_${transcriptMode}.srt`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -657,7 +682,9 @@ export function ReelsGrid({
                     <div className="absolute bottom-16 sm:bottom-20 inset-x-3 z-35 flex justify-center pointer-events-none transition-all duration-150">
                       <div className="bg-black/85 backdrop-blur-md px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-2xl border border-white/20 text-center max-w-[92%] shadow-2xl animate-fade-in">
                         <p className="text-white font-bold text-xs sm:text-sm drop-shadow-md leading-snug tracking-wide">
-                          {activeSegment.text}
+                          {transcriptMode === 'translation' && activeSegment.translatedText
+                            ? activeSegment.translatedText
+                            : activeSegment.text}
                         </p>
                       </div>
                     </div>
@@ -874,6 +901,34 @@ export function ReelsGrid({
 
                     {/* Header Right Controls */}
                     <div className="flex items-center gap-2 shrink-0">
+                      {/* Language Mode Toggle (Hinglish/Spoken vs English Translation) */}
+                      {activeTranscript?.hasTranslation && (
+                        <div className="flex items-center bg-slate-100 dark:bg-zinc-800 p-0.5 rounded-lg text-xs font-semibold">
+                          <button
+                            type="button"
+                            onClick={() => setTranscriptMode('spoken')}
+                            className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                              transcriptMode === 'spoken'
+                                ? 'bg-white dark:bg-zinc-700 text-slate-900 dark:text-white shadow-xs'
+                                : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'
+                            }`}
+                          >
+                            Hinglish / Spoken
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setTranscriptMode('translation')}
+                            className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                              transcriptMode === 'translation'
+                                ? 'bg-white dark:bg-zinc-700 text-slate-900 dark:text-white shadow-xs'
+                                : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'
+                            }`}
+                          >
+                            English Translation
+                          </button>
+                        </div>
+                      )}
+
                       {/* Auto-scroll Sync Toggle */}
                       {activeTranscript && (
                         <button

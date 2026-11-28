@@ -70,25 +70,31 @@ export async function POST(request: NextRequest) {
 
     const transcript = await transcribeMedia(targetUrl, shortcode, caption);
 
-    // Generate formatted SRT string
+    const formatTime = (sec: number) => {
+      const hrs = Math.floor(sec / 3600).toString().padStart(2, '0');
+      const mins = Math.floor((sec % 3600) / 60).toString().padStart(2, '0');
+      const secs = Math.floor(sec % 60).toString().padStart(2, '0');
+      const ms = Math.floor((sec % 1) * 1000).toString().padStart(3, '0');
+      return `${hrs}:${mins}:${secs},${ms}`;
+    };
+
+    // Generate formatted SRT strings for both spoken (Hinglish/Gujlish) and exact English translation
     const srt = transcript.segments
-      .map((s, idx) => {
-        const formatTime = (sec: number) => {
-          const hrs = Math.floor(sec / 3600).toString().padStart(2, '0');
-          const mins = Math.floor((sec % 3600) / 60).toString().padStart(2, '0');
-          const secs = Math.floor(sec % 60).toString().padStart(2, '0');
-          const ms = Math.floor((sec % 1) * 1000).toString().padStart(3, '0');
-          return `${hrs}:${mins}:${secs},${ms}`;
-        };
-        return `${idx + 1}\n${formatTime(s.start)} --> ${formatTime(s.end)}\n${s.text}\n`;
-      })
+      .map((s, idx) => `${idx + 1}\n${formatTime(s.start)} --> ${formatTime(s.end)}\n${s.text}\n`)
       .join('\n');
+
+    const translationSrt = transcript.hasTranslation
+      ? transcript.segments
+          .map((s, idx) => `${idx + 1}\n${formatTime(s.start)} --> ${formatTime(s.end)}\n${s.translatedText || s.text}\n`)
+          .join('\n')
+      : undefined;
 
     return NextResponse.json({
       success: true,
       data: {
         ...transcript,
         srt,
+        translationSrt,
       },
     });
   } catch (error: unknown) {

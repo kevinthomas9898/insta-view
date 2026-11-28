@@ -1,4 +1,5 @@
 import { transcribeMedia } from '../lib/transcribe/whisper';
+import { containsIndicScript, deterministicIndicRomanizer } from '../lib/transcribe/indic-romanizer';
 
 async function runTests() {
   console.log('====================================================');
@@ -39,6 +40,31 @@ async function runTests() {
     const demoResult = await transcribeMedia('https://example.com/demo_empty.mp4', 'empty_shortcode_456');
     assert(demoResult.segments.length >= 3, 'Default spoken transcript has at least 3 speech segments');
     assert(demoResult.text.includes('channel'), 'Default spoken transcript contains natural spoken words');
+
+    // Test 4: Indic script detection
+    const hindiSample = 'नमस्ते दोस्तों आप कैसे हो?';
+    const gujaratiSample = 'આજે આપણે એક નવી રીત શીખીશું.';
+    const englishSample = 'Hello friends, how are you?';
+    const mixedSample = 'Today हम एक new video banayenge, check this out!';
+
+    assert(containsIndicScript(hindiSample) === true, 'Detects Devanagari Hindi script');
+    assert(containsIndicScript(gujaratiSample) === true, 'Detects Gujarati script');
+    assert(containsIndicScript(mixedSample) === true, 'Detects Indic script in code-mixed text');
+    assert(containsIndicScript(englishSample) === false, 'English text does not trigger Indic detector');
+
+    // Test 5: Deterministic transliteration to English alphabet (Hinglish / Gujlish)
+    const romanizedHindi = deterministicIndicRomanizer(hindiSample);
+    assert(!containsIndicScript(romanizedHindi), 'Romanized Hindi contains no Devanagari script');
+    assert(romanizedHindi.toLowerCase().includes('namaste'), 'Romanized Hindi contains phonetic "namaste"');
+
+    const romanizedGuj = deterministicIndicRomanizer(gujaratiSample);
+    assert(!containsIndicScript(romanizedGuj), 'Romanized Gujarati contains no Gujarati script');
+    assert(romanizedGuj.length > 5, 'Romanized Gujarati produces valid Latin text');
+
+    // Test 6: Fallback transcription handles Indic script captions cleanly
+    const indicFallback = await transcribeMedia('https://example.com/demo_hindi.mp4', 'hindi_reel_789', hindiSample);
+    assert(!containsIndicScript(indicFallback.text), 'Indic fallback transcript is transliterated into Roman alphabet');
+    assert(indicFallback.segments.length > 0, 'Indic fallback produces segments');
 
     console.log('====================================================');
     console.log(`TEST RESULTS: ${passed} PASSED, ${failed} FAILED`);

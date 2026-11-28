@@ -1,21 +1,26 @@
 import { globalCache, CACHE_TTL } from '@/lib/cache';
 import { extractReelStreamUrl } from './media-resolver';
 import { formatTranscriptToParagraphs } from './formatter';
+import { containsIndicScript, romanizeAndTranslateIndic, deterministicIndicRomanizer } from './indic-romanizer';
 
 export interface TranscriptSegment {
   id?: number;
   start: number;
   end: number;
   text: string;
+  translatedText?: string;
+  originalText?: string;
 }
 
 export interface TranscriptResult {
   text: string;
+  translatedText?: string;
   language: string;
   duration?: number;
   segments: TranscriptSegment[];
   fromCache?: boolean;
   provider: 'groq' | 'fallback';
+  hasTranslation?: boolean;
 }
 
 /**
@@ -83,6 +88,11 @@ export async function transcribeMedia(
       formData.append('model', 'whisper-large-v3-turbo');
       formData.append('response_format', 'verbose_json');
       formData.append('temperature', '0');
+      // Prompt Whisper to transcribe Hindi and Gujarati in Romanized Hinglish and Gujlish
+      formData.append(
+        'prompt',
+        'Hindi, Gujarati, Hinglish, Gujlish, English code-mixed conversation. Transcribe Hindi in Hinglish (Roman script) and Gujarati in Gujlish (Roman script). For example: "Aap kaise ho?", "Tame kem cho?", "Su chale che?", "Main theek hoon, bhai."'
+      );
 
       const groqResponse = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
         method: 'POST',
@@ -101,7 +111,7 @@ export async function transcribeMedia(
 
       const data = await groqResponse.json();
 
-      const segments: TranscriptSegment[] = (data.segments || []).map(
+      let segments: TranscriptSegment[] = (data.segments || []).map(
         (s: { start: number; end: number; text: string }, idx: number) => ({
           id: idx,
           start: Math.round(s.start * 10) / 10,
@@ -110,13 +120,35 @@ export async function transcribeMedia(
         })
       );
 
-      const formattedText = formatTranscriptToParagraphs(segments, data.text?.trim() || '');
+      let rawFullText = data.text?.trim() || '';
+      let translatedText: string | undefined = undefined;
+      let hasTranslation = false;
+
+      // If text contains Devanagari (Hindi) or Gujarati script, or is flagged as Hindi/Gujarati,
+      // transliterate to natural Hinglish/Gujlish and generate exact English translation with zero errors
+      if (containsIndicScript(rawFullText) || data.language === 'hi' || data.language === 'gu') {
+        const indicResult = await romanizeAndTranslateIndic(segments, rawFullText, groqApiKey);
+        segments = indicResult.hinglishSegments;
+        rawFullText = indicResult.hinglishText;
+        translatedText = indicResult.translatedText;
+        hasTranslation = Boolean(translatedText && translatedText.toLowerCase() !== rawFullText.toLowerCase());
+      }
+
+      const formattedText = formatTranscriptToParagraphs(segments, rawFullText);
+      const formattedTranslation = translatedText
+        ? formatTranscriptToParagraphs(
+            segments.map((s) => ({ ...s, text: s.translatedText || s.text })),
+            translatedText
+          )
+        : undefined;
 
       const result: TranscriptResult = {
         text: formattedText,
+        translatedText: formattedTranslation,
         language: data.language || 'en',
         duration: data.duration || 0,
         segments,
+        hasTranslation,
         provider: 'groq',
       };
 
@@ -141,7 +173,9 @@ function generateFallbackTranscript(captionHint?: string): TranscriptResult {
   const cleanCaption = (captionHint || '').replace(/#[a-zA-Z0-9_]+/g, '').trim();
   
   if (cleanCaption && cleanCaption.length > 20) {
-    const sentences = cleanCaption.split(/[.!?]+/).map(s => s.trim()).filter(Boolean);
+    const isIndic = containsIndicScript(cleanCaption);
+    const romanizedCaption = isIndic ? deterministicIndicRomanizer(cleanCaption) : cleanCaption;
+    const sentences = romanizedCaption.split(/[.!?\n]+/).map(s => s.trim()).filter(Boolean);
     let currentTime = 0;
     const segments: TranscriptSegment[] = sentences.slice(0, 8).map((sentence, idx) => {
       const duration = Math.max(2.5, Math.min(6, sentence.split(' ').length * 0.4));
@@ -156,10 +190,11 @@ function generateFallbackTranscript(captionHint?: string): TranscriptResult {
     });
 
     return {
-      text: cleanCaption,
-      language: 'en',
+      text: romanizedCaption,
+      language: isIndic ? 'hi' : 'en',
       duration: Math.round(currentTime * 10) / 10,
       segments,
+      hasTranslation: false,
       provider: 'fallback',
     };
   }
