@@ -15,6 +15,7 @@ import {
   Volume2,
 } from 'lucide-react';
 import { TranscriptResult } from '@/lib/transcribe/whisper';
+import { formatTranscriptToParagraphs } from '@/lib/transcribe/formatter';
 
 interface ReelTranscriptModalProps {
   isOpen: boolean;
@@ -34,17 +35,30 @@ export function ReelTranscriptModal({
   const [activeTab, setActiveTab] = useState<'paragraph' | 'timestamps'>('paragraph');
   const [copied, setCopied] = useState(false);
 
+  // Intelligently format spoken dialogue into natural, readable paragraphs
+  const formattedText = React.useMemo(() => {
+    if (!transcript?.text) return '';
+    if (transcript.text.includes('\n\n')) {
+      return transcript.text;
+    }
+    return formatTranscriptToParagraphs(transcript.segments, transcript.text);
+  }, [transcript]);
+
+  const paragraphs = React.useMemo(() => {
+    return formattedText ? formattedText.split(/\n\n+/).filter(Boolean) : [];
+  }, [formattedText]);
+
   if (!isOpen || !transcript) return null;
 
   const handleCopy = () => {
-    if (!transcript.text) return;
-    navigator.clipboard.writeText(transcript.text);
+    if (!formattedText) return;
+    navigator.clipboard.writeText(formattedText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   const handleDownloadTxt = () => {
-    const blob = new Blob([transcript.text], { type: 'text/plain;charset=utf-8' });
+    const blob = new Blob([formattedText], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -64,7 +78,7 @@ export function ReelTranscriptModal({
     URL.revokeObjectURL(url);
   };
 
-  const wordCount = transcript.text ? transcript.text.split(/\s+/).filter(Boolean).length : 0;
+  const wordCount = formattedText ? formattedText.split(/\s+/).filter(Boolean).length : 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-fade-in">
@@ -145,8 +159,16 @@ export function ReelTranscriptModal({
         {/* Content Body */}
         <div className="p-4 sm:p-5 flex-1 overflow-y-auto max-h-[50vh] text-slate-800 dark:text-zinc-200 text-sm leading-relaxed">
           {activeTab === 'paragraph' ? (
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-zinc-950/50 border border-slate-100 dark:border-zinc-800/80 font-normal select-text whitespace-pre-wrap">
-              {transcript.text}
+            <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-zinc-950/50 border border-slate-100 dark:border-zinc-800/80 font-normal select-text space-y-3.5">
+              {paragraphs.length > 0 ? (
+                paragraphs.map((para, idx) => (
+                  <p key={idx} className="leading-relaxed text-slate-800 dark:text-zinc-200">
+                    {para}
+                  </p>
+                ))
+              ) : (
+                <p className="text-slate-400 dark:text-zinc-500">No transcript text available.</p>
+              )}
             </div>
           ) : (
             <div className="flex flex-col gap-2.5">

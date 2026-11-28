@@ -1,5 +1,6 @@
 import { globalCache, CACHE_TTL } from '@/lib/cache';
 import { extractReelStreamUrl } from './media-resolver';
+import { formatTranscriptToParagraphs } from './formatter';
 
 export interface TranscriptSegment {
   id?: number;
@@ -100,16 +101,22 @@ export async function transcribeMedia(
 
       const data = await groqResponse.json();
 
-      const result: TranscriptResult = {
-        text: data.text?.trim() || '',
-        language: data.language || 'en',
-        duration: data.duration || 0,
-        segments: (data.segments || []).map((s: { start: number; end: number; text: string }, idx: number) => ({
+      const segments: TranscriptSegment[] = (data.segments || []).map(
+        (s: { start: number; end: number; text: string }, idx: number) => ({
           id: idx,
           start: Math.round(s.start * 10) / 10,
           end: Math.round(s.end * 10) / 10,
           text: s.text.trim(),
-        })),
+        })
+      );
+
+      const formattedText = formatTranscriptToParagraphs(segments, data.text?.trim() || '');
+
+      const result: TranscriptResult = {
+        text: formattedText,
+        language: data.language || 'en',
+        duration: data.duration || 0,
+        segments,
         provider: 'groq',
       };
 
