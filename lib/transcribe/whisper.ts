@@ -32,7 +32,10 @@ export async function transcribeMedia(
   cacheKeyId?: string,
   captionHint?: string
 ): Promise<TranscriptResult> {
-  const cacheKey = cacheKeyId ? `transcript:${cacheKeyId}` : `transcript:${encodeURIComponent(mediaUrl.slice(0, 100))}`;
+  // Use v7 cache key to ensure any stale English hallucinations are cleared
+  const cacheKey = cacheKeyId
+    ? `transcript:v7:${cacheKeyId}`
+    : `transcript:v7:${encodeURIComponent(mediaUrl.slice(0, 100))}`;
   
   // 1. Check in-memory cache
   const cached = globalCache.get<TranscriptResult>(cacheKey);
@@ -49,15 +52,11 @@ export async function transcribeMedia(
       const isLikelyImage = targetUrl.includes('.jpg') || targetUrl.includes('.jpeg') || targetUrl.includes('.png');
       const isDummyUrl = targetUrl.includes('flower.mp4') || targetUrl.includes('interactive-examples') || targetUrl.includes('pexels');
       const isDash = targetUrl.includes('dashinit');
+      const isMetaCdn = targetUrl.includes('fbcdn.net') || targetUrl.includes('cdninstagram.com');
 
-      // If mediaUrl is an image, dummy placeholder, DASH manifest, or not from Meta CDN, resolve genuine progressive stream
-      if (cacheKeyId && (!targetUrl || isLikelyImage || isDummyUrl || isDash || !targetUrl.includes('fbcdn.net'))) {
+      // If mediaUrl is missing, dummy, or not from Meta CDN, resolve genuine progressive stream
+      if (cacheKeyId && (!targetUrl || isLikelyImage || isDummyUrl || isDash || !isMetaCdn)) {
         const streamUrl = await extractReelStreamUrl(cacheKeyId);
-        if (streamUrl) {
-          targetUrl = streamUrl;
-        }
-      } else if (!targetUrl || isLikelyImage || isDummyUrl || isDash || !targetUrl.includes('.mp4')) {
-        const streamUrl = await extractReelStreamUrl(cacheKeyId || targetUrl);
         if (streamUrl) {
           targetUrl = streamUrl;
         }
@@ -83,38 +82,19 @@ export async function transcribeMedia(
         throw new Error('Media file exceeds the 25MB transcription limit.');
       }
 
-      // ─── LANGUAGE-AWARE WHISPER STRATEGY ───────────────────────────────
-      // Indian Instagram reels are almost always code-mixed (Hindi + English,
-      // Gujarati + English, or all three).  Whisper with auto-detect picks
-      // the FIRST language it hears, then hallucinates garbage for every
-      // segment in the other language.
-      //
-      // Fix: ALWAYS run Whisper with language='hi' first.  Hindi-mode Whisper
-      // captures English words inside Hindi speech accurately (they appear in
-      // Devanagari phonetics or stay Latin), and Qwen converts everything to
-      // clean Hinglish + English translation.  If the 'hi' pass produces
-      // suspiciously little text (pure-English reel), fall back to auto-detect.
-      // ────────────────────────────────────────────────────────────────────
-
       /**
-       * Calls Groq Whisper and returns raw response JSON.
+       * Calls Groq Whisper Large v3 (full 32-layer model) without prompt biasing.
        */
       const callWhisper = async (lang?: string) => {
         const fd = new FormData();
         fd.append('file', mediaBlob, 'audio.mp4');
-        fd.append('model', 'whisper-large-v3-turbo');
+        fd.append('model', 'whisper-large-v3');
         fd.append('response_format', 'verbose_json');
         fd.append('temperature', '0');
         if (lang) {
           fd.append('language', lang);
         }
-        // Hindi-mode prompt primes the decoder for code-mixed vocabulary
-        fd.append(
-          'prompt',
-          lang === 'hi'
-            ? 'Yeh ek Indian Instagram reel hai jismein Hindi aur English dono mili hui hai. Hindi, Hinglish, Gujarati, English code-mixed speech. Transcribe sab kuch accurately.'
-            : 'Multilingual Indian Instagram reel. Hindi, Gujarati, Hinglish, Gujlish, English code-mixed conversation.'
-        );
+        // Never pass a Romanized prompt: prompts force Whisper to decode into that script/language.
 
         const resp = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
           method: 'POST',
@@ -132,35 +112,28 @@ export async function transcribeMedia(
         return resp.json();
       };
 
-      // PASS 1: Always try Hindi first — it captures code-mixed speech accurately
-      let data: any;
-      let usedHindiPass = false;
+      // PASS 1: Natural Auto-detect (captures clean multilingual speech)
+      console.log('[Transcription] Pass 1: Whisper Large v3 auto-detect');
+      let data = await callWhisper();
+      let rawFullText = data.text?.trim() || '';
 
-      try {
-        console.log('[Transcription] Pass 1: Whisper with language=hi (captures code-mixed Hindi+English)');
-        data = await callWhisper('hi');
-        usedHindiPass = true;
-
-        // Safety check: if Hindi-mode produced very little text relative to
-        // audio duration, the reel is probably pure English — fall back
-        const hiText = data.text?.trim() || '';
-        const hiDuration = data.duration || 0;
-        const wordsPerSecond = hiText.split(/\s+/).filter(Boolean).length / Math.max(1, hiDuration);
-
-        if (hiText.length < 10 || (hiDuration > 10 && wordsPerSecond < 0.3)) {
-          console.log('[Transcription] Hindi pass produced very little text, retrying with auto-detect');
-          try {
-            data = await callWhisper();
-            usedHindiPass = false;
-          } catch {
-            // Keep Hindi result if auto-detect also fails
+      // PASS 2: If no Indic script detected, verify whether spoken Hindi was misclassified as English
+      // In code-mixed reels (starts in English, switches to Hindi), Whisper auto-detect sometimes
+      // locks to English from the first few seconds. Running a Hindi verification pass checks if
+      // the audio actually contains spoken Hindi in Devanagari.
+      if (!containsIndicScript(rawFullText)) {
+        try {
+          console.log('[Transcription] No Indic script in auto-detect, running Hindi verification pass...');
+          const hiData = await callWhisper('hi');
+          const hiText = hiData.text?.trim() || '';
+          if (containsIndicScript(hiText)) {
+            console.log('[Transcription] Hindi verification pass detected genuine Hindi speech in Devanagari!');
+            data = hiData;
+            rawFullText = hiText;
           }
+        } catch (e) {
+          console.warn('[Transcription] Hindi verification pass error, keeping initial result:', e);
         }
-      } catch {
-        // Hindi pass failed — fall back to auto-detect
-        console.log('[Transcription] Hindi pass failed, falling back to auto-detect');
-        data = await callWhisper();
-        usedHindiPass = false;
       }
 
       let segments: TranscriptSegment[] = (data.segments || []).map(
@@ -172,24 +145,16 @@ export async function transcribeMedia(
         })
       );
 
-      let rawFullText = data.text?.trim() || '';
       let translatedText: string | undefined = undefined;
       let hasTranslation = false;
 
-      // ALWAYS run Qwen post-processing for any transcript that contains
-      // Devanagari/Gujarati script, was transcribed in Hindi mode, or whose
-      // language was detected as Hindi/Gujarati.  This converts:
-      //   - Devanagari → natural Hinglish (Roman)
-      //   - English words that got Devanagari-ified → back to English
-      //   - Generates exact fluent English translation
-      const needsIndicProcessing =
-        containsIndicScript(rawFullText) ||
-        usedHindiPass ||
-        data.language === 'hi' ||
-        data.language === 'gu';
-
-      if (needsIndicProcessing) {
-        console.log(`[Transcription] Running Qwen transliteration pipeline (lang=${data.language}, hindiPass=${usedHindiPass})`);
+      // When Devanagari (Hindi) or Gujarati script is present, run Qwen transliteration:
+      // - English parts stay in English
+      // - Hindi parts become natural conversational Hinglish
+      // - Gujarati parts become natural Gujlish
+      // - Generates exact fluent English translation
+      if (containsIndicScript(rawFullText) || data.language === 'hi' || data.language === 'gu') {
+        console.log(`[Transcription] Running Qwen transliteration pipeline for code-mixed speech...`);
         const indicResult = await romanizeAndTranslateIndic(segments, rawFullText, groqApiKey);
         segments = indicResult.hinglishSegments;
         rawFullText = indicResult.hinglishText;

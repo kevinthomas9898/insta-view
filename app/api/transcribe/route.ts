@@ -47,8 +47,10 @@ export async function POST(request: NextRequest) {
       targetUrl.includes('pexels') ||
       targetUrl.includes('dashinit');
 
+    const isMetaCdn = targetUrl && (targetUrl.includes('fbcdn.net') || targetUrl.includes('cdninstagram.com'));
+
     // Always ensure we have a genuine progressive stream when shortcode is available
-    if (shortcode && (isImageOrDummy || !targetUrl.includes('fbcdn.net'))) {
+    if (shortcode && (isImageOrDummy || !isMetaCdn)) {
       const stream = await extractReelStreamUrl(shortcode);
       if (stream) {
         targetUrl = stream;
