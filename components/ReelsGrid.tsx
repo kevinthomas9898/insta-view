@@ -70,14 +70,64 @@ export function ReelsGrid({
   const [copiedTranscript, setCopiedTranscript] = useState(false);
   const [activeTranscript, setActiveTranscript] = useState<(TranscriptResult & { srt?: string }) | null>(null);
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [isAutoScrollEnabled, setIsAutoScrollEnabled] = useState(true);
+  const [showOnVideoCaptions, setShowOnVideoCaptions] = useState(true);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const transcriptScrollRef = useRef<HTMLDivElement | null>(null);
+  const activeItemRef = useRef<HTMLDivElement | null>(null);
   const lastTimeUpdateRef = useRef<number>(0);
 
-  // Parse transcript into interactive paragraphs with timecode anchors
+  // Parse transcript into interactive paragraphs with timecode anchors & child segments
   const formattedParagraphs: FormattedParagraph[] = React.useMemo(() => {
     if (!activeTranscript) return [];
     return parseTranscriptParagraphs(activeTranscript.segments, activeTranscript.text);
   }, [activeTranscript]);
+
+  // Synchronized active segment and paragraph calculation
+  const activeSegmentIndex = React.useMemo(() => {
+    if (!activeTranscript?.segments || activeTranscript.segments.length === 0) return -1;
+    const segs = activeTranscript.segments;
+    for (let i = 0; i < segs.length; i++) {
+      const s = segs[i];
+      const nextS = segs[i + 1];
+      const sEnd = nextS ? nextS.start : (s.end > s.start ? s.end : s.start + 4);
+      if (currentTime >= s.start && currentTime < sEnd) {
+        return i;
+      }
+    }
+    if (segs.length > 0 && currentTime < segs[0].start) return 0;
+    return -1;
+  }, [activeTranscript, currentTime]);
+
+  const activeSegment =
+    activeSegmentIndex >= 0 && activeTranscript?.segments
+      ? activeTranscript.segments[activeSegmentIndex]
+      : null;
+
+  const activeParagraphIndex = React.useMemo(() => {
+    if (!formattedParagraphs || formattedParagraphs.length === 0) return -1;
+    for (let i = 0; i < formattedParagraphs.length; i++) {
+      const p = formattedParagraphs[i];
+      const nextP = formattedParagraphs[i + 1];
+      const pEnd = nextP ? nextP.start : (p.end > p.start ? p.end : p.start + 10);
+      if (currentTime >= p.start && currentTime < pEnd) {
+        return i;
+      }
+    }
+    if (formattedParagraphs.length > 0 && currentTime < formattedParagraphs[0].start) return 0;
+    return -1;
+  }, [formattedParagraphs, currentTime]);
+
+  // Auto-scroll transcript seamlessly as the video plays
+  useEffect(() => {
+    if (!isAutoScrollEnabled || !isTranscriptPaneOpen) return;
+    if (!activeItemRef.current) return;
+
+    activeItemRef.current.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+    });
+  }, [activeParagraphIndex, activeSegmentIndex, isAutoScrollEnabled, isTranscriptPaneOpen, transcriptTab]);
 
   const seekTo = (seconds: number) => {
     if (videoRef.current) {
@@ -423,6 +473,22 @@ export function ReelsGrid({
                       </button>
                     )}
 
+                    {/* Live Subtitles CC Toggle */}
+                    {activeTranscript && (
+                      <button
+                        type="button"
+                        onClick={() => setShowOnVideoCaptions((v) => !v)}
+                        className={`px-2 py-1 rounded-lg text-[11px] font-extrabold flex items-center gap-1 transition-all cursor-pointer shadow-xs ${
+                          showOnVideoCaptions
+                            ? 'bg-amber-400 text-black shadow-amber-400/20'
+                            : 'bg-black/60 hover:bg-black/90 text-white/70 border border-white/20'
+                        }`}
+                        title={showOnVideoCaptions ? 'Hide On-Video Subtitles' : 'Show On-Video Subtitles'}
+                      >
+                        CC
+                      </button>
+                    )}
+
                     {/* Speed Toggle (only if video) */}
                     {isPlayableVideo && (
                       <button
@@ -528,7 +594,7 @@ export function ReelsGrid({
                       onTimeUpdate={() => {
                         if (videoRef.current && videoRef.current.duration) {
                           const now = Date.now();
-                          if (now - lastTimeUpdateRef.current > 200) {
+                          if (now - lastTimeUpdateRef.current > 100) {
                             lastTimeUpdateRef.current = now;
                             setCurrentTime(videoRef.current.currentTime);
                             setDuration(videoRef.current.duration);
@@ -560,6 +626,17 @@ export function ReelsGrid({
                     <div className="absolute inset-0 flex items-center justify-center bg-black/35 z-25 pointer-events-none">
                       <div className="p-4 rounded-full bg-black/80 backdrop-blur-sm text-white border border-white/20 shadow-2xl transition-transform">
                         <Play className="w-8 h-8 fill-current translate-x-0.5 text-white" />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Live On-Video Synced Subtitle Banner */}
+                  {showOnVideoCaptions && activeSegment && isPlayableVideo && (
+                    <div className="absolute bottom-16 sm:bottom-20 inset-x-3 z-35 flex justify-center pointer-events-none transition-all duration-150">
+                      <div className="bg-black/85 backdrop-blur-md px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-2xl border border-white/20 text-center max-w-[92%] shadow-2xl animate-fade-in">
+                        <p className="text-white font-bold text-xs sm:text-sm drop-shadow-md leading-snug tracking-wide">
+                          {activeSegment.text}
+                        </p>
                       </div>
                     </div>
                   )}
@@ -835,7 +912,7 @@ export function ReelsGrid({
                     </div>
                   </div>
 
-                  {/* Metadata Bar */}
+                  {/* Metadata Bar & Sync Status */}
                   {activeTranscript && (
                     <div className="px-4 sm:px-6 py-2.5 border-b border-slate-100 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 flex items-center justify-between text-xs text-slate-600 dark:text-zinc-400">
                       <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
@@ -858,14 +935,29 @@ export function ReelsGrid({
                           </span>
                         </span>
                       </div>
-                      <span className="text-[11px] text-pink-600 dark:text-pink-400 font-medium hidden sm:inline">
-                        ✨ Tap any paragraph to jump video playback
-                      </span>
+
+                      {/* Auto-scroll sync toggle button */}
+                      <button
+                        type="button"
+                        onClick={() => setIsAutoScrollEnabled((v) => !v)}
+                        className={`px-2 py-1 rounded-md text-[11px] font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
+                          isAutoScrollEnabled
+                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                            : 'bg-slate-200/80 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400'
+                        }`}
+                        title={isAutoScrollEnabled ? 'Auto-scroll is following video playback' : 'Click to resume auto-scroll'}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${isAutoScrollEnabled ? 'bg-emerald-500 animate-ping' : 'bg-slate-400'}`} />
+                        <span>{isAutoScrollEnabled ? 'Sync ON' : 'Sync Paused'}</span>
+                      </button>
                     </div>
                   )}
 
                   {/* Transcript Content Body */}
-                  <div className="flex-1 overflow-y-auto p-4 sm:p-6 text-sm leading-relaxed">
+                  <div
+                    ref={transcriptScrollRef}
+                    className="flex-1 overflow-y-auto p-4 sm:p-6 text-sm leading-relaxed scroll-smooth"
+                  >
                     {isTranscribing ? (
                       <div className="h-full flex flex-col items-center justify-center text-center p-6 my-auto">
                         <div className="p-4 rounded-3xl bg-pink-500/10 border border-pink-500/20 mb-4 animate-pulse">
@@ -885,17 +977,16 @@ export function ReelsGrid({
                     ) : activeTranscript ? (
                       transcriptTab === 'paragraphs' ? (
                         <div className="space-y-3.5 select-text">
-                          {formattedParagraphs.map((para) => {
-                            const isActive =
-                              currentTime >= para.start &&
-                              (para.end > 0 ? currentTime <= para.end : currentTime <= para.start + 12);
+                          {formattedParagraphs.map((para, idx) => {
+                            const isParaActive = activeParagraphIndex === idx;
                             return (
                               <div
                                 key={para.id}
+                                ref={isParaActive ? activeItemRef : null}
                                 onClick={() => seekTo(para.start)}
-                                className={`group p-3.5 rounded-2xl transition-all cursor-pointer border ${
-                                  isActive
-                                    ? 'bg-pink-500/10 dark:bg-pink-500/15 border-pink-500/50 shadow-md ring-1 ring-pink-500/30'
+                                className={`group p-3.5 rounded-2xl transition-all duration-200 cursor-pointer border ${
+                                  isParaActive
+                                    ? 'bg-pink-500/10 dark:bg-pink-500/15 border-pink-500 shadow-md ring-2 ring-pink-500/30'
                                     : 'bg-slate-50/70 hover:bg-slate-100/80 dark:bg-zinc-950/40 dark:hover:bg-zinc-800/60 border-slate-200/80 dark:border-zinc-800/70'
                                 }`}
                                 title="Click to play from this moment"
@@ -903,7 +994,7 @@ export function ReelsGrid({
                                 <div className="flex items-center justify-between mb-1.5 text-[11px] text-slate-400 dark:text-zinc-500 font-mono">
                                   <span
                                     className={`inline-flex items-center gap-1 font-semibold px-2 py-0.5 rounded-md ${
-                                      isActive
+                                      isParaActive
                                         ? 'bg-pink-500 text-white shadow-xs'
                                         : 'bg-slate-200/80 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 group-hover:bg-pink-500 group-hover:text-white transition-colors'
                                     }`}
@@ -914,18 +1005,52 @@ export function ReelsGrid({
                                       {(Math.floor(para.start % 60)).toString().padStart(2, '0')}
                                     </span>
                                   </span>
-                                  <span className="text-[10px] font-sans font-medium text-slate-400 dark:text-zinc-500">
-                                    {isActive ? '● Playing now' : `Paragraph ${para.id + 1}`}
+                                  <span
+                                    className={`text-[10px] font-sans font-medium ${
+                                      isParaActive
+                                        ? 'text-pink-500 dark:text-pink-400 font-bold animate-pulse'
+                                        : 'text-slate-400 dark:text-zinc-500'
+                                    }`}
+                                  >
+                                    {isParaActive ? '● Speaking now' : `Paragraph ${para.id + 1}`}
                                   </span>
                                 </div>
-                                <p
-                                  className={`leading-relaxed text-sm ${
-                                    isActive
-                                      ? 'text-slate-900 dark:text-white font-medium'
-                                      : 'text-slate-800 dark:text-zinc-300'
-                                  }`}
-                                >
-                                  {para.text}
+                                <p className="leading-relaxed text-sm">
+                                  {para.segments && para.segments.length > 0 ? (
+                                    para.segments.map((seg, sIdx) => {
+                                      const isSegActive =
+                                        activeSegment?.id === seg.id ||
+                                        (currentTime >= seg.start &&
+                                          currentTime < (seg.end > seg.start ? seg.end : seg.start + 2.5));
+                                      return (
+                                        <span
+                                          key={sIdx}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            seekTo(seg.start);
+                                          }}
+                                          className={`cursor-pointer transition-all duration-150 rounded px-1 py-0.5 inline-block ${
+                                            isSegActive
+                                              ? 'bg-pink-500/25 text-pink-600 dark:text-pink-300 font-bold border-b-2 border-pink-500 shadow-2xs'
+                                              : 'text-slate-800 dark:text-zinc-300 hover:text-pink-500 hover:bg-pink-500/10'
+                                          }`}
+                                          title={`Click to play: "${seg.text.slice(0, 30)}..."`}
+                                        >
+                                          {seg.text}{' '}
+                                        </span>
+                                      );
+                                    })
+                                  ) : (
+                                    <span
+                                      className={
+                                        isParaActive
+                                          ? 'text-slate-900 dark:text-white font-medium'
+                                          : 'text-slate-800 dark:text-zinc-300'
+                                      }
+                                    >
+                                      {para.text}
+                                    </span>
+                                  )}
                                 </p>
                               </div>
                             );
@@ -934,22 +1059,23 @@ export function ReelsGrid({
                       ) : (
                         <div className="space-y-2 select-text">
                           {activeTranscript.segments.map((seg, idx) => {
-                            const isActive = currentTime >= seg.start && currentTime <= seg.end;
+                            const isSegActive = activeSegmentIndex === idx;
                             return (
                               <div
                                 key={idx}
+                                ref={isSegActive ? activeItemRef : null}
                                 onClick={() => seekTo(seg.start)}
-                                className={`group p-2.5 rounded-xl transition-all cursor-pointer border flex items-start gap-3 ${
-                                  isActive
-                                    ? 'bg-pink-500/10 dark:bg-pink-500/15 border-pink-500/50 shadow-xs'
+                                className={`group p-2.5 rounded-xl transition-all duration-150 cursor-pointer border flex items-start gap-3 ${
+                                  isSegActive
+                                    ? 'bg-pink-500/15 dark:bg-pink-500/20 border-pink-500 shadow-sm ring-1 ring-pink-500/40'
                                     : 'bg-slate-50/60 hover:bg-slate-100/80 dark:bg-zinc-950/40 dark:hover:bg-zinc-800/50 border-slate-200/60 dark:border-zinc-800/60'
                                 }`}
                                 title="Click to play segment"
                               >
                                 <span
                                   className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded-md shrink-0 flex items-center gap-1 ${
-                                    isActive
-                                      ? 'bg-pink-500 text-white'
+                                    isSegActive
+                                      ? 'bg-pink-500 text-white shadow-xs'
                                       : 'bg-slate-200/70 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 group-hover:bg-pink-500 group-hover:text-white transition-colors'
                                   }`}
                                 >
@@ -961,8 +1087,8 @@ export function ReelsGrid({
                                 </span>
                                 <p
                                   className={`text-xs sm:text-sm leading-relaxed ${
-                                    isActive
-                                      ? 'text-slate-900 dark:text-white font-medium'
+                                    isSegActive
+                                      ? 'text-slate-900 dark:text-white font-bold'
                                       : 'text-slate-700 dark:text-zinc-300'
                                   }`}
                                 >

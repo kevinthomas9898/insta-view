@@ -5,6 +5,7 @@ export interface FormattedParagraph {
   start: number;
   end: number;
   text: string;
+  segments?: TranscriptSegment[];
 }
 
 /**
@@ -69,6 +70,7 @@ export function parseTranscriptParagraphs(
       start: currentSegs[0].start,
       end: currentSegs[currentSegs.length - 1].end,
       text: currentSegs.map((s) => s.text.trim()).join(' '),
+      segments: [...currentSegs],
     });
     currentSegs = [];
     currentWords = 0;
