@@ -51,6 +51,7 @@ import {
   HardDrive,
   Clipboard,
   ClipboardCheck,
+  FileText,
 } from 'lucide-react';
 
 import { FAQ_ITEMS, type FaqItem } from '@/lib/data/faq';
@@ -485,6 +486,10 @@ export function InstaViewer({
               <Link href={`${langPrefix}/reels`} className="px-2.5 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
                 {tNav.reels}
               </Link>
+              <Link href="/reel-transcriber" className="px-2.5 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors flex items-center gap-1.5">
+                <span>Transcribe</span>
+                <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-pink-500/10 text-pink-500 font-bold border border-pink-500/20">AI</span>
+              </Link>
               <Link href={`${langPrefix}/posts`} className="px-2.5 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors">
                 {tNav.posts}
               </Link>
@@ -587,6 +592,14 @@ export function InstaViewer({
               >
                 <Film className="w-3.5 h-3.5 text-rose-500" />
                 <span>{tNav.reels}</span>
+              </Link>
+              <Link
+                href="/reel-transcriber"
+                onClick={() => setIsMobileNavOpen(false)}
+                className="flex items-center gap-2 p-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800/80 transition-colors"
+              >
+                <FileText className="w-3.5 h-3.5 text-pink-500" />
+                <span>Transcriber</span>
               </Link>
               <Link
                 href={`${langPrefix}/posts`}
@@ -1212,6 +1225,12 @@ export function InstaViewer({
                 <li>
                   <Link href="/reels" className="hover:text-pink-600 dark:hover:text-pink-400 transition-colors">
                     Instagram Reels Downloader
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/reel-transcriber" className="hover:text-pink-600 dark:hover:text-pink-400 transition-colors flex items-center gap-1.5 font-semibold text-pink-600 dark:text-pink-400">
+                    <span>Reel Transcriber (AI)</span>
+                    <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-pink-500/10 border border-pink-500/20">NEW</span>
                   </Link>
                 </li>
                 <li>
