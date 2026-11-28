@@ -980,75 +980,83 @@ export function ReelsGrid({
                         </p>
                       </div>
                     ) : activeTranscript ? (
-                      <div className="space-y-2.5 select-text">
-                        {formattedParagraphs.map((para, idx) => {
-                          const isParaActive = activeParagraphIndex === idx;
-                          return (
-                            <div
-                              key={para.id}
-                              ref={isParaActive ? activeItemRef : null}
-                              data-active-para={isParaActive ? 'true' : undefined}
-                              onClick={() => seekTo(para.start)}
-                              className={`group relative pl-3.5 pr-2.5 py-2 rounded-xl transition-all cursor-pointer border-l-2 ${
-                                isParaActive
-                                  ? 'border-pink-500 bg-pink-500/8 dark:bg-pink-500/12'
-                                  : 'border-transparent hover:border-slate-300 dark:hover:border-zinc-700 hover:bg-slate-50/70 dark:hover:bg-zinc-800/40'
-                              }`}
-                            >
-                              <div className="flex items-center gap-2 mb-0.5">
-                                <span
-                                  className={`text-[11px] font-mono font-semibold transition-colors ${
-                                    isParaActive
-                                      ? 'text-pink-500 dark:text-pink-400 font-bold'
-                                      : 'text-slate-400 dark:text-zinc-500 group-hover:text-slate-600 dark:group-hover:text-zinc-300'
-                                  }`}
-                                >
-                                  {formatTime(para.start)}
-                                </span>
-                              </div>
-                              <p className="leading-relaxed text-sm">
-                                {para.segments && para.segments.length > 0 ? (
-                                  para.segments.map((seg, sIdx) => {
-                                    const isSegActive =
-                                      activeSegment?.id === seg.id ||
-                                      (currentTime >= seg.start &&
-                                        currentTime < (seg.end > seg.start ? seg.end : seg.start + 2.5));
-                                    return (
-                                      <span
-                                        key={sIdx}
-                                        data-active-highlight={isSegActive ? 'true' : undefined}
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          seekTo(seg.start);
-                                        }}
-                                        className={`cursor-pointer transition-colors rounded px-0.5 ${
-                                          isSegActive
-                                            ? 'bg-pink-500/25 text-pink-600 dark:text-pink-300 font-bold'
-                                            : isParaActive
-                                            ? 'text-slate-900 dark:text-zinc-100'
-                                            : 'text-slate-600 dark:text-zinc-400 group-hover:text-slate-900 dark:group-hover:text-zinc-200'
-                                        }`}
-                                      >
-                                        {seg.text}{' '}
-                                      </span>
-                                    );
-                                  })
-                                ) : (
+                      formattedParagraphs && formattedParagraphs.length > 0 ? (
+                        <div className="space-y-2.5 select-text">
+                          {formattedParagraphs.map((para, idx) => {
+                            const isParaActive = activeParagraphIndex === idx;
+                            return (
+                              <div
+                                key={para.id}
+                                ref={isParaActive ? activeItemRef : null}
+                                data-active-para={isParaActive ? 'true' : undefined}
+                                onClick={() => seekTo(para.start)}
+                                className={`group relative pl-3.5 pr-2.5 py-2 rounded-xl transition-all cursor-pointer border-l-2 ${
+                                  isParaActive
+                                    ? 'border-pink-500 bg-pink-500/8 dark:bg-pink-500/12'
+                                    : 'border-transparent hover:border-slate-300 dark:hover:border-zinc-700 hover:bg-slate-50/70 dark:hover:bg-zinc-800/40'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2 mb-0.5">
                                   <span
-                                    className={
+                                    className={`text-[11px] font-mono font-semibold transition-colors ${
                                       isParaActive
-                                        ? 'text-slate-900 dark:text-white font-medium'
-                                        : 'text-slate-600 dark:text-zinc-400'
-                                    }
+                                        ? 'text-pink-500 dark:text-pink-400 font-bold'
+                                        : 'text-slate-400 dark:text-zinc-500 group-hover:text-slate-600 dark:group-hover:text-zinc-300'
+                                    }`}
                                   >
-                                    {para.text}
+                                    {formatTime(para.start)}
                                   </span>
-                                )}
-                              </p>
-                            </div>
-                          );
-                        })}
-                      </div>
+                                </div>
+                                <p className="leading-relaxed text-sm">
+                                  {para.segments && para.segments.length > 0 ? (
+                                    para.segments.map((seg, sIdx) => {
+                                      const isSegActive =
+                                        activeSegment?.id === seg.id ||
+                                        (currentTime >= seg.start &&
+                                          currentTime < (seg.end > seg.start ? seg.end : seg.start + 2.5));
+                                      return (
+                                        <span
+                                          key={sIdx}
+                                          data-active-highlight={isSegActive ? 'true' : undefined}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            seekTo(seg.start);
+                                          }}
+                                          className={`cursor-pointer transition-colors rounded px-0.5 ${
+                                            isSegActive
+                                              ? 'bg-pink-500/25 text-pink-600 dark:text-pink-300 font-bold'
+                                              : isParaActive
+                                              ? 'text-slate-900 dark:text-zinc-100'
+                                              : 'text-slate-600 dark:text-zinc-400 group-hover:text-slate-900 dark:group-hover:text-zinc-200'
+                                          }`}
+                                        >
+                                          {seg.text}{' '}
+                                        </span>
+                                      );
+                                    })
+                                  ) : (
+                                    <span
+                                      className={
+                                        isParaActive
+                                          ? 'text-slate-900 dark:text-white font-medium'
+                                          : 'text-slate-600 dark:text-zinc-400'
+                                      }
+                                    >
+                                      {para.text}
+                                    </span>
+                                  )}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-800/40 text-slate-800 dark:text-zinc-200 text-sm leading-relaxed whitespace-pre-wrap">
+                          {transcriptMode === 'translation' && activeTranscript.translatedText
+                            ? activeTranscript.translatedText
+                            : activeTranscript.text}
+                        </div>
+                      )
                     ) : (
                       <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400">
                         <FileText className="w-8 h-8 mb-2 opacity-50" />

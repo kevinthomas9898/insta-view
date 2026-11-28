@@ -3,6 +3,9 @@ import { globalRateLimiter } from '@/lib/rate-limit';
 import { transcribeMedia } from '@/lib/transcribe/whisper';
 import { extractReelStreamUrl } from '@/lib/transcribe/media-resolver';
 
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'anonymous';
   const rateCheck = globalRateLimiter.check(ip);
@@ -51,26 +54,30 @@ export async function POST(request: NextRequest) {
 
     // Always ensure we have a genuine progressive stream when shortcode is available
     if (shortcode && (isImageOrDummy || !isMetaCdn)) {
-      const stream = await extractReelStreamUrl(shortcode);
-      if (stream) {
-        targetUrl = stream;
+      try {
+        const stream = await extractReelStreamUrl(shortcode);
+        if (stream) {
+          targetUrl = stream;
+        }
+      } catch {
+        // Continue to fallback
       }
     }
 
-    if (!targetUrl) {
+    if (!targetUrl && !caption) {
       return NextResponse.json(
         {
           success: false,
           error: {
             code: 'MEDIA_NOT_FOUND',
-            message: 'Could not locate playable media stream for transcription.',
+            message: 'Could not locate playable media stream or dialogue caption for transcription.',
           },
         },
         { status: 404 }
       );
     }
 
-    const transcript = await transcribeMedia(targetUrl, shortcode, caption);
+    const transcript = await transcribeMedia(targetUrl || '', shortcode, caption);
 
     const formatTime = (sec: number) => {
       const hrs = Math.floor(sec / 3600).toString().padStart(2, '0');

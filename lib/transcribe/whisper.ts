@@ -32,10 +32,10 @@ export async function transcribeMedia(
   cacheKeyId?: string,
   captionHint?: string
 ): Promise<TranscriptResult> {
-  // Use v7 cache key to ensure any stale English hallucinations are cleared
+  // Use v10 cache key to ensure fresh high-accuracy transcription with segment transliteration
   const cacheKey = cacheKeyId
-    ? `transcript:v7:${cacheKeyId}`
-    : `transcript:v7:${encodeURIComponent(mediaUrl.slice(0, 100))}`;
+    ? `transcript:v10:${cacheKeyId}`
+    : `transcript:v10:${encodeURIComponent(mediaUrl.slice(0, 100))}`;
   
   // 1. Check in-memory cache
   const cached = globalCache.get<TranscriptResult>(cacheKey);
@@ -54,12 +54,20 @@ export async function transcribeMedia(
       const isDash = targetUrl.includes('dashinit');
       const isMetaCdn = targetUrl.includes('fbcdn.net') || targetUrl.includes('cdninstagram.com');
 
-      // If mediaUrl is missing, dummy, or not from Meta CDN, resolve genuine progressive stream
+      // Only attempt stream extraction if targetUrl is missing, an image, or dummy placeholder
       if (cacheKeyId && (!targetUrl || isLikelyImage || isDummyUrl || isDash || !isMetaCdn)) {
-        const streamUrl = await extractReelStreamUrl(cacheKeyId);
-        if (streamUrl) {
-          targetUrl = streamUrl;
+        try {
+          const streamUrl = await extractReelStreamUrl(cacheKeyId);
+          if (streamUrl) {
+            targetUrl = streamUrl;
+          }
+        } catch {
+          // Ignore and continue with targetUrl
         }
+      }
+
+      if (!targetUrl) {
+        throw new Error('No target media URL available for transcription buffer.');
       }
 
       // Fetch media buffer (with safety timeout and size check)
@@ -68,7 +76,7 @@ export async function transcribeMedia(
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
           Referer: 'https://www.instagram.com/',
         },
-        signal: AbortSignal.timeout(25000), // 25s timeout
+        signal: AbortSignal.timeout(15000), // 15s timeout
       });
 
       if (!mediaResponse.ok) {
@@ -83,18 +91,17 @@ export async function transcribeMedia(
       }
 
       /**
-       * Calls Groq Whisper Large v3 (full 32-layer model) without prompt biasing.
+       * Calls Groq Whisper Large v3 Turbo (high-speed transcription engine).
        */
       const callWhisper = async (lang?: string) => {
         const fd = new FormData();
         fd.append('file', mediaBlob, 'audio.mp4');
-        fd.append('model', 'whisper-large-v3');
+        fd.append('model', 'whisper-large-v3-turbo');
         fd.append('response_format', 'verbose_json');
         fd.append('temperature', '0');
         if (lang) {
           fd.append('language', lang);
         }
-        // Never pass a Romanized prompt: prompts force Whisper to decode into that script/language.
 
         const resp = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
           method: 'POST',
@@ -105,34 +112,37 @@ export async function transcribeMedia(
 
         if (!resp.ok) {
           const errorText = await resp.text();
-          console.warn(`[Transcription] Groq Whisper (lang=${lang || 'auto'}) error:`, errorText);
+          console.warn(`[Transcription] Groq Whisper Turbo (lang=${lang || 'auto'}) error:`, errorText);
           throw new Error(`Groq Whisper API error: ${resp.status}`);
         }
 
         return resp.json();
       };
 
-      // PASS 1: Natural Auto-detect (captures clean multilingual speech)
-      console.log('[Transcription] Pass 1: Whisper Large v3 auto-detect');
-      let data = await callWhisper();
+      // Check if caption signals Hindi/Gujarati or Indian code-mixed content
+      const captionSignalsIndic = Boolean(
+        captionHint && (
+          containsIndicScript(captionHint) ||
+          /\b(bhai|yaar|kya|hai|nahi|mera|tera|aur|ko|se|mein|woh|yeh|kar|ho|toh|bol|dil|dost|saas|nanad|shaadi|dulhan|nighty|shopping|khada|chuno|khul|shuru|karo|kaise|bataun|beta|daant|naada|shadi|pata|acha|achha|theek|sahi|sab|kuch|bahut|chahiye|bolo|baat|desh|namaste|kem|cho|gujarati|hindi|hinglish)\b/i.test(captionHint)
+        )
+      );
+
+      // Pass 1: If caption signals Indian content, force language='hi' directly to prevent English locking;
+      // otherwise run auto-detect.
+      let data = await callWhisper(captionSignalsIndic ? 'hi' : undefined);
       let rawFullText = data.text?.trim() || '';
 
-      // PASS 2: If no Indic script detected, verify whether spoken Hindi was misclassified as English
-      // In code-mixed reels (starts in English, switches to Hindi), Whisper auto-detect sometimes
-      // locks to English from the first few seconds. Running a Hindi verification pass checks if
-      // the audio actually contains spoken Hindi in Devanagari.
-      if (!containsIndicScript(rawFullText)) {
+      // Pass 2 (fallback): If auto-detect returned no Indic script, verify if Hindi speech was present
+      if (!captionSignalsIndic && !containsIndicScript(rawFullText)) {
         try {
-          console.log('[Transcription] No Indic script in auto-detect, running Hindi verification pass...');
           const hiData = await callWhisper('hi');
           const hiText = hiData.text?.trim() || '';
           if (containsIndicScript(hiText)) {
-            console.log('[Transcription] Hindi verification pass detected genuine Hindi speech in Devanagari!');
             data = hiData;
             rawFullText = hiText;
           }
-        } catch (e) {
-          console.warn('[Transcription] Hindi verification pass error, keeping initial result:', e);
+        } catch {
+          // Keep auto-detect data
         }
       }
 
@@ -149,12 +159,11 @@ export async function transcribeMedia(
       let hasTranslation = false;
 
       // When Devanagari (Hindi) or Gujarati script is present, run Qwen transliteration:
-      // - English parts stay in English
+      // - English parts stay in English (first line, middle lines, etc.)
       // - Hindi parts become natural conversational Hinglish
       // - Gujarati parts become natural Gujlish
       // - Generates exact fluent English translation
       if (containsIndicScript(rawFullText) || data.language === 'hi' || data.language === 'gu') {
-        console.log(`[Transcription] Running Qwen transliteration pipeline for code-mixed speech...`);
         const indicResult = await romanizeAndTranslateIndic(segments, rawFullText, groqApiKey);
         segments = indicResult.hinglishSegments;
         rawFullText = indicResult.hinglishText;

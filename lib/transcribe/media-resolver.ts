@@ -59,7 +59,7 @@ function requestOnce(urlStr: string, jar: CookieJar): Promise<{ status: number; 
       {
         method: 'GET',
         headers: browserHeaders(jar.toString()),
-        timeout: 15000,
+        timeout: 3500,
       },
       (res) => {
         jar.absorb(res.headers);
@@ -81,7 +81,7 @@ function requestOnce(urlStr: string, jar: CookieJar): Promise<{ status: number; 
   });
 }
 
-async function requestFollowingRedirects(url: string, jar: CookieJar, maxRedirects = 6) {
+async function requestFollowingRedirects(url: string, jar: CookieJar, maxRedirects = 2) {
   let current = url;
   for (let i = 0; i <= maxRedirects; i++) {
     const res = await requestOnce(current, jar);
@@ -177,7 +177,7 @@ export async function extractReelStreamUrl(shortcodeOrUrl: string): Promise<stri
     const pageUrl = `https://www.instagram.com/reel/${code}/`;
     let media: any = null;
 
-    for (let attempt = 0; attempt < 2 && !media; attempt++) {
+    for (let attempt = 0; attempt < 1 && !media; attempt++) {
       const page = await requestFollowingRedirects(pageUrl, jar);
       if (page.html) {
         media = extractMediaFromHtml(page.html, code);
@@ -188,7 +188,14 @@ export async function extractReelStreamUrl(shortcodeOrUrl: string): Promise<stri
     }
 
     if (media && Array.isArray(media.video_versions) && media.video_versions.length > 0) {
-      const videoUrl = cleanUrl(media.video_versions[0].url);
+      // Pick a bandwidth-efficient video stream (e.g. 480p/360p) for transcription to avoid large uploads and connection drops
+      const sorted = [...media.video_versions].sort((a, b) => {
+        const resA = (a.width || 0) * (a.height || 0);
+        const resB = (b.width || 0) * (b.height || 0);
+        return resA - resB;
+      });
+      const chosen = sorted.find((v) => (v.height || 0) >= 360) || sorted[0] || media.video_versions[0];
+      const videoUrl = cleanUrl(chosen.url);
       if (videoUrl) {
         globalCache.set(cacheKey, videoUrl, CACHE_TTL.REELS);
         return videoUrl;

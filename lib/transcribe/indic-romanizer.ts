@@ -116,9 +116,12 @@ export async function romanizeAndTranslateIndic(
   fullText: string,
   groqApiKey: string
 ): Promise<IndicProcessResult> {
-  const lineTexts = segments.map((s) => s.text);
-
   try {
+    const compactSegments = segments.slice(0, 30).map((s, idx) => ({
+      id: s.id ?? idx,
+      text: s.text,
+    }));
+
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -133,25 +136,24 @@ export async function romanizeAndTranslateIndic(
           {
             role: 'system',
             content:
-              'You are an expert Indic multilingual speech transliterator and translator.\n' +
-              'Given a JSON array of spoken lines from an Indian Instagram reel (which may contain Hindi, Gujarati, English, or a mix of all three switching mid-sentence):\n' +
-              'Return a JSON object with two fields:\n' +
-              '1. "hinglish": array of strings of the exact same length. Rules:\n' +
-              '   - English words MUST stay in English exactly as spoken (do NOT translate them)\n' +
-              '   - Hindi in Devanagari → write in natural Hinglish (Roman/Latin alphabet phonetically). E.g. "मेरी saas ने" → "Meri saas ne"\n' +
-              '   - Gujarati script → write in natural Gujlish (Roman/Latin alphabet phonetically)\n' +
-              '   - If a line is entirely English, keep it exactly as-is\n' +
-              '   - Preserve code-mixing naturally: "My mother-in-law ने मुझे लाल nighty दिखाई" → "My mother-in-law ne mujhe laal nighty dikhai"\n' +
-              '2. "translation": array of strings of the exact same length where each line is translated accurately and fluently into natural English.\n' +
-              'Never omit any line. Keep array lengths identical to input lines. Never add extra lines.',
+              'You are an expert Indic speech transliterator and translator.\n' +
+              'Convert Hindi/Gujarati/code-mixed speech segments into natural Hinglish (Roman alphabet phonetically) and fluent English translation.\n' +
+              'Return a JSON object with:\n' +
+              '1. "hinglish": full combined text in natural Hinglish\n' +
+              '2. "translation": full combined text in fluent English\n' +
+              '3. "segments": array of { "id": number, "hinglish": string, "translation": string }\n' +
+              'Rules: English spoken words stay in English. Hindi speech becomes natural Hinglish. Gujarati becomes natural Gujlish. Never output Devanagari or Gujarati script.',
           },
           {
             role: 'user',
-            content: JSON.stringify({ lines: lineTexts }),
+            content: JSON.stringify({
+              fullTranscript: fullText,
+              segments: compactSegments,
+            }),
           },
         ],
       }),
-      signal: AbortSignal.timeout(15000), // 15s timeout
+      signal: AbortSignal.timeout(12000), // Fast 12s timeout
     });
 
     if (res.ok) {
@@ -159,22 +161,44 @@ export async function romanizeAndTranslateIndic(
       const content = data.choices?.[0]?.message?.content;
       if (content) {
         const parsed = JSON.parse(content);
-        const hinglishArr: string[] = Array.isArray(parsed.hinglish) ? parsed.hinglish : [];
-        const translationArr: string[] = Array.isArray(parsed.translation) ? parsed.translation : [];
+        const hinglishFullText: string = (parsed.hinglish || fullText).trim();
+        const translatedFullText: string = (parsed.translation || hinglishFullText).trim();
 
+        // Create a lookup for segment translations
+        const segMap = new Map<number, { hinglish: string; translation: string }>();
+        if (Array.isArray(parsed.segments)) {
+          for (const s of parsed.segments) {
+            if (typeof s.id === 'number') {
+              segMap.set(s.id, {
+                hinglish: s.hinglish || '',
+                translation: s.translation || '',
+              });
+            }
+          }
+        }
+
+        // Update segments with natural Hinglish and English translation
         const updatedSegments: TranscriptSegment[] = segments.map((seg, idx) => {
-          const romanized = hinglishArr[idx] || deterministicIndicRomanizer(seg.text);
-          const translated = translationArr[idx] || romanized;
+          const segId = seg.id ?? idx;
+          const mapped = segMap.get(segId);
+
+          const hinglishText = mapped?.hinglish
+            ? mapped.hinglish
+            : containsIndicScript(seg.text)
+            ? deterministicIndicRomanizer(seg.text)
+            : seg.text;
+
+          const translationText = mapped?.translation
+            ? mapped.translation
+            : hinglishText;
+
           return {
             ...seg,
             originalText: seg.text,
-            text: romanized,
-            translatedText: translated,
+            text: hinglishText,
+            translatedText: translationText,
           };
         });
-
-        const hinglishFullText = updatedSegments.map((s) => s.text).join(' ');
-        const translatedFullText = updatedSegments.map((s) => s.translatedText || s.text).join(' ');
 
         return {
           hinglishSegments: updatedSegments,
@@ -184,7 +208,7 @@ export async function romanizeAndTranslateIndic(
       }
     }
   } catch (err) {
-    console.warn('[Indic Transliteration] Groq translation call failed, falling back to deterministic romanizer:', err);
+    console.warn('[Indic Transliteration] Groq translation call failed, falling back:', err);
   }
 
   // Fallback: Pure-JS deterministic transliterator
@@ -198,7 +222,7 @@ export async function romanizeAndTranslateIndic(
     };
   });
 
-  const fallbackText = fallbackSegments.map((s) => s.text).join(' ');
+  const fallbackText = deterministicIndicRomanizer(fullText);
   return {
     hinglishSegments: fallbackSegments,
     hinglishText: fallbackText,
