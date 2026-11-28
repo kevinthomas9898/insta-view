@@ -64,6 +64,7 @@ export interface InstaViewerProps {
   heroHighlight?: string;
   heroDescription?: string;
   searchPlaceholder?: string;
+  autoTranscribe?: boolean;
 }
 
 export function InstaViewer({
@@ -74,9 +75,16 @@ export function InstaViewer({
   heroHighlight = 'Anonymously',
   heroDescription = 'View public Instagram stories, highlights, reels, and posts without an account or login. Save high-definition photos and MP4 videos with 100% privacy and zero digital footprint.',
   searchPlaceholder = 'Enter username or instagram.com/profile...',
+  autoTranscribe = false,
 }: InstaViewerProps) {
   const [usernameInput, setUsernameInput] = useState('');
   const [searchedUsername, setSearchedUsername] = useState('');
+  const [isDirectMedia, setIsDirectMedia] = useState(false);
+  const [directMediaItem, setDirectMediaItem] = useState<{
+    item: ReelResult | PostResult;
+    type: 'reel' | 'post';
+    username: string;
+  } | null>(null);
 
   const router = useRouter();
   const pathname = usePathname() || '/';
@@ -245,18 +253,13 @@ export function InstaViewer({
         const resolvedType = json.data.type || targetType;
 
         setSearchedUsername(resolvedUser);
-        setProfile({
+        setIsDirectMedia(true);
+        setDirectMediaItem({
+          item: resolvedItem,
+          type: resolvedType,
           username: resolvedUser,
-          fullName: `@${resolvedUser}`,
-          avatarUrl: '',
-          biography: 'Direct media item resolved via InstaView Fast Resolver.',
-          postsCount: 1,
-          followers: 12500,
-          following: 120,
-          verified: false,
-          isPrivate: false,
-          userId: code,
         });
+        setProfile(null);
 
         if (resolvedType === 'reel') {
           setActiveTab('reels');
@@ -275,6 +278,9 @@ export function InstaViewer({
     }
 
     if (!userToFetch) return;
+
+    setIsDirectMedia(false);
+    setDirectMediaItem(null);
 
     // Switch tab if direct URL pointed to reels/posts/stories
     const nextTab = parsed.targetTab || activeTab;
@@ -843,6 +849,71 @@ export function InstaViewer({
           </div>
         )}
 
+        {/* Direct Link Media Result (Reels or Posts) */}
+        {isDirectMedia && directMediaItem && (
+          <div className="w-full animate-fade-in overflow-hidden max-w-4xl mx-auto my-6">
+            {/* Direct Media Focused Header Card */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-lg mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-pink-500 via-rose-500 to-amber-500 flex items-center justify-center text-white shrink-0 shadow-md">
+                  {directMediaItem.type === 'reel' ? (
+                    <Film className="w-6 h-6" />
+                  ) : (
+                    <Eye className="w-6 h-6" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-white">
+                      @{directMediaItem.username}
+                    </span>
+                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      Direct {directMediaItem.type === 'reel' ? 'Reel' : 'Post'} Resolved
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-zinc-400 line-clamp-1 mt-0.5">
+                    {directMediaItem.item.caption || `Instagram ${directMediaItem.type} #${searchedUsername}`}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 self-stretch sm:self-auto shrink-0">
+                {directMediaItem.item.downloadUrl && (
+                  <a
+                    href={directMediaItem.item.downloadUrl}
+                    download
+                    className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-200 font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download HD</span>
+                  </a>
+                )}
+                {directMediaItem.type === 'reel' && (
+                  <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-pink-500/10 border border-pink-500/20 text-pink-500 font-bold text-xs">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>AI Transcriber Ready</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Direct Media Grid */}
+            {directMediaItem.type === 'reel' ? (
+              <ReelsGrid
+                reels={reels}
+                username={directMediaItem.username}
+                autoOpenFirst={true}
+                autoStartTranscribe={autoTranscribe}
+              />
+            ) : (
+              <PostsGrid
+                posts={posts}
+                username={directMediaItem.username}
+              />
+            )}
+          </div>
+        )}
+
         {/* Active Profile Results */}
         {profile && (
           <div className="w-full animate-fade-in overflow-hidden">
@@ -958,7 +1029,7 @@ export function InstaViewer({
         )}
 
         {/* Informational SEO & AEO Content Sections (Visible on Home & for Crawlers) */}
-        {!profile && (
+        {!profile && !isDirectMedia && (
           <div className="mt-12 space-y-16">
             {/* Features Grid */}
             <section id="features">

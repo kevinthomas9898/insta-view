@@ -1,8 +1,20 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { X, Sparkles, AlertCircle, CheckCircle2, ShieldCheck, Play, ArrowRight } from 'lucide-react';
-import { AdsterraBanner } from '@/components/AdsterraBanner';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  X,
+  Sparkles,
+  AlertCircle,
+  CheckCircle2,
+  ShieldCheck,
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  ArrowRight,
+  ExternalLink,
+} from 'lucide-react';
+import { NativeAffiliateCard } from '@/components/NativeAffiliateCard';
 
 interface RewardedAdModalProps {
   isOpen: boolean;
@@ -20,12 +32,16 @@ export function RewardedAdModal({
   const [secondsRemaining, setSecondsRemaining] = useState(requiredSeconds);
   const [isCompleted, setIsCompleted] = useState(false);
   const [showExitWarning, setShowExitWarning] = useState(false);
+  const [isVideoMuted, setIsVideoMuted] = useState(true);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(true);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
     if (!isOpen) {
       setSecondsRemaining(requiredSeconds);
       setIsCompleted(false);
       setShowExitWarning(false);
+      setIsVideoPlaying(true);
       return;
     }
 
@@ -62,21 +78,39 @@ export function RewardedAdModal({
     }
   };
 
+  const toggleVideoPlayback = () => {
+    if (!videoRef.current) return;
+    if (isVideoPlaying) {
+      videoRef.current.pause();
+      setIsVideoPlaying(false);
+    } else {
+      videoRef.current.play().catch(() => {});
+      setIsVideoPlaying(true);
+    }
+  };
+
+  const toggleVideoMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!videoRef.current) return;
+    videoRef.current.muted = !isVideoMuted;
+    setIsVideoMuted(!isVideoMuted);
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in">
       <div
-        className="relative w-full max-w-lg bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+        className="relative w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col text-zinc-100"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Header Banner */}
-        <div className="bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 p-4 text-white text-center relative">
+        <div className="bg-gradient-to-r from-pink-600 via-rose-600 to-amber-600 p-4 text-white text-center relative shadow-md">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-semibold mb-1">
             <Sparkles className="w-3.5 h-3.5" />
             <span>Sponsor-Supported Free AI</span>
           </div>
           <h3 className="text-lg font-bold">Unlocking Reel Transcript</h3>
           <p className="text-xs text-white/90 mt-0.5">
-            Watching this sponsor ad keeps AI speech recognition 100% free for everyone!
+            Watching this sponsor video keeps AI speech recognition 100% free for everyone!
           </p>
 
           {/* Close button (only active after countdown or shows warning) */}
@@ -91,49 +125,119 @@ export function RewardedAdModal({
 
         {/* Early exit warning toast */}
         {showExitWarning && (
-          <div className="mx-4 mt-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-center gap-2.5 text-xs text-amber-700 dark:text-amber-400 animate-shake">
+          <div className="mx-4 mt-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-center gap-2.5 text-xs text-amber-400 animate-shake">
             <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>Please allow the 15-second sponsor ad to finish to unlock your free transcript!</span>
+            <span>Please allow the 15-second sponsor video to finish to unlock your free transcript!</span>
           </div>
         )}
 
-        {/* Sponsor Ad Area */}
-        <div className="p-4 flex flex-col items-center justify-center min-h-[260px] bg-slate-50 dark:bg-zinc-950/60 border-y border-slate-100 dark:border-zinc-800/80">
-          <div className="text-[11px] font-medium text-slate-400 dark:text-zinc-500 mb-2 uppercase tracking-wider flex items-center gap-1">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-            <span>Official Sponsor Message</span>
+        {/* Sponsor Video & Audio Player Area (No Blank Screen) */}
+        <div className="p-4 flex flex-col items-center justify-center bg-zinc-950 border-y border-zinc-800">
+          <div className="w-full flex items-center justify-between text-[11px] font-medium text-zinc-400 mb-2 uppercase tracking-wider">
+            <div className="flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Official Sponsor Video</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-pink-400 font-bold">
+              <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping inline-block" />
+              <span>AD PLAYING • 0:{secondsRemaining < 10 ? `0${secondsRemaining}` : secondsRemaining}</span>
+            </div>
           </div>
 
-          {/* Adsterra Display Placement */}
-          <div className="w-full flex justify-center items-center overflow-hidden rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 py-2">
-            <AdsterraBanner width={300} height={250} bannerKey="4ff02455261b1454e019ced3534847d2" />
+          {/* Interactive HD Video Container */}
+          <div
+            onClick={toggleVideoPlayback}
+            className="relative w-full aspect-video rounded-2xl overflow-hidden bg-black border border-zinc-800 shadow-xl group cursor-pointer"
+          >
+            <video
+              ref={videoRef}
+              src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+              autoPlay
+              playsInline
+              loop
+              muted={isVideoMuted}
+              className="w-full h-full object-cover"
+            />
+
+            {/* Gradient Overlay & Badges */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
+
+            {/* Top Left: Sponsor Brand Tag */}
+            <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-md text-[10px] font-semibold text-white/90 border border-white/10">
+              <Sparkles className="w-3 h-3 text-amber-400" />
+              <span>Sponsored Media Stream</span>
+            </div>
+
+            {/* Top Right: Sound Toggle Button */}
+            <button
+              type="button"
+              onClick={toggleVideoMute}
+              className="absolute top-3 right-3 p-2 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md text-white border border-white/10 transition-transform active:scale-90 cursor-pointer"
+              title={isVideoMuted ? 'Unmute Audio' : 'Mute Audio'}
+            >
+              {isVideoMuted ? (
+                <VolumeX className="w-4 h-4 text-zinc-300" />
+              ) : (
+                <Volume2 className="w-4 h-4 text-emerald-400" />
+              )}
+            </button>
+
+            {/* Center Play/Pause Indicator (shown on hover or pause) */}
+            {!isVideoPlaying && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                <div className="p-3.5 rounded-full bg-white/20 backdrop-blur-md text-white shadow-lg">
+                  <Play className="w-6 h-6 fill-white" />
+                </div>
+              </div>
+            )}
+
+            {/* Bottom Overlay: Audio Equalizer & Title */}
+            <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between text-white pointer-events-none">
+              <div>
+                <p className="text-xs font-bold text-white drop-shadow-md">AI Audio Extractor Engine</p>
+                <p className="text-[10px] text-zinc-300 drop-shadow-md">High-Speed Neural Voice Transcription</p>
+              </div>
+
+              {/* Animated Equalizer Waveform */}
+              <div className="flex items-end gap-1 h-5">
+                <span className="w-1 bg-pink-500 rounded-full animate-bounce [animation-delay:0ms] h-3" />
+                <span className="w-1 bg-rose-500 rounded-full animate-bounce [animation-delay:150ms] h-5" />
+                <span className="w-1 bg-amber-500 rounded-full animate-bounce [animation-delay:300ms] h-4" />
+                <span className="w-1 bg-emerald-500 rounded-full animate-bounce [animation-delay:450ms] h-2" />
+              </div>
+            </div>
+          </div>
+
+          {/* Native Partner Deal (Companion Banner below video) */}
+          <div className="w-full mt-3">
+            <NativeAffiliateCard className="!p-3 !bg-zinc-900/90 !border-zinc-800" />
           </div>
         </div>
 
         {/* Timer & Action Footer */}
-        <div className="p-4 sm:p-5 flex flex-col gap-3 bg-white dark:bg-zinc-900">
+        <div className="p-4 sm:p-5 flex flex-col gap-3 bg-zinc-900">
           {/* Progress Bar & Countdown */}
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between text-xs font-semibold">
-              <span className="text-slate-600 dark:text-zinc-400 flex items-center gap-1.5">
+              <span className="text-zinc-400 flex items-center gap-1.5">
                 {isCompleted ? (
                   <>
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    <span className="text-emerald-600 dark:text-emerald-400">Transcript Ready to Unlock!</span>
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <span className="text-emerald-400">Transcript Ready to Unlock!</span>
                   </>
                 ) : (
                   <>
-                    <Play className="w-3.5 h-3.5 text-pink-500 animate-pulse" />
+                    <Play className="w-3.5 h-3.5 text-pink-400 animate-pulse" />
                     <span>Extracting audio & transcribing speech...</span>
                   </>
                 )}
               </span>
-              <span className={`tabular-nums ${isCompleted ? 'text-emerald-500' : 'text-pink-500 font-bold'}`}>
+              <span className={`tabular-nums ${isCompleted ? 'text-emerald-400' : 'text-pink-400 font-bold'}`}>
                 {isCompleted ? '100%' : `${secondsRemaining}s remaining`}
               </span>
             </div>
 
-            <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-zinc-800 overflow-hidden">
+            <div className="w-full h-2 rounded-full bg-zinc-800 overflow-hidden">
               <div
                 className={`h-full transition-all duration-1000 ease-linear rounded-full ${
                   isCompleted ? 'bg-emerald-500' : 'bg-gradient-to-r from-pink-500 to-rose-500'
@@ -151,7 +255,7 @@ export function RewardedAdModal({
             className={`w-full py-3.5 px-6 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg transition-all ${
               isCompleted
                 ? 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white cursor-pointer active:scale-98 shadow-emerald-500/25 ring-2 ring-emerald-400/50'
-                : 'bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500 cursor-not-allowed'
+                : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
             }`}
           >
             {isCompleted ? (
@@ -164,7 +268,7 @@ export function RewardedAdModal({
             )}
           </button>
 
-          <p className="text-[11px] text-center text-slate-400 dark:text-zinc-500">
+          <p className="text-[11px] text-center text-zinc-500">
             100% Free Service • No account or credit card required • Zero data stored
           </p>
         </div>

@@ -94,6 +94,7 @@ export default function ReelTranscriberPage() {
       />
       <InstaViewer
         initialTab="reels"
+        autoTranscribe={true}
         heroBadge="Free AI Speech-to-Text Reel Transcriber"
         heroTitle="Transcribe Instagram Reels "
         heroHighlight="to Text & Subtitles"

@@ -33,6 +33,8 @@ interface ReelsGridProps {
   hasMore?: boolean;
   isLoadingMore?: boolean;
   onLoadMore?: () => void;
+  autoOpenFirst?: boolean;
+  autoStartTranscribe?: boolean;
 }
 
 export function ReelsGrid({
@@ -41,6 +43,8 @@ export function ReelsGrid({
   hasMore = false,
   isLoadingMore = false,
   onLoadMore,
+  autoOpenFirst = false,
+  autoStartTranscribe = false,
 }: ReelsGridProps) {
   const [selectedReel, setSelectedReel] = useState<ReelResult | null>(null);
   const [isReelLoading, setIsReelLoading] = useState(true);
@@ -92,6 +96,19 @@ export function ReelsGrid({
     setIsAdModalOpen(false);
     setIsTranscriptModalOpen(true);
   };
+
+  const hasAutoStartedRef = useRef(false);
+  useEffect(() => {
+    if (reels.length === 0 || hasAutoStartedRef.current) return;
+
+    if (autoStartTranscribe) {
+      hasAutoStartedRef.current = true;
+      handleStartTranscription(reels[0]);
+    } else if (autoOpenFirst && reels.length === 1 && !selectedReel) {
+      hasAutoStartedRef.current = true;
+      setSelectedReel(reels[0]);
+    }
+  }, [autoStartTranscribe, autoOpenFirst, reels, selectedReel]);
 
   const copyCaption = (text: string) => {
     if (!text) return;
