@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { globalRateLimiter } from '@/lib/rate-limit';
 import { globalCache, CACHE_TTL } from '@/lib/cache';
 import { PostResult, ReelResult } from '@/lib/instagram/types';
+import { extractReelStreamUrl } from '@/lib/transcribe/media-resolver';
 
 function parseCount(str: string): number {
   const clean = str.replace(/,/g, '').trim().toUpperCase();
@@ -195,7 +196,8 @@ export async function GET(request: NextRequest) {
           }
 
           if (targetType === 'reel') {
-            const finalMediaUrl = videoUrl || rawImageUrl || 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4';
+            const streamUrl = await extractReelStreamUrl(shortcode);
+            const finalMediaUrl = streamUrl || videoUrl || rawImageUrl || 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4';
             const reelItem: ReelResult = {
               id: shortcode,
               type: 'video',

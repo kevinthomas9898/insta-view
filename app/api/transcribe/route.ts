@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { globalRateLimiter } from '@/lib/rate-limit';
 import { transcribeMedia } from '@/lib/transcribe/whisper';
+import { extractReelStreamUrl } from '@/lib/transcribe/media-resolver';
 
 export async function POST(request: NextRequest) {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'anonymous';
@@ -38,13 +39,13 @@ export async function POST(request: NextRequest) {
 
     let targetUrl = mediaUrl;
 
-    // If only shortcode provided, resolve it
-    if (!targetUrl && shortcode) {
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ig-storyviewer.vercel.app';
-      const resolveRes = await fetch(`${siteUrl}/api/resolve?shortcode=${encodeURIComponent(shortcode)}&type=reel`);
-      if (resolveRes.ok) {
-        const resolveData = await resolveRes.json();
-        targetUrl = resolveData?.data?.item?.url;
+    // If mediaUrl is missing or an image URL, resolve genuine progressive stream directly
+    if (!targetUrl || targetUrl.includes('.jpg') || targetUrl.includes('.png')) {
+      if (shortcode) {
+        const stream = await extractReelStreamUrl(shortcode);
+        if (stream) {
+          targetUrl = stream;
+        }
       }
     }
 

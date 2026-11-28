@@ -1,4 +1,5 @@
 import { globalCache, CACHE_TTL } from '@/lib/cache';
+import { extractReelStreamUrl } from './media-resolver';
 
 export interface TranscriptSegment {
   id?: number;
@@ -38,13 +39,24 @@ export async function transcribeMedia(
   // 2. If Groq API Key is available, execute live high-speed transcription
   if (groqApiKey) {
     try {
+      let targetUrl = mediaUrl;
+      const isLikelyImage = targetUrl.includes('.jpg') || targetUrl.includes('.jpeg') || targetUrl.includes('.png');
+
+      // If mediaUrl is an image or not a direct playable mp4, extract genuine progressive stream
+      if (isLikelyImage || (cacheKeyId && !targetUrl.includes('.mp4'))) {
+        const streamUrl = await extractReelStreamUrl(cacheKeyId || targetUrl);
+        if (streamUrl) {
+          targetUrl = streamUrl;
+        }
+      }
+
       // Fetch media buffer (with safety timeout and size check)
-      const mediaResponse = await fetch(mediaUrl, {
+      const mediaResponse = await fetch(targetUrl, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
           Referer: 'https://www.instagram.com/',
         },
-        signal: AbortSignal.timeout(15000), // 15s timeout
+        signal: AbortSignal.timeout(20000), // 20s timeout
       });
 
       if (!mediaResponse.ok) {
