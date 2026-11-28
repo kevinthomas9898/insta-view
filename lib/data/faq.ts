@@ -65,4 +65,34 @@ export const FAQ_ITEMS: FaqItem[] = [
       'The Secret Watchlist lets you pin your favorite Instagram creators for 1-click access without retyping their usernames. Your watchlist is stored 100% locally in your browser’s private storage (localStorage). It is never sent to our servers, never synced with an account, and completely invisible to Meta and profile owners.',
     category: 'Features & Privacy',
   },
+  {
+    question: 'How do I transcribe an Instagram Reel to text for free?',
+    answer:
+      'Simply paste any public Instagram Reel URL into the search bar or click the "Text ✨" action pill on any Reel in the viewer. InstaView’s AI speech recognition engine automatically converts the spoken dialogue, voiceover, and lyrics into clean text with timestamps in seconds.',
+    category: 'Reel Transcriber',
+  },
+  {
+    question: 'Can I download subtitles (.SRT) and copy speech from Instagram Reels?',
+    answer:
+      'Yes. Once transcribed, you can copy the full text in 1-click or export a standardized .SRT subtitle file with exact timestamps, perfect for video editors, content creators, and accessibility captions.',
+    category: 'Reel Transcriber',
+  },
+  {
+    question: 'What languages does the Reel Transcriber support?',
+    answer:
+      'The Reel Transcriber supports over 50 major languages including English, Spanish, Portuguese, Hindi, French, German, Italian, Russian, Turkish, and Indonesian with high accuracy through background noise and music.',
+    category: 'Reel Transcriber',
+  },
+  {
+    question: 'Can I view and download full-size HD profile pictures (DP) anonymously?',
+    answer:
+      'Yes. Enter any Instagram handle or click on the profile avatar to open the Full HD DP Viewer. You can zoom in on uncropped square avatars and download the uncompressed original profile picture from both public and private accounts.',
+    category: 'Profile & DP Viewer',
+  },
+  {
+    question: 'How do I extract background music or audio from an Instagram Reel?',
+    answer:
+      'When viewing any Reel on InstaView, click the "Audio" button to extract the soundtrack as a high-bitrate M4A audio file. It preserves original crystal-clear audio quality without needing third-party software.',
+    category: 'Downloads',
+  },
 ];

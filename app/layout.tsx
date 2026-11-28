@@ -189,6 +189,22 @@ export default function RootLayout({
           "text": "Yes, viewing publicly shared content on the internet without logging in is completely safe and legal. InstaView does not record user browsing history, store passwords, or violate Instagram's public content access boundaries.",
         },
       },
+      {
+        "@type": "Question",
+        "name": "How do I transcribe an Instagram Reel to text for free?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Paste any public Instagram Reel URL into InstaView or click the 'Text' button on any Reel card. Our AI speech recognition engine automatically extracts spoken dialogue, voiceovers, and lyrics into written text and downloadable .SRT subtitles in seconds.",
+        },
+      },
+      {
+        "@type": "Question",
+        "name": "Can I view and download full-size HD profile pictures (DP) anonymously?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. InstaView retrieves uncropped, full-size 1080p profile pictures directly from Meta's CDN for both public and private accounts with zero account login.",
+        },
+      },
     ],
   };
 

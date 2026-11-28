@@ -21,7 +21,6 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { LANGUAGES, SUPPORTED_LANGS, getTranslations } from '@/lib/i18n/translations';
 import { AdSlot } from '@/components/AdSlot';
-      {/* Secret Watchlist Modal (Centered Viewport Dialog) */}
 import { StoryVaultModal } from '@/components/StoryVaultModal';
 import { WatchlistModal } from '@/components/WatchlistModal';
 import { TopAccountsDirectory } from '@/components/TopAccountsDirectory';
@@ -31,6 +30,7 @@ import {
   Loader2,
   AlertCircle,
   EyeOff,
+  Eye,
   Download,
   Smartphone,
   Lock,
@@ -809,10 +809,10 @@ export function InstaViewer({
                 </button>
               </div>
             )}
-            {/* Trust Guarantee Badge (100% Clean: No Pop-Ups, No Fake Buttons, Direct Downloads) */}
+            {/* Trust Guarantee Badge */}
             <div className="mt-4 flex items-center justify-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-emerald-600 dark:text-emerald-400 font-medium bg-emerald-500/10 dark:bg-emerald-950/25 border border-emerald-500/20 px-3.5 py-1.5 rounded-full max-w-fit mx-auto shadow-2xs">
               <ShieldCheck className="w-3.5 h-3.5 shrink-0 text-emerald-500" />
-              <span>100% Clean: Direct Media • Zero Pop-Up Ads • No Fake Buttons • 100% Anonymous</span>
+              <span>100% Anonymous • Direct HD Downloads • Zero Logins</span>
             </div>
           </div>
         </section>
@@ -1089,14 +1089,14 @@ export function InstaViewer({
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <Link href="/stories" className="p-5 rounded-2xl bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 shadow-xs hover:border-pink-500/40 transition-colors block">
                   <div className="flex items-center gap-2 mb-2">
                     <PlaySquare className="w-5 h-5 text-pink-500" />
                     <h3 className="font-bold text-sm text-slate-900 dark:text-white">Instagram Stories</h3>
                   </div>
                   <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
-                    Watch disappearing 24-hour photos and video stories without showing up in the seen list.
+                    Watch disappearing 24-hour photos and video stories without appearing in the viewer list.
                   </p>
                 </Link>
 
@@ -1110,23 +1110,46 @@ export function InstaViewer({
                   </p>
                 </Link>
 
-                <Link href="/posts" className="p-5 rounded-2xl bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 shadow-xs hover:border-rose-500/40 transition-colors block">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Grid className="w-5 h-5 text-rose-500" />
-                    <h3 className="font-bold text-sm text-slate-900 dark:text-white">Posts & Carousels</h3>
-                  </div>
-                  <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
-                    Browse full timeline posts with captions, like counts, comment counts, and multi-slide carousel albums.
-                  </p>
-                </Link>
-
                 <Link href="/reels" className="p-5 rounded-2xl bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 shadow-xs hover:border-fuchsia-500/40 transition-colors block">
                   <div className="flex items-center gap-2 mb-2">
                     <Film className="w-5 h-5 text-fuchsia-500" />
                     <h3 className="font-bold text-sm text-slate-900 dark:text-white">Instagram Reels</h3>
                   </div>
                   <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
-                    Watch trending short videos in full screen with audio and download high-bitrate MP4s instantly.
+                    Watch short videos in full screen with audio and download high-bitrate MP4s instantly.
+                  </p>
+                </Link>
+
+                <Link href="/posts" className="p-5 rounded-2xl bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 shadow-xs hover:border-rose-500/40 transition-colors block">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Grid className="w-5 h-5 text-rose-500" />
+                    <h3 className="font-bold text-sm text-slate-900 dark:text-white">Posts & Carousels</h3>
+                  </div>
+                  <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
+                    Browse timeline posts with captions, like counts, and multi-slide carousel albums.
+                  </p>
+                </Link>
+
+                <Link href="/reel-transcriber" className="p-5 rounded-2xl bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 shadow-xs hover:border-pink-500/40 transition-colors block">
+                  <div className="flex items-center gap-2 mb-2">
+                    <FileText className="w-5 h-5 text-pink-500" />
+                    <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
+                      <span>Reel Transcriber</span>
+                      <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-pink-500/10 text-pink-500 font-bold">AI</span>
+                    </h3>
+                  </div>
+                  <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
+                    Transcribe spoken dialogue into text and export time-coded .SRT subtitles automatically.
+                  </p>
+                </Link>
+
+                <Link href="/dp-downloader" className="p-5 rounded-2xl bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 shadow-xs hover:border-cyan-500/40 transition-colors block">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Eye className="w-5 h-5 text-cyan-500" />
+                    <h3 className="font-bold text-sm text-slate-900 dark:text-white">Full HD DP Viewer</h3>
+                  </div>
+                  <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
+                    Zoom in on uncropped original profile pictures and download full 1080p avatars.
                   </p>
                 </Link>
               </div>
