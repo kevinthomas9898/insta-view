@@ -4,7 +4,6 @@ import { transcribeMedia } from '@/lib/transcribe/whisper';
 import { extractReelStreamUrl } from '@/lib/transcribe/media-resolver';
 
 export const maxDuration = 60;
-export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'anonymous';
