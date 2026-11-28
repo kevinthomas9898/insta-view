@@ -32,10 +32,10 @@ export async function transcribeMedia(
   cacheKeyId?: string,
   captionHint?: string
 ): Promise<TranscriptResult> {
-  // Use v10 cache key to ensure fresh high-accuracy transcription with segment transliteration
+  // Use v11 cache key to ensure verbatim code-switching preservation (English in English, Hindi in Hinglish)
   const cacheKey = cacheKeyId
-    ? `transcript:v10:${cacheKeyId}`
-    : `transcript:v10:${encodeURIComponent(mediaUrl.slice(0, 100))}`;
+    ? `transcript:v11:${cacheKeyId}`
+    : `transcript:v11:${encodeURIComponent(mediaUrl.slice(0, 100))}`;
   
   // 1. Check in-memory cache
   const cached = globalCache.get<TranscriptResult>(cacheKey);

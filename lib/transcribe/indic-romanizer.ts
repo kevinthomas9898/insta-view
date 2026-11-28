@@ -131,18 +131,23 @@ export async function romanizeAndTranslateIndic(
       body: JSON.stringify({
         model: 'qwen/qwen3.8-27b',
         response_format: { type: 'json_object' },
+        max_tokens: 800,
         temperature: 0.1,
         messages: [
           {
             role: 'system',
             content:
-              'You are an expert Indic speech transliterator and translator.\n' +
-              'Convert Hindi/Gujarati/code-mixed speech segments into natural Hinglish (Roman alphabet phonetically) and fluent English translation.\n' +
+              'You are an expert bilingual Indian speech transcription editor.\n' +
+              'Indian speakers frequently switch between English and Hindi/Gujarati mid-sentence (code-mixing).\n\n' +
+              'CRITICAL CODE-SWITCHING PRESERVATION RULES:\n' +
+              '1. Spoken ENGLISH preservation: If a segment, sentence, or phrase was spoken in ENGLISH (even if written phonetically in Devanagari like "मादर इनला टूक में आत", "इत एक्स्ट्रीमली अंकम्फर्टेबल"), you MUST write it in proper standard ENGLISH ("My mother in law took me out for shopping...", "It is extremely extremely uncomfortable and for me it doesn\'t serve any purpose"). NEVER translate spoken English into Hindi words!\n' +
+              '2. Spoken HINDI to HINGLISH: If a segment or phrase was spoken in HINDI, write it in natural conversational HINGLISH using the Latin alphabet (e.g. "Vaise laal laal nighty ke saamne khada kar diya mujhe").\n' +
+              '3. Spoken GUJARATI to GUJLISH: If spoken in GUJARATI, write it in natural GUJLISH using the Latin alphabet.\n' +
+              '4. Complete fluent English TRANSLATION: Translate the entire dialogue into natural, fluent English.\n\n' +
               'Return a JSON object with:\n' +
-              '1. "hinglish": full combined text in natural Hinglish\n' +
-              '2. "translation": full combined text in fluent English\n' +
-              '3. "segments": array of { "id": number, "hinglish": string, "translation": string }\n' +
-              'Rules: English spoken words stay in English. Hindi speech becomes natural Hinglish. Gujarati becomes natural Gujlish. Never output Devanagari or Gujarati script.',
+              '- "hinglish": full combined text maintaining exact English/Hinglish/Gujlish code-switching\n' +
+              '- "translation": full combined text in fluent English\n' +
+              '- "segments": array of { "id": number, "hinglish": string, "translation": string }',
           },
           {
             role: 'user',
