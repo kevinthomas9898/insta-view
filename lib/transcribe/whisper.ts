@@ -28,7 +28,7 @@ export async function transcribeMedia(
 ): Promise<TranscriptResult> {
   const cacheKey = cacheKeyId ? `transcript:${cacheKeyId}` : `transcript:${encodeURIComponent(mediaUrl.slice(0, 100))}`;
   
-  // 1. Check in-memory / Redis cache
+  // 1. Check in-memory cache
   const cached = globalCache.get<TranscriptResult>(cacheKey);
   if (cached) {
     return { ...cached, fromCache: true };
@@ -41,9 +41,16 @@ export async function transcribeMedia(
     try {
       let targetUrl = mediaUrl;
       const isLikelyImage = targetUrl.includes('.jpg') || targetUrl.includes('.jpeg') || targetUrl.includes('.png');
+      const isDummyUrl = targetUrl.includes('flower.mp4') || targetUrl.includes('interactive-examples') || targetUrl.includes('pexels');
+      const isDash = targetUrl.includes('dashinit');
 
-      // If mediaUrl is an image or not a direct playable mp4, extract genuine progressive stream
-      if (isLikelyImage || (cacheKeyId && !targetUrl.includes('.mp4'))) {
+      // If mediaUrl is an image, dummy placeholder, DASH manifest, or not from Meta CDN, resolve genuine progressive stream
+      if (cacheKeyId && (!targetUrl || isLikelyImage || isDummyUrl || isDash || !targetUrl.includes('fbcdn.net'))) {
+        const streamUrl = await extractReelStreamUrl(cacheKeyId);
+        if (streamUrl) {
+          targetUrl = streamUrl;
+        }
+      } else if (!targetUrl || isLikelyImage || isDummyUrl || isDash || !targetUrl.includes('.mp4')) {
         const streamUrl = await extractReelStreamUrl(cacheKeyId || targetUrl);
         if (streamUrl) {
           targetUrl = streamUrl;
@@ -56,7 +63,7 @@ export async function transcribeMedia(
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
           Referer: 'https://www.instagram.com/',
         },
-        signal: AbortSignal.timeout(20000), // 20s timeout
+        signal: AbortSignal.timeout(25000), // 25s timeout
       });
 
       if (!mediaResponse.ok) {
@@ -82,7 +89,7 @@ export async function transcribeMedia(
           Authorization: `Bearer ${groqApiKey}`,
         },
         body: formData,
-        signal: AbortSignal.timeout(25000),
+        signal: AbortSignal.timeout(30000),
       });
 
       if (!groqResponse.ok) {
@@ -106,7 +113,7 @@ export async function transcribeMedia(
         provider: 'groq',
       };
 
-      // Cache for 24 hours
+      // Cache genuine groq transcript for 24 hours
       globalCache.set(cacheKey, result, CACHE_TTL.TRANSCRIPT);
       return result;
     } catch (err) {
@@ -114,9 +121,9 @@ export async function transcribeMedia(
     }
   }
 
-  // 3. Fallback / Dev Mock: Generate realistic transcript from caption and timing
+  // 3. Fallback / Dev Mock: Generate realistic transcript from caption and timing (short 60s cache for fallbacks)
   const fallbackResult = generateFallbackTranscript(captionHint);
-  globalCache.set(cacheKey, fallbackResult, CACHE_TTL.REELS);
+  globalCache.set(cacheKey, fallbackResult, 60);
   return fallbackResult;
 }
 

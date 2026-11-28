@@ -70,11 +70,21 @@ export async function GET(request: NextRequest) {
   const cached = globalCache.get<{ item: PostResult | ReelResult; type: 'reel' | 'post'; username: string }>(cacheKey);
 
   if (cached && !isDemo) {
-    return NextResponse.json({
-      success: true,
-      data: cached,
-      metadata: { fromCache: true },
-    });
+    const isInvalidReelUrl =
+      targetType === 'reel' &&
+      (!cached.item.url ||
+        cached.item.url.includes('.jpg') ||
+        cached.item.url.includes('.jpeg') ||
+        cached.item.url.includes('.png') ||
+        cached.item.url.includes('flower.mp4'));
+
+    if (!isInvalidReelUrl) {
+      return NextResponse.json({
+        success: true,
+        data: cached,
+        metadata: { fromCache: true },
+      });
+    }
   }
 
   // Attempt live resolution if RapidAPI key is configured

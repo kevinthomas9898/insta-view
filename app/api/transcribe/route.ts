@@ -38,14 +38,20 @@ export async function POST(request: NextRequest) {
     }
 
     let targetUrl = mediaUrl;
+    const isImageOrDummy =
+      !targetUrl ||
+      targetUrl.includes('.jpg') ||
+      targetUrl.includes('.jpeg') ||
+      targetUrl.includes('.png') ||
+      targetUrl.includes('flower.mp4') ||
+      targetUrl.includes('pexels') ||
+      targetUrl.includes('dashinit');
 
-    // If mediaUrl is missing or an image URL, resolve genuine progressive stream directly
-    if (!targetUrl || targetUrl.includes('.jpg') || targetUrl.includes('.png')) {
-      if (shortcode) {
-        const stream = await extractReelStreamUrl(shortcode);
-        if (stream) {
-          targetUrl = stream;
-        }
+    // Always ensure we have a genuine progressive stream when shortcode is available
+    if (shortcode && (isImageOrDummy || !targetUrl.includes('fbcdn.net'))) {
+      const stream = await extractReelStreamUrl(shortcode);
+      if (stream) {
+        targetUrl = stream;
       }
     }
 
