@@ -83,33 +83,92 @@ export async function transcribeMedia(
         throw new Error('Media file exceeds the 25MB transcription limit.');
       }
 
-      const formData = new FormData();
-      formData.append('file', mediaBlob, 'audio.mp4');
-      formData.append('model', 'whisper-large-v3-turbo');
-      formData.append('response_format', 'verbose_json');
-      formData.append('temperature', '0');
-      // Prompt Whisper to transcribe Hindi and Gujarati in Romanized Hinglish and Gujlish
-      formData.append(
-        'prompt',
-        'Hindi, Gujarati, Hinglish, Gujlish, English code-mixed conversation. Transcribe Hindi in Hinglish (Roman script) and Gujarati in Gujlish (Roman script). For example: "Aap kaise ho?", "Tame kem cho?", "Su chale che?", "Main theek hoon, bhai."'
-      );
+      // Detect if the reel likely has Hindi/Gujarati content from caption
+      // Whisper with auto-detect hallucinate English nonsense on Hindi speech,
+      // so we must force language='hi' to get accurate Devanagari output first,
+      // then post-process with Qwen into Hinglish + English translation.
+      const captionHasIndic = captionHint ? containsIndicScript(captionHint) : false;
+      const captionHasHindiKeywords = captionHint
+        ? /\b(bhai|yaar|kya|hai|nahi|mera|tera|aur|ko|se|mein|woh|yeh|kar|ho|toh|bol|dil|dost|saas|nanad|shaadi|dulhan)\b/i.test(captionHint)
+        : false;
+      const likelyIndic = captionHasIndic || captionHasHindiKeywords;
 
-      const groqResponse = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${groqApiKey}`,
-        },
-        body: formData,
-        signal: AbortSignal.timeout(30000),
-      });
+      /**
+       * Calls Groq Whisper and returns raw response JSON.
+       * @param lang - explicit language code, or undefined for auto-detect
+       */
+      const callWhisper = async (lang?: string) => {
+        const fd = new FormData();
+        fd.append('file', mediaBlob, 'audio.mp4');
+        fd.append('model', 'whisper-large-v3-turbo');
+        fd.append('response_format', 'verbose_json');
+        fd.append('temperature', '0');
+        if (lang) {
+          fd.append('language', lang);
+        }
+        fd.append(
+          'prompt',
+          lang === 'hi'
+            ? 'Hindi, Hinglish, English code-mixed speech. Yeh ek Indian Instagram reel hai jismein Hindi aur English dono mili hui hai. Transcribe karo sab kuch accurately.'
+            : 'Hindi, Gujarati, Hinglish, Gujlish, English code-mixed conversation. Transcribe Hindi in Hinglish (Roman script) and Gujarati in Gujlish (Roman script). For example: "Aap kaise ho?", "Tame kem cho?", "Su chale che?", "Main theek hoon, bhai."'
+        );
 
-      if (!groqResponse.ok) {
-        const errorText = await groqResponse.text();
-        console.warn('[Transcription] Groq API returned error:', errorText);
-        throw new Error(`Groq Whisper API error: ${groqResponse.status}`);
+        const resp = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${groqApiKey}` },
+          body: fd,
+          signal: AbortSignal.timeout(30000),
+        });
+
+        if (!resp.ok) {
+          const errorText = await resp.text();
+          console.warn(`[Transcription] Groq Whisper (lang=${lang || 'auto'}) error:`, errorText);
+          throw new Error(`Groq Whisper API error: ${resp.status}`);
+        }
+
+        return resp.json();
+      };
+
+      // Heuristic to detect if Whisper output looks garbled/hallucinated
+      const looksGarbled = (text: string, detectedLang: string): boolean => {
+        if (!text || text.length < 20) return false;
+        // If Whisper says it's English but the caption is clearly Hindi,
+        // the English output is almost certainly garbled hallucination
+        if (detectedLang === 'en' && likelyIndic) return true;
+        // Hallucination markers: very repetitive text, nonsense patterns
+        const words = text.split(/\s+/);
+        if (words.length < 5) return false;
+        const unique = new Set(words.map(w => w.toLowerCase()));
+        // If less than 30% unique words, it's repetitive hallucination
+        if (unique.size / words.length < 0.3) return true;
+        return false;
+      };
+
+      // PRIMARY PASS: If likely Hindi, force language='hi' for accurate Devanagari.
+      // Otherwise auto-detect, then retry with 'hi' if output looks garbled.
+      let data: any;
+
+      if (likelyIndic) {
+        // Caption signals Hindi content — go straight to language='hi'
+        console.log('[Transcription] Caption signals Hindi/Gujarati content, forcing language=hi');
+        data = await callWhisper('hi');
+      } else {
+        // Auto-detect first
+        data = await callWhisper();
+
+        // Check if the auto-detect result is garbled Hindi-as-English
+        const autoText = data.text?.trim() || '';
+        const autoLang = data.language || 'en';
+
+        if (looksGarbled(autoText, autoLang) || (autoLang === 'hi' && !containsIndicScript(autoText))) {
+          console.log(`[Transcription] Auto-detect result looks garbled (lang=${autoLang}), retrying with language=hi`);
+          try {
+            data = await callWhisper('hi');
+          } catch {
+            // Keep auto-detect result if retry fails
+          }
+        }
       }
-
-      const data = await groqResponse.json();
 
       let segments: TranscriptSegment[] = (data.segments || []).map(
         (s: { start: number; end: number; text: string }, idx: number) => ({
