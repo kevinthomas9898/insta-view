@@ -1,41 +1,57 @@
 import { TranscriptSegment } from './whisper';
 
+export interface FormattedParagraph {
+  id: number;
+  start: number;
+  end: number;
+  text: string;
+}
+
 /**
- * Intelligent spoken speech paragraph formatter.
- * Splits speech transcripts into readable paragraphs based on:
- * 1. Dialogue reporting verbs and quotation intros (whispered, yelled, said)
- * 2. Dialogue questions and answers
- * 3. Timing gaps / pauses in spoken audio (> 0.5s silence)
- * 4. Pacing limits (30-50 words per paragraph at sentence boundaries)
+ * Intelligent spoken speech paragraph parser.
+ * Groups segments into coherent paragraphs with start & end timestamps
+ * based on speech pauses, dialogue cues, and narrative pacing.
  */
-export function formatTranscriptToParagraphs(
+export function parseTranscriptParagraphs(
   segments?: TranscriptSegment[],
   fullText?: string
-): string {
+): FormattedParagraph[] {
   if (!segments || segments.length === 0) {
-    if (!fullText) return '';
-    // Sentence-based fallback for raw text without segment timestamps
+    if (!fullText) return [];
     const sentences = fullText.match(/[^.!?]+[.!?]+(\s+|$)|[^.!?]+$/g) || [fullText];
-    const paras: string[] = [];
+    const paras: FormattedParagraph[] = [];
     let current: string[] = [];
     let wordCount = 0;
+    let paraId = 0;
 
     for (const s of sentences) {
       current.push(s.trim());
       wordCount += s.trim().split(/\s+/).length;
       if (wordCount >= 35 || current.length >= 3) {
-        paras.push(current.join(' '));
+        paras.push({
+          id: paraId++,
+          start: 0,
+          end: 0,
+          text: current.join(' '),
+        });
         current = [];
         wordCount = 0;
       }
     }
-    if (current.length > 0) paras.push(current.join(' '));
-    return paras.join('\n\n');
+    if (current.length > 0) {
+      paras.push({
+        id: paraId++,
+        start: 0,
+        end: 0,
+        text: current.join(' '),
+      });
+    }
+    return paras;
   }
 
-  const paragraphs: string[] = [];
-  let currentPara: string[] = [];
-  let currentParaWords = 0;
+  const paragraphs: FormattedParagraph[] = [];
+  let currentSegs: TranscriptSegment[] = [];
+  let currentWords = 0;
   let prevSeg: TranscriptSegment | null = null;
   let inDialogue = false;
 
@@ -45,6 +61,18 @@ export function formatTranscriptToParagraphs(
     /^(I promised|I didn't|I stood|I said|I spun|I took|He backed|He stared|She came|She just|My fingers|Then|Next|Only|Legend|Everyone|Eight years|Halfway)\b/i;
   const directSpeechStartRegex =
     /^(Hey|Where's|What's|Why|How|Never|Bandages off|Blue eyes\?|You finally)\b/i;
+
+  const flushParagraph = () => {
+    if (currentSegs.length === 0) return;
+    paragraphs.push({
+      id: paragraphs.length,
+      start: currentSegs[0].start,
+      end: currentSegs[currentSegs.length - 1].end,
+      text: currentSegs.map((s) => s.text.trim()).join(' '),
+    });
+    currentSegs = [];
+    currentWords = 0;
+  };
 
   for (let i = 0; i < segments.length; i++) {
     const seg = segments[i];
@@ -56,8 +84,8 @@ export function formatTranscriptToParagraphs(
 
     let shouldBreak = false;
 
-    if (currentPara.length > 0) {
-      // 1. Dialogue intro before direct speech (e.g. "whispered,", "yelled,", "spoke.")
+    if (currentSegs.length > 0) {
+      // 1. Dialogue intro before direct speech
       if (
         dialogueIntroRegex.test(prevText) ||
         prevText.endsWith(':') ||
@@ -67,7 +95,7 @@ export function formatTranscriptToParagraphs(
         shouldBreak = true;
         inDialogue = true;
       }
-      // 2. Explicit direct speech beginning (e.g. "Where's your umbrella?", "Hey, Bandage Boy...", "Bandages off", "Blue eyes?")
+      // 2. Explicit direct speech beginning
       else if (
         directSpeechStartRegex.test(text) &&
         (prevText.endsWith('.') || prevText.endsWith('!') || prevText.endsWith('?'))
@@ -99,7 +127,7 @@ export function formatTranscriptToParagraphs(
       }
       // 6. Natural speech pacing: paragraph has >= 30 words and a pause (gap >= 0.35s)
       else if (
-        currentParaWords >= 30 &&
+        currentWords >= 30 &&
         gap >= 0.35 &&
         (prevText.endsWith('.') || prevText.endsWith('!') || prevText.endsWith('?'))
       ) {
@@ -108,7 +136,7 @@ export function formatTranscriptToParagraphs(
       }
       // 7. Max paragraph size limit (>= 50 words)
       else if (
-        currentParaWords >= 50 &&
+        currentWords >= 50 &&
         (prevText.endsWith('.') || prevText.endsWith('!') || prevText.endsWith('?'))
       ) {
         shouldBreak = true;
@@ -116,20 +144,27 @@ export function formatTranscriptToParagraphs(
       }
     }
 
-    if (shouldBreak && currentPara.length > 0) {
-      paragraphs.push(currentPara.join(' '));
-      currentPara = [];
-      currentParaWords = 0;
+    if (shouldBreak) {
+      flushParagraph();
     }
 
-    currentPara.push(text);
-    currentParaWords += text.split(/\s+/).length;
+    currentSegs.push(seg);
+    currentWords += text.split(/\s+/).length;
     prevSeg = seg;
   }
 
-  if (currentPara.length > 0) {
-    paragraphs.push(currentPara.join(' '));
-  }
+  flushParagraph();
+  return paragraphs;
+}
 
-  return paragraphs.join('\n\n');
+/**
+ * Intelligent spoken speech paragraph formatter.
+ * Returns newline-separated paragraphs string.
+ */
+export function formatTranscriptToParagraphs(
+  segments?: TranscriptSegment[],
+  fullText?: string
+): string {
+  const paras = parseTranscriptParagraphs(segments, fullText);
+  return paras.map((p) => p.text).join('\n\n');
 }

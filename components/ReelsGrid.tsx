@@ -6,6 +6,7 @@ import { AdBanner } from '@/components/AdBanner';
 import { RewardedAdModal } from '@/components/RewardedAdModal';
 import { ReelTranscriptModal } from '@/components/ReelTranscriptModal';
 import { TranscriptResult } from '@/lib/transcribe/whisper';
+import { parseTranscriptParagraphs, FormattedParagraph } from '@/lib/transcribe/formatter';
 import {
   Play,
   Pause,
@@ -25,6 +26,11 @@ import {
   EyeOff,
   FileText,
   Sparkles,
+  Clock,
+  Globe,
+  AlignLeft,
+  ListOrdered,
+  Columns,
 } from 'lucide-react';
 
 interface ReelsGridProps {
@@ -59,12 +65,60 @@ export function ReelsGrid({
   const [isOverlayVisible, setIsOverlayVisible] = useState(true);
   const [isAdModalOpen, setIsAdModalOpen] = useState(false);
   const [isTranscriptModalOpen, setIsTranscriptModalOpen] = useState(false);
+  const [isTranscriptPaneOpen, setIsTranscriptPaneOpen] = useState(false);
+  const [transcriptTab, setTranscriptTab] = useState<'paragraphs' | 'timestamps'>('paragraphs');
+  const [copiedTranscript, setCopiedTranscript] = useState(false);
   const [activeTranscript, setActiveTranscript] = useState<(TranscriptResult & { srt?: string }) | null>(null);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const lastTimeUpdateRef = useRef<number>(0);
 
+  // Parse transcript into interactive paragraphs with timecode anchors
+  const formattedParagraphs: FormattedParagraph[] = React.useMemo(() => {
+    if (!activeTranscript) return [];
+    return parseTranscriptParagraphs(activeTranscript.segments, activeTranscript.text);
+  }, [activeTranscript]);
+
+  const seekTo = (seconds: number) => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = Math.max(0, seconds);
+      videoRef.current.play();
+      setIsVideoPlaying(true);
+    }
+  };
+
+  const handleCopyTranscript = () => {
+    if (!activeTranscript?.text) return;
+    navigator.clipboard.writeText(activeTranscript.text);
+    setCopiedTranscript(true);
+    setTimeout(() => setCopiedTranscript(false), 2000);
+  };
+
+  const handleDownloadTxt = () => {
+    if (!activeTranscript?.text) return;
+    const blob = new Blob([activeTranscript.text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `transcript_${username}_${selectedReel?.id || 'reel'}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadSrt = () => {
+    if (!activeTranscript?.srt) return;
+    const blob = new Blob([activeTranscript.srt], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `subtitles_${username}_${selectedReel?.id || 'reel'}.srt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleStartTranscription = async (reel: ReelResult) => {
+    setSelectedReel(reel);
+    setIsTranscriptPaneOpen(true);
     setIsAdModalOpen(true);
     setIsTranscribing(true);
 
@@ -94,7 +148,7 @@ export function ReelsGrid({
 
   const handleAdCompleted = () => {
     setIsAdModalOpen(false);
-    setIsTranscriptModalOpen(true);
+    setIsTranscriptPaneOpen(true);
   };
 
   const hasAutoStartedRef = useRef(false);
@@ -318,326 +372,662 @@ export function ReelsGrid({
         </div>
       ) : null}
 
-      {/* Reel Modal Player */}
+      {/* Reel Studio Player (Side-by-side Video & Synchronized Transcript) */}
       {selectedReel && (() => {
         const isPlayableVideo = Boolean(selectedReel.url && selectedReel.url.includes('.mp4'));
         return (
-          <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 select-none">
-            <div className="relative w-full max-w-sm sm:max-w-md h-[88vh] bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden flex flex-col justify-between shadow-2xl">
-              {/* Top Close, Speed, Mute & Clean View Bar */}
-              <div className="absolute top-0 inset-x-0 z-40 p-3.5 bg-gradient-to-b from-black/85 via-black/50 to-transparent flex items-center justify-between text-white">
-                <span className="text-xs font-bold tracking-tight drop-shadow">@{username} Reel</span>
-                <div className="flex items-center gap-1.5">
-                  {/* Speed Toggle (only if video) */}
-                  {isPlayableVideo && (
-                    <button
-                      type="button"
-                      onClick={cyclePlaybackSpeed}
-                      className="px-2 py-1 bg-black/60 hover:bg-black/90 active:scale-90 text-[11px] font-bold rounded-lg border border-white/20 transition-all cursor-pointer shadow-xs"
-                      title="Playback Speed"
-                    >
-                      {playbackSpeed}x
-                    </button>
-                  )}
-
-                  {/* Sound Toggle (only if video) */}
-                  {isPlayableVideo && (
-                    <button
-                      type="button"
-                      onClick={toggleVideoMute}
-                      className="p-2 hover:bg-white/20 active:scale-90 rounded-full text-white transition-all cursor-pointer"
-                      title={isVideoMuted ? 'Unmute' : 'Mute'}
-                    >
-                      {isVideoMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4 text-white" />}
-                    </button>
-                  )}
-
-                  {/* Clean View Toggle */}
-                  <button
-                    type="button"
-                    onClick={() => setIsOverlayVisible((v) => !v)}
-                    className={`p-2 hover:bg-white/20 active:scale-90 rounded-full transition-all cursor-pointer ${
-                      !isOverlayVisible ? 'text-pink-400 bg-pink-500/20' : 'text-white'
-                    }`}
-                    title={isOverlayVisible ? 'Clean View (hide caption & buttons)' : 'Show details & controls'}
-                    aria-label={isOverlayVisible ? 'Clean View' : 'Show Details'}
-                  >
-                    {isOverlayVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-
-                  {/* Close */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedReel(null);
-                      setIsOverlayVisible(true);
-                    }}
-                    className="p-2 hover:bg-white/20 active:scale-90 rounded-full text-white transition-all cursor-pointer"
-                    title="Close"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Video Player or Cover Preview */}
+          <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 select-none animate-fade-in">
+            <div
+              className={`relative w-full ${
+                isTranscriptPaneOpen
+                  ? 'max-w-5xl lg:max-w-6xl h-[92vh] max-h-[880px]'
+                  : 'max-w-sm sm:max-w-md h-[88vh]'
+              } bg-zinc-950 border border-zinc-800/80 rounded-3xl overflow-hidden flex flex-col md:flex-row justify-between shadow-2xl transition-all duration-300`}
+            >
+              {/* Left Column: Vertical Video Player */}
               <div
-                className="relative flex-1 flex items-center justify-center bg-black overflow-hidden cursor-pointer"
-                onClick={isPlayableVideo ? toggleVideoPlay : undefined}
+                className={`relative flex flex-col justify-between bg-black overflow-hidden ${
+                  isTranscriptPaneOpen
+                    ? 'w-full md:w-[350px] lg:w-[380px] shrink-0 h-[38vh] md:h-full border-b md:border-b-0 md:border-r border-zinc-800/80'
+                    : 'w-full h-full'
+                }`}
               >
-                {/* Notice if only cover frame is available */}
-                {!isPlayableVideo && (
-                  <div className="absolute top-14 inset-x-4 bg-zinc-950/85 backdrop-blur-md border border-amber-500/40 rounded-xl p-2.5 text-center z-25 shadow-xl">
-                    <p className="text-xs text-amber-200 font-semibold">Video Stream Direct from Instagram</p>
-                    <p className="text-[11px] text-zinc-300 mt-0.5">High-res cover frame loaded. Tap "Direct Source URL" to view the video stream on Instagram.</p>
-                  </div>
-                )}
+                {/* Top Close, Speed, Mute & Clean View Bar */}
+                <div className="absolute top-0 inset-x-0 z-40 p-3.5 bg-gradient-to-b from-black/85 via-black/50 to-transparent flex items-center justify-between text-white">
+                  <span className="text-xs font-bold tracking-tight drop-shadow truncate max-w-[130px]">
+                    @{username} Reel
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {/* Transcript Split View Toggle */}
+                    {isPlayableVideo && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!activeTranscript && !isTranscribing) {
+                            handleStartTranscription(selectedReel);
+                          } else {
+                            setIsTranscriptPaneOpen((prev) => !prev);
+                          }
+                        }}
+                        className={`px-2 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 transition-all cursor-pointer shadow-xs ${
+                          isTranscriptPaneOpen
+                            ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-pink-500/20'
+                            : 'bg-black/60 hover:bg-black/90 text-white/90 border border-white/20'
+                        }`}
+                        title={isTranscriptPaneOpen ? 'Hide Transcript Panel' : 'Open Transcript & Video side-by-side'}
+                      >
+                        <FileText className="w-3.5 h-3.5 text-pink-400" />
+                        <span className="hidden sm:inline">
+                          {isTranscriptPaneOpen ? 'Transcript' : 'Transcript'}
+                        </span>
+                      </button>
+                    )}
 
-                {/* Loading Spinner Overlay */}
-                {isReelLoading && isPlayableVideo && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-xs z-15 transition-opacity duration-150 animate-fade-in pointer-events-none">
-                    <div className="p-3 rounded-full bg-zinc-900/90 border border-white/10 shadow-2xl">
-                      <Loader2 className="w-7 h-7 text-pink-500 animate-spin" />
-                    </div>
-                    <span className="text-[11px] font-medium text-white/90 mt-2.5 tracking-wide">
-                      Loading reel...
-                    </span>
-                  </div>
-                )}
+                    {/* Speed Toggle (only if video) */}
+                    {isPlayableVideo && (
+                      <button
+                        type="button"
+                        onClick={cyclePlaybackSpeed}
+                        className="px-2 py-1 bg-black/60 hover:bg-black/90 active:scale-90 text-[11px] font-bold rounded-lg border border-white/20 transition-all cursor-pointer shadow-xs"
+                        title="Playback Speed"
+                      >
+                        {playbackSpeed}x
+                      </button>
+                    )}
 
-                {isPlayableVideo ? (
-                  <video
-                    key={selectedReel.id || selectedReel.url}
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    loop
-                    muted={isVideoMuted}
-                    preload="metadata"
-                    poster={`/api/media?url=${encodeURIComponent(selectedReel.thumbnailUrl || selectedReel.url)}`}
-                    onLoadedMetadata={() => {
-                      if (videoRef.current) {
-                        setDuration(videoRef.current.duration);
-                      }
-                    }}
-                    onWaiting={() => setIsReelLoading(true)}
-                    onStalled={() => setIsReelLoading(true)}
-                    onPlaying={() => {
-                      setIsReelLoading(false);
-                      setIsVideoPlaying(true);
-                    }}
-                    onPause={() => setIsVideoPlaying(false)}
-                    onTimeUpdate={() => {
-                      if (videoRef.current && videoRef.current.duration) {
-                        const now = Date.now();
-                        if (now - lastTimeUpdateRef.current > 200) {
-                          lastTimeUpdateRef.current = now;
-                          setCurrentTime(videoRef.current.currentTime);
-                          setDuration(videoRef.current.duration);
-                          setVideoProgress((videoRef.current.currentTime / videoRef.current.duration) * 100);
-                        }
-                      }
-                    }}
-                    className={`w-full h-full object-contain transition-opacity duration-200 ${
-                      isReelLoading ? 'opacity-80' : 'opacity-100'
-                    }`}
-                    src={`/api/media?url=${encodeURIComponent(selectedReel.url)}`}
-                    onError={(e) => {
-                      setIsReelLoading(false);
-                      if (e.currentTarget.src !== selectedReel.url) {
-                        e.currentTarget.src = selectedReel.url;
-                      }
-                    }}
-                  />
-                ) : (
-                  <img
-                    src={`/api/media?url=${encodeURIComponent(selectedReel.thumbnailUrl || selectedReel.url)}`}
-                    alt={selectedReel.caption || 'Reel cover'}
-                    className="w-full h-full object-contain"
-                  />
-                )}
+                    {/* Sound Toggle (only if video) */}
+                    {isPlayableVideo && (
+                      <button
+                        type="button"
+                        onClick={toggleVideoMute}
+                        className="p-1.5 hover:bg-white/20 active:scale-90 rounded-full text-white transition-all cursor-pointer"
+                        title={isVideoMuted ? 'Unmute' : 'Mute'}
+                      >
+                        {isVideoMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4 text-white" />}
+                      </button>
+                    )}
 
-                {/* Center Play Icon When Paused */}
-                {isPlayableVideo && !isVideoPlaying && !isReelLoading && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/35 z-25 pointer-events-none">
-                    <div className="p-4 rounded-full bg-black/80 backdrop-blur-sm text-white border border-white/20 shadow-2xl transition-transform">
-                      <Play className="w-8 h-8 fill-current translate-x-0.5 text-white" />
-                    </div>
-                  </div>
-                )}
-
-                {/* Instagram-Style Transparent Overlay for Reel */}
-                {isOverlayVisible ? (
-                  <>
-                    {/* Bottom-Left Information Overlay */}
-                    <div
-                      className="absolute bottom-3 left-3 right-16 z-30 flex flex-col gap-1.5 pointer-events-auto"
-                      onClick={(e) => e.stopPropagation()}
+                    {/* Clean View Toggle */}
+                    <button
+                      type="button"
+                      onClick={() => setIsOverlayVisible((v) => !v)}
+                      className={`p-1.5 hover:bg-white/20 active:scale-90 rounded-full transition-all cursor-pointer ${
+                        !isOverlayVisible ? 'text-pink-400 bg-pink-500/20' : 'text-white'
+                      }`}
+                      title={isOverlayVisible ? 'Clean View (hide caption & buttons)' : 'Show details & controls'}
+                      aria-label={isOverlayVisible ? 'Clean View' : 'Show Details'}
                     >
-                      {/* Creator & Audio Title */}
-                      <div className="flex items-center gap-2 flex-wrap text-white">
-                        <span className="text-xs font-bold drop-shadow">@{username}</span>
-                        {selectedReel.audioTitle && (
-                          <div className="flex items-center gap-1 text-[11px] text-white/85 font-medium drop-shadow bg-black/40 backdrop-blur-xs px-2 py-0.5 rounded-full border border-white/10 max-w-[200px]">
-                            <Music className="w-3 h-3 text-pink-400 shrink-0" />
-                            <span className="truncate">{selectedReel.audioTitle}</span>
+                      {isOverlayVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+
+                    {/* Close (rendered on video header only when transcript pane is closed) */}
+                    {!isTranscriptPaneOpen && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedReel(null);
+                          setIsTranscriptPaneOpen(false);
+                          setIsOverlayVisible(true);
+                        }}
+                        className="p-1.5 hover:bg-white/20 active:scale-90 rounded-full text-white transition-all cursor-pointer"
+                        title="Close"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Video Player or Cover Preview */}
+                <div
+                  className="relative flex-1 flex items-center justify-center bg-black overflow-hidden cursor-pointer"
+                  onClick={isPlayableVideo ? toggleVideoPlay : undefined}
+                >
+                  {/* Notice if only cover frame is available */}
+                  {!isPlayableVideo && (
+                    <div className="absolute top-14 inset-x-4 bg-zinc-950/85 backdrop-blur-md border border-amber-500/40 rounded-xl p-2.5 text-center z-25 shadow-xl">
+                      <p className="text-xs text-amber-200 font-semibold">Video Stream Direct from Instagram</p>
+                      <p className="text-[11px] text-zinc-300 mt-0.5">High-res cover frame loaded. Tap "Direct Source URL" to view the video stream on Instagram.</p>
+                    </div>
+                  )}
+
+                  {/* Loading Spinner Overlay */}
+                  {isReelLoading && isPlayableVideo && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-xs z-15 transition-opacity duration-150 animate-fade-in pointer-events-none">
+                      <div className="p-3 rounded-full bg-zinc-900/90 border border-white/10 shadow-2xl">
+                        <Loader2 className="w-7 h-7 text-pink-500 animate-spin" />
+                      </div>
+                      <span className="text-[11px] font-medium text-white/90 mt-2.5 tracking-wide">
+                        Loading reel...
+                      </span>
+                    </div>
+                  )}
+
+                  {isPlayableVideo ? (
+                    <video
+                      key={selectedReel.id || selectedReel.url}
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      loop
+                      muted={isVideoMuted}
+                      preload="metadata"
+                      poster={`/api/media?url=${encodeURIComponent(selectedReel.thumbnailUrl || selectedReel.url)}`}
+                      onLoadedMetadata={() => {
+                        if (videoRef.current) {
+                          setDuration(videoRef.current.duration);
+                        }
+                      }}
+                      onWaiting={() => setIsReelLoading(true)}
+                      onStalled={() => setIsReelLoading(true)}
+                      onPlaying={() => {
+                        setIsReelLoading(false);
+                        setIsVideoPlaying(true);
+                      }}
+                      onPause={() => setIsVideoPlaying(false)}
+                      onTimeUpdate={() => {
+                        if (videoRef.current && videoRef.current.duration) {
+                          const now = Date.now();
+                          if (now - lastTimeUpdateRef.current > 200) {
+                            lastTimeUpdateRef.current = now;
+                            setCurrentTime(videoRef.current.currentTime);
+                            setDuration(videoRef.current.duration);
+                            setVideoProgress((videoRef.current.currentTime / videoRef.current.duration) * 100);
+                          }
+                        }
+                      }}
+                      className={`w-full h-full object-contain transition-opacity duration-200 ${
+                        isReelLoading ? 'opacity-80' : 'opacity-100'
+                      }`}
+                      src={`/api/media?url=${encodeURIComponent(selectedReel.url)}`}
+                      onError={(e) => {
+                        setIsReelLoading(false);
+                        if (e.currentTarget.src !== selectedReel.url) {
+                          e.currentTarget.src = selectedReel.url;
+                        }
+                      }}
+                    />
+                  ) : (
+                    <img
+                      src={`/api/media?url=${encodeURIComponent(selectedReel.thumbnailUrl || selectedReel.url)}`}
+                      alt={selectedReel.caption || 'Reel cover'}
+                      className="w-full h-full object-contain"
+                    />
+                  )}
+
+                  {/* Center Play Icon When Paused */}
+                  {isPlayableVideo && !isVideoPlaying && !isReelLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/35 z-25 pointer-events-none">
+                      <div className="p-4 rounded-full bg-black/80 backdrop-blur-sm text-white border border-white/20 shadow-2xl transition-transform">
+                        <Play className="w-8 h-8 fill-current translate-x-0.5 text-white" />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Instagram-Style Transparent Overlay for Reel */}
+                  {isOverlayVisible ? (
+                    <>
+                      {/* Bottom-Left Information Overlay */}
+                      <div
+                        className="absolute bottom-3 left-3 right-16 z-30 flex flex-col gap-1.5 pointer-events-auto"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {/* Creator & Audio Title */}
+                        <div className="flex items-center gap-2 flex-wrap text-white">
+                          <span className="text-xs font-bold drop-shadow">@{username}</span>
+                          {selectedReel.audioTitle && (
+                            <div className="flex items-center gap-1 text-[11px] text-white/85 font-medium drop-shadow bg-black/40 backdrop-blur-xs px-2 py-0.5 rounded-full border border-white/10 max-w-[200px]">
+                              <Music className="w-3 h-3 text-pink-400 shrink-0" />
+                              <span className="truncate">{selectedReel.audioTitle}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Collapsible Caption */}
+                        {selectedReel.caption && !selectedReel.caption.startsWith('http') && (
+                          <div className="text-xs text-white/95 leading-relaxed drop-shadow-sm max-h-[16vh] overflow-y-auto pr-1">
+                            <p className={isCaptionExpanded ? 'whitespace-pre-line' : 'line-clamp-2'}>
+                              {selectedReel.caption}
+                            </p>
+                            {selectedReel.caption.length > 70 && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setIsCaptionExpanded(!isCaptionExpanded);
+                                }}
+                                className="text-[11px] font-bold text-pink-400 hover:text-pink-300 mt-0.5 cursor-pointer underline underline-offset-2"
+                              >
+                                {isCaptionExpanded ? 'Show less' : '... more'}
+                              </button>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Elapsed Time & Duration */}
+                        {isPlayableVideo && (
+                          <div className="text-[10px] text-white/70 font-mono tracking-wider drop-shadow-sm">
+                            {formatTime(currentTime)} / {formatTime(duration)}
                           </div>
                         )}
                       </div>
 
-                      {/* Collapsible Caption */}
-                      {selectedReel.caption && !selectedReel.caption.startsWith('http') && (
-                        <div className="text-xs text-white/95 leading-relaxed drop-shadow-sm max-h-[16vh] overflow-y-auto pr-1">
-                          <p className={isCaptionExpanded ? 'whitespace-pre-line' : 'line-clamp-2'}>
-                            {selectedReel.caption}
-                          </p>
-                          {selectedReel.caption.length > 70 && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setIsCaptionExpanded(!isCaptionExpanded);
-                              }}
-                              className="text-[11px] font-bold text-pink-400 hover:text-pink-300 mt-0.5 cursor-pointer underline underline-offset-2"
-                            >
-                              {isCaptionExpanded ? 'Show less' : '... more'}
-                            </button>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Elapsed Time & Duration */}
-                      {isPlayableVideo && (
-                        <div className="text-[10px] text-white/70 font-mono tracking-wider drop-shadow-sm">
-                          {formatTime(currentTime)} / {formatTime(duration)}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Instagram-Style Vertical Action Column on Right Edge */}
-                    <div
-                      className="absolute right-3 bottom-6 z-35 flex flex-col items-center gap-3 pointer-events-auto"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {/* Download Video Action */}
-                      <a
-                        href={
-                          selectedReel.downloadUrl ||
-                          `/api/media?url=${encodeURIComponent(selectedReel.url)}&download=true&filename=reel_${username}_${selectedReel.id}.${isPlayableVideo ? 'mp4' : 'jpg'}`
-                        }
-                        download
-                        className="group flex flex-col items-center gap-0.5 active:scale-90 transition-transform cursor-pointer"
-                        title={isPlayableVideo ? 'Download Reel Video' : 'Download Cover'}
+                      {/* Instagram-Style Vertical Action Column on Right Edge */}
+                      <div
+                        className="absolute right-3 bottom-6 z-35 flex flex-col items-center gap-3 pointer-events-auto"
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        <div className="p-2.5 rounded-full bg-black/60 hover:bg-black/90 active:bg-pink-600 backdrop-blur-md text-white border border-white/20 shadow-xl group-hover:border-pink-500/50 transition-colors">
-                          <Download className="w-4 h-4 text-white group-hover:text-pink-300 transition-colors" />
-                        </div>
-                        <span className="text-[10px] font-semibold text-white drop-shadow-md">Video</span>
-                      </a>
-
-                      {/* Download Audio Action */}
-                      {isPlayableVideo && (
+                        {/* Download Video Action */}
                         <a
-                          href={`/api/media?url=${encodeURIComponent(selectedReel.url)}&download=true&audioOnly=true&filename=audio_${username}_${selectedReel.id}.m4a`}
+                          href={
+                            selectedReel.downloadUrl ||
+                            `/api/media?url=${encodeURIComponent(selectedReel.url)}&download=true&filename=reel_${username}_${selectedReel.id}.${isPlayableVideo ? 'mp4' : 'jpg'}`
+                          }
                           download
                           className="group flex flex-col items-center gap-0.5 active:scale-90 transition-transform cursor-pointer"
-                          title="Extract and download reel audio track (M4A)"
+                          title={isPlayableVideo ? 'Download Reel Video' : 'Download Cover'}
                         >
                           <div className="p-2.5 rounded-full bg-black/60 hover:bg-black/90 active:bg-pink-600 backdrop-blur-md text-white border border-white/20 shadow-xl group-hover:border-pink-500/50 transition-colors">
-                            <Music className="w-4 h-4 text-white group-hover:text-pink-300 transition-colors" />
+                            <Download className="w-4 h-4 text-white group-hover:text-pink-300 transition-colors" />
                           </div>
-                          <span className="text-[10px] font-semibold text-white drop-shadow-md">Audio</span>
+                          <span className="text-[10px] font-semibold text-white drop-shadow-md">Video</span>
                         </a>
-                      )}
 
-                      {/* Transcribe Reel Action */}
-                      {isPlayableVideo && (
-                        <button
-                          type="button"
-                          onClick={() => handleStartTranscription(selectedReel)}
-                          className="group flex flex-col items-center gap-0.5 active:scale-90 transition-transform cursor-pointer"
-                          title="Transcribe spoken words & lyrics with AI"
-                        >
-                          <div className="p-2.5 rounded-full bg-gradient-to-tr from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white border border-pink-400/30 shadow-xl shadow-pink-500/20 group-hover:scale-105 transition-all">
-                            {isTranscribing ? (
-                              <Loader2 className="w-4 h-4 text-white animate-spin" />
-                            ) : (
-                              <FileText className="w-4 h-4 text-white" />
-                            )}
-                          </div>
-                          <span className="text-[10px] font-semibold text-white drop-shadow-md flex items-center gap-0.5">
-                            <span>Text</span>
-                            <Sparkles className="w-2.5 h-2.5 text-amber-300" />
-                          </span>
-                        </button>
-                      )}
+                        {/* Download Audio Action */}
+                        {isPlayableVideo && (
+                          <a
+                            href={`/api/media?url=${encodeURIComponent(selectedReel.url)}&download=true&audioOnly=true&filename=audio_${username}_${selectedReel.id}.m4a`}
+                            download
+                            className="group flex flex-col items-center gap-0.5 active:scale-90 transition-transform cursor-pointer"
+                            title="Extract and download reel audio track (M4A)"
+                          >
+                            <div className="p-2.5 rounded-full bg-black/60 hover:bg-black/90 active:bg-pink-600 backdrop-blur-md text-white border border-white/20 shadow-xl group-hover:border-pink-500/50 transition-colors">
+                              <Music className="w-4 h-4 text-white group-hover:text-pink-300 transition-colors" />
+                            </div>
+                            <span className="text-[10px] font-semibold text-white drop-shadow-md">Audio</span>
+                          </a>
+                        )}
 
-                      {/* Copy Caption Action */}
-                      {selectedReel.caption && !selectedReel.caption.startsWith('http') && (
-                        <button
-                          type="button"
-                          onClick={() => copyCaption(selectedReel.caption || '')}
+                        {/* Transcribe Reel Action */}
+                        {isPlayableVideo && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!activeTranscript && !isTranscribing) {
+                                handleStartTranscription(selectedReel);
+                              } else {
+                                setIsTranscriptPaneOpen(true);
+                              }
+                            }}
+                            className={`group flex flex-col items-center gap-0.5 active:scale-90 transition-transform cursor-pointer ${
+                              isTranscriptPaneOpen ? 'scale-105' : ''
+                            }`}
+                            title="Transcribe & view synchronized text side-by-side"
+                          >
+                            <div className={`p-2.5 rounded-full ${
+                              isTranscriptPaneOpen
+                                ? 'bg-gradient-to-tr from-pink-500 via-rose-500 to-amber-500 ring-2 ring-pink-400'
+                                : 'bg-gradient-to-tr from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500'
+                            } text-white border border-pink-400/30 shadow-xl shadow-pink-500/20 transition-all`}>
+                              {isTranscribing ? (
+                                <Loader2 className="w-4 h-4 text-white animate-spin" />
+                              ) : (
+                                <FileText className="w-4 h-4 text-white" />
+                              )}
+                            </div>
+                            <span className="text-[10px] font-semibold text-white drop-shadow-md flex items-center gap-0.5">
+                              <span>Text</span>
+                              <Sparkles className="w-2.5 h-2.5 text-amber-300" />
+                            </span>
+                          </button>
+                        )}
+
+                        {/* Copy Caption Action */}
+                        {selectedReel.caption && !selectedReel.caption.startsWith('http') && (
+                          <button
+                            type="button"
+                            onClick={() => copyCaption(selectedReel.caption || '')}
+                            className="group flex flex-col items-center gap-0.5 active:scale-90 transition-transform cursor-pointer"
+                            title="Copy Caption"
+                          >
+                            <div className="p-2.5 rounded-full bg-black/60 hover:bg-black/90 active:bg-pink-600 backdrop-blur-md text-white border border-white/20 shadow-xl group-hover:border-pink-500/50 transition-colors">
+                              {copyState === 'caption' ? (
+                                <Check className="w-4 h-4 text-emerald-400" />
+                              ) : (
+                                <Copy className="w-4 h-4 text-white group-hover:text-pink-300 transition-colors" />
+                              )}
+                            </div>
+                            <span className="text-[10px] font-semibold text-white drop-shadow-md">
+                              {copyState === 'caption' ? 'Copied' : 'Caption'}
+                            </span>
+                          </button>
+                        )}
+
+                        {/* Direct Source Link */}
+                        <a
+                          href={selectedReel.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="group flex flex-col items-center gap-0.5 active:scale-90 transition-transform cursor-pointer"
-                          title="Copy Caption"
+                          title="Direct Source URL"
                         >
                           <div className="p-2.5 rounded-full bg-black/60 hover:bg-black/90 active:bg-pink-600 backdrop-blur-md text-white border border-white/20 shadow-xl group-hover:border-pink-500/50 transition-colors">
-                            {copyState === 'caption' ? (
-                              <Check className="w-4 h-4 text-emerald-400" />
-                            ) : (
-                              <Copy className="w-4 h-4 text-white group-hover:text-pink-300 transition-colors" />
-                            )}
+                            <Maximize2 className="w-4 h-4 text-white group-hover:text-pink-300 transition-colors" />
                           </div>
-                          <span className="text-[10px] font-semibold text-white drop-shadow-md">
-                            {copyState === 'caption' ? 'Copied' : 'Caption'}
-                          </span>
-                        </button>
-                      )}
-
-                      {/* Direct Source Link */}
-                      <a
-                        href={selectedReel.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="group flex flex-col items-center gap-0.5 active:scale-90 transition-transform cursor-pointer"
-                        title="Direct Source URL"
-                      >
-                        <div className="p-2.5 rounded-full bg-black/60 hover:bg-black/90 active:bg-pink-600 backdrop-blur-md text-white border border-white/20 shadow-xl group-hover:border-pink-500/50 transition-colors">
-                          <Maximize2 className="w-4 h-4 text-white group-hover:text-pink-300 transition-colors" />
-                        </div>
-                        <span className="text-[10px] font-semibold text-white drop-shadow-md">Direct</span>
-                      </a>
-                    </div>
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsOverlayVisible(true);
-                    }}
-                    className="absolute bottom-4 left-1/2 -translate-x-1/2 z-35 px-3.5 py-1.5 rounded-full bg-black/80 hover:bg-black backdrop-blur-md border border-white/20 text-white text-xs font-medium flex items-center gap-1.5 shadow-xl transition-all cursor-pointer active:scale-95"
-                  >
-                    <Eye className="w-3.5 h-3.5 text-pink-400" />
-                    <span>Show Details</span>
-                  </button>
-                )}
-
-                {/* Instagram-Style Bottom-Edge Timeline Scrub Bar (Always at bottom-0, never in the middle) */}
-                {isPlayableVideo && (
-                  <div
-                    className="absolute bottom-0 inset-x-0 z-40 h-1 sm:h-1.5 bg-white/20 hover:h-2.5 transition-all cursor-pointer group"
-                    onClick={handleVideoSeek}
-                    title="Seek"
-                  >
-                    <div
-                      className="h-full bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 relative transition-all"
-                      style={{ width: `${videoProgress}%` }}
+                          <span className="text-[10px] font-semibold text-white drop-shadow-md">Direct</span>
+                        </a>
+                      </div>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsOverlayVisible(true);
+                      }}
+                      className="absolute bottom-4 left-1/2 -translate-x-1/2 z-35 px-3.5 py-1.5 rounded-full bg-black/80 hover:bg-black backdrop-blur-md border border-white/20 text-white text-xs font-medium flex items-center gap-1.5 shadow-xl transition-all cursor-pointer active:scale-95"
                     >
-                      <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-2.5 h-2.5 rounded-full bg-white shadow-md opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <Eye className="w-3.5 h-3.5 text-pink-400" />
+                      <span>Show Details</span>
+                    </button>
+                  )}
+
+                  {/* Instagram-Style Bottom-Edge Timeline Scrub Bar (Always at bottom-0, never in the middle) */}
+                  {isPlayableVideo && (
+                    <div
+                      className="absolute bottom-0 inset-x-0 z-40 h-1 sm:h-1.5 bg-white/20 hover:h-2.5 transition-all cursor-pointer group"
+                      onClick={handleVideoSeek}
+                      title="Seek"
+                    >
+                      <div
+                        className="h-full bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 relative transition-all"
+                        style={{ width: `${videoProgress}%` }}
+                      >
+                        <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-2.5 h-2.5 rounded-full bg-white shadow-md opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Right Column: Studio Synchronized Transcript Workspace */}
+              {isTranscriptPaneOpen && (
+                <div className="flex-1 h-[54vh] md:h-full bg-white dark:bg-zinc-900 flex flex-col overflow-hidden min-w-0 animate-fade-in">
+                  {/* Studio Header */}
+                  <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-zinc-800/80 flex flex-wrap items-center justify-between gap-3 bg-slate-50/70 dark:bg-zinc-900/60">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="p-2 rounded-xl bg-gradient-to-tr from-pink-500 to-rose-500 text-white shadow-md shadow-pink-500/20 shrink-0">
+                        <FileText className="w-5 h-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-bold text-slate-900 dark:text-zinc-100 text-sm sm:text-base">
+                            Reel Audio Transcript
+                          </h3>
+                          <span
+                            className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                              isTranscribing
+                                ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 animate-pulse'
+                                : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                            }`}
+                          >
+                            {isTranscribing ? 'Transcribing...' : 'Ready • Synced Audio'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-zinc-400 truncate">
+                          Spoken dialogue extracted from @{username} • Click text to seek video
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Tab Switcher & Modal Controls */}
+                    <div className="flex items-center gap-2 ml-auto">
+                      <div className="flex items-center bg-slate-100 dark:bg-zinc-800 p-0.5 rounded-xl text-xs font-semibold">
+                        <button
+                          type="button"
+                          onClick={() => setTranscriptTab('paragraphs')}
+                          className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                            transcriptTab === 'paragraphs'
+                              ? 'bg-white dark:bg-zinc-700 text-slate-900 dark:text-white shadow-xs'
+                              : 'text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200'
+                          }`}
+                        >
+                          <AlignLeft className="w-3.5 h-3.5" />
+                          <span>Paragraphs</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setTranscriptTab('timestamps')}
+                          className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                            transcriptTab === 'timestamps'
+                              ? 'bg-white dark:bg-zinc-700 text-slate-900 dark:text-white shadow-xs'
+                              : 'text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200'
+                          }`}
+                        >
+                          <ListOrdered className="w-3.5 h-3.5" />
+                          <span>Timestamps</span>
+                        </button>
+                      </div>
+
+                      {/* Collapse/Minimize Side Pane */}
+                      <button
+                        type="button"
+                        onClick={() => setIsTranscriptPaneOpen(false)}
+                        className="p-1.5 hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 rounded-lg transition-colors cursor-pointer"
+                        title="Collapse Transcript Pane (Show Video Only)"
+                      >
+                        <Columns className="w-4 h-4" />
+                      </button>
+
+                      {/* Close Reel Modal Entirely */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedReel(null);
+                          setIsTranscriptPaneOpen(false);
+                          setIsOverlayVisible(true);
+                        }}
+                        className="p-1.5 hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 rounded-lg transition-colors cursor-pointer"
+                        title="Close Reel"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
                     </div>
                   </div>
-                )}
-              </div>
+
+                  {/* Metadata Bar */}
+                  {activeTranscript && (
+                    <div className="px-4 sm:px-6 py-2.5 border-b border-slate-100 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 flex items-center justify-between text-xs text-slate-600 dark:text-zinc-400">
+                      <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                        <span className="flex items-center gap-1 bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md text-[11px]">
+                          <Clock className="w-3 h-3 text-pink-500" />
+                          <span>
+                            {activeTranscript.duration
+                              ? `${Math.round(activeTranscript.duration)}s`
+                              : `${Math.round(duration)}s`}
+                          </span>
+                        </span>
+                        <span className="flex items-center gap-1 bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md text-[11px]">
+                          <Globe className="w-3 h-3 text-blue-500" />
+                          <span className="uppercase">{activeTranscript.language || 'en'}</span>
+                        </span>
+                        <span className="flex items-center gap-1 bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md text-[11px]">
+                          <FileText className="w-3 h-3 text-emerald-500" />
+                          <span>
+                            {activeTranscript.text ? activeTranscript.text.split(/\s+/).filter(Boolean).length : 0} words
+                          </span>
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-pink-600 dark:text-pink-400 font-medium hidden sm:inline">
+                        ✨ Tap any paragraph to jump video playback
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Transcript Content Body */}
+                  <div className="flex-1 overflow-y-auto p-4 sm:p-6 text-sm leading-relaxed">
+                    {isTranscribing ? (
+                      <div className="h-full flex flex-col items-center justify-center text-center p-6 my-auto">
+                        <div className="p-4 rounded-3xl bg-pink-500/10 border border-pink-500/20 mb-4 animate-pulse">
+                          <Loader2 className="w-8 h-8 text-pink-500 animate-spin" />
+                        </div>
+                        <h4 className="font-bold text-slate-900 dark:text-white text-base mb-1">
+                          Transcribing Spoken Audio...
+                        </h4>
+                        <p className="text-xs text-slate-500 dark:text-zinc-400 max-w-sm leading-relaxed mb-4">
+                          Extracting audio track and transcribing speech with Groq Whisper Large v3 Turbo in real-time.
+                        </p>
+                        <div className="flex items-center gap-2 text-[11px] text-pink-600 dark:text-pink-400 font-medium bg-pink-50 dark:bg-pink-950/30 px-3 py-1.5 rounded-full border border-pink-500/20">
+                          <Sparkles className="w-3.5 h-3.5 animate-spin" />
+                          <span>Video is playing live on the left</span>
+                        </div>
+                      </div>
+                    ) : activeTranscript ? (
+                      transcriptTab === 'paragraphs' ? (
+                        <div className="space-y-3.5 select-text">
+                          {formattedParagraphs.map((para) => {
+                            const isActive =
+                              currentTime >= para.start &&
+                              (para.end > 0 ? currentTime <= para.end : currentTime <= para.start + 12);
+                            return (
+                              <div
+                                key={para.id}
+                                onClick={() => seekTo(para.start)}
+                                className={`group p-3.5 rounded-2xl transition-all cursor-pointer border ${
+                                  isActive
+                                    ? 'bg-pink-500/10 dark:bg-pink-500/15 border-pink-500/50 shadow-md ring-1 ring-pink-500/30'
+                                    : 'bg-slate-50/70 hover:bg-slate-100/80 dark:bg-zinc-950/40 dark:hover:bg-zinc-800/60 border-slate-200/80 dark:border-zinc-800/70'
+                                }`}
+                                title="Click to play from this moment"
+                              >
+                                <div className="flex items-center justify-between mb-1.5 text-[11px] text-slate-400 dark:text-zinc-500 font-mono">
+                                  <span
+                                    className={`inline-flex items-center gap-1 font-semibold px-2 py-0.5 rounded-md ${
+                                      isActive
+                                        ? 'bg-pink-500 text-white shadow-xs'
+                                        : 'bg-slate-200/80 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 group-hover:bg-pink-500 group-hover:text-white transition-colors'
+                                    }`}
+                                  >
+                                    <Play className="w-2.5 h-2.5 fill-current" />
+                                    <span>
+                                      {Math.floor(para.start / 60)}:
+                                      {(Math.floor(para.start % 60)).toString().padStart(2, '0')}
+                                    </span>
+                                  </span>
+                                  <span className="text-[10px] font-sans font-medium text-slate-400 dark:text-zinc-500">
+                                    {isActive ? '● Playing now' : `Paragraph ${para.id + 1}`}
+                                  </span>
+                                </div>
+                                <p
+                                  className={`leading-relaxed text-sm ${
+                                    isActive
+                                      ? 'text-slate-900 dark:text-white font-medium'
+                                      : 'text-slate-800 dark:text-zinc-300'
+                                  }`}
+                                >
+                                  {para.text}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="space-y-2 select-text">
+                          {activeTranscript.segments.map((seg, idx) => {
+                            const isActive = currentTime >= seg.start && currentTime <= seg.end;
+                            return (
+                              <div
+                                key={idx}
+                                onClick={() => seekTo(seg.start)}
+                                className={`group p-2.5 rounded-xl transition-all cursor-pointer border flex items-start gap-3 ${
+                                  isActive
+                                    ? 'bg-pink-500/10 dark:bg-pink-500/15 border-pink-500/50 shadow-xs'
+                                    : 'bg-slate-50/60 hover:bg-slate-100/80 dark:bg-zinc-950/40 dark:hover:bg-zinc-800/50 border-slate-200/60 dark:border-zinc-800/60'
+                                }`}
+                                title="Click to play segment"
+                              >
+                                <span
+                                  className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded-md shrink-0 flex items-center gap-1 ${
+                                    isActive
+                                      ? 'bg-pink-500 text-white'
+                                      : 'bg-slate-200/70 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 group-hover:bg-pink-500 group-hover:text-white transition-colors'
+                                  }`}
+                                >
+                                  <Play className="w-2.5 h-2.5 fill-current" />
+                                  <span>
+                                    {Math.floor(seg.start / 60)}:
+                                    {(Math.floor(seg.start % 60)).toString().padStart(2, '0')}
+                                  </span>
+                                </span>
+                                <p
+                                  className={`text-xs sm:text-sm leading-relaxed ${
+                                    isActive
+                                      ? 'text-slate-900 dark:text-white font-medium'
+                                      : 'text-slate-700 dark:text-zinc-300'
+                                  }`}
+                                >
+                                  {seg.text}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )
+                    ) : (
+                      <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400">
+                        <FileText className="w-8 h-8 mb-2 opacity-50" />
+                        <p className="text-xs">No transcript loaded yet. Tap "Text ✨" on the video to transcribe.</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Studio Footer Actions */}
+                  {activeTranscript && (
+                    <div className="p-3.5 sm:p-4 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-950/50 flex flex-wrap items-center justify-between gap-2.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={handleCopyTranscript}
+                          className="flex items-center gap-1.5 py-2 px-3.5 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-semibold text-xs shadow-md shadow-pink-500/20 active:scale-95 transition-all cursor-pointer"
+                        >
+                          {copiedTranscript ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-300" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                          <span>{copiedTranscript ? 'Copied!' : 'Copy Transcript'}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleDownloadTxt}
+                          className="flex items-center gap-1.5 py-2 px-3 rounded-xl bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 font-medium text-xs transition-colors cursor-pointer"
+                          title="Download plain text file"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          <span>.TXT</span>
+                        </button>
+
+                        {activeTranscript.srt && (
+                          <button
+                            type="button"
+                            onClick={handleDownloadSrt}
+                            className="flex items-center gap-1.5 py-2 px-3 rounded-xl bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 font-medium text-xs transition-colors cursor-pointer"
+                            title="Download subtitles with timecodes"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            <span>.SRT Subtitles</span>
+                          </button>
+                        )}
+                      </div>
+
+                      <span className="text-[11px] text-slate-400 dark:text-zinc-500 hidden lg:inline">
+                        Click any paragraph to seek video
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         );
@@ -649,15 +1039,6 @@ export function ReelsGrid({
         onClose={() => setIsAdModalOpen(false)}
         onUnlocked={handleAdCompleted}
         requiredSeconds={15}
-      />
-
-      {/* Full Reel Audio Transcript Viewer */}
-      <ReelTranscriptModal
-        isOpen={isTranscriptModalOpen}
-        onClose={() => setIsTranscriptModalOpen(false)}
-        transcript={activeTranscript}
-        reelUsername={username}
-        reelShortcode={selectedReel?.id}
       />
     </>
   );
